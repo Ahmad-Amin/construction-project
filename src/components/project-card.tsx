@@ -24,7 +24,7 @@ export function ProjectCard({
   return (
     <Link
       href={`/dashboard/projects/${p.id}`}
-      className="group animate-rise block overflow-hidden rounded-2xl border border-line bg-surface transition duration-300 hover:-translate-y-1 hover:border-primary/60 hover:shadow-xl hover:shadow-black/10"
+      className={`group animate-rise block overflow-hidden rounded-2xl border border-line bg-surface transition duration-300 hover:-translate-y-1 hover:border-primary/60 hover:shadow-xl hover:shadow-black/10 ${p.archived ? "opacity-75" : ""}`}
       style={{ animationDelay: `${index * 70}ms` }}
     >
       <div className="bg-hero relative h-40 overflow-hidden">
@@ -42,7 +42,7 @@ export function ProjectCard({
         <div className="absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-black/45 to-transparent" aria-hidden />
 
         <span className="absolute left-3 top-3 rounded-full bg-surface/90 px-2.5 py-1 text-xs font-semibold backdrop-blur">
-          {projectStatusLabel[p.status]}
+          {p.archived ? "Archived" : projectStatusLabel[p.status]}
         </span>
         {p.awaitingMe > 0 && (
           <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow">

@@ -18,11 +18,3 @@ export const milestoneStatusLabel: Record<MilestoneStatus, string> = {
   in_progress: "In progress",
   done: "Done",
 };
-
-export const DEFAULT_MILESTONES = [
-  "Foundation",
-  "Grey Structure",
-  "Electrical",
-  "Plumbing",
-  "Finishing",
-];

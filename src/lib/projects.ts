@@ -10,6 +10,8 @@ export type ProjectBasic = {
   start_date: string | null;
   expected_completion_date: string | null;
   status: ProjectStatus;
+  archived_at: string | null;
+  completed_at: string | null;
   company: { name: string; logo_url: string | null } | null;
 };
 
@@ -19,7 +21,7 @@ export const getProjectBasic = cache(async (id: string): Promise<ProjectBasic | 
   const supabase = await createClient();
   const { data } = await supabase
     .from("projects")
-    .select("id, company_id, name, location, start_date, expected_completion_date, status, company:companies(name, logo_url)")
+    .select("id, company_id, name, location, start_date, expected_completion_date, status, archived_at, completed_at, company:companies(name, logo_url)")
     .eq("id", id)
     .maybeSingle();
   if (!data) return null;

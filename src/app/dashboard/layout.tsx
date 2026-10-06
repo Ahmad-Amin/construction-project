@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { countUnread } from "@/lib/notifications";
 import { viewerSide } from "@/lib/payments";
 import { createClient } from "@/lib/supabase/server";
 import type { ProjectStatus } from "@/lib/types";
@@ -17,25 +18,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Row-level security decides which projects come back: a company sees its own,
   // a homeowner only theirs. Payments waiting on this person show as badges.
   const supabase = await createClient();
-  const [projectsRes, pendingRes] = await Promise.all([
+  const [projectsRes, pendingRes, unread] = await Promise.all([
     supabase
       .from("projects")
-      .select("id, name, status")
+      .select("id, name, status, archived_at")
       .order("created_at", { ascending: false })
       .limit(40),
     side
       ? supabase.from("payments").select("project_id").eq("status", "pending").neq("side", side).limit(1000)
       : Promise.resolve({ data: [] as { project_id: string }[] }),
+    countUnread(supabase),
   ]);
 
   const awaiting = new Map<string, number>();
   for (const row of (pendingRes.data ?? []) as { project_id: string }[]) {
     awaiting.set(row.project_id, (awaiting.get(row.project_id) ?? 0) + 1);
   }
-  const projects = ((projectsRes.data ?? []) as { id: string; name: string; status: ProjectStatus }[]).map((p) => ({
-    ...p,
-    awaiting: awaiting.get(p.id) ?? 0,
-  }));
+  const projects = ((projectsRes.data ?? []) as { id: string; name: string; status: ProjectStatus; archived_at: string | null }[]).map(
+    (p) => ({
+      id: p.id,
+      name: p.name,
+      status: p.status,
+      archived: !!p.archived_at,
+      awaiting: awaiting.get(p.id) ?? 0,
+    }),
+  );
 
   return (
     <AppShell
@@ -47,6 +54,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       company={viewer.company ? { name: viewer.company.name, logoUrl: viewer.company.logoUrl } : null}
       projects={projects}
       isOwner={isOwner}
+      unread={unread}
     >
       {children}
     </AppShell>

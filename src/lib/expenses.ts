@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ExpenseFilters } from "@/lib/expense-filters";
 
 export const EXPENSE_CATEGORIES = [
   "material",
@@ -44,12 +45,11 @@ type Row = {
   client_visible: boolean;
   created_by: string;
   created_by_name: string;
-  created_at: string;
-  updated_at: string;
+  edited: boolean;
 };
 
 export const EXPENSE_COLUMNS =
-  "id, amount, expense_date, category, vendor_note, receipt_path, client_visible, created_by, created_by_name, created_at, updated_at";
+  "id, amount, expense_date, category, vendor_note, receipt_path, client_visible, created_by, created_by_name, edited";
 
 const SIGNED_URL_SECONDS = 60 * 60;
 
@@ -78,8 +78,8 @@ export async function toExpenseItems(supabase: SupabaseClient, rows: Row[]): Pro
     clientVisible: r.client_visible,
     receiptPath: r.receipt_path,
     receiptUrl: (r.receipt_path && signed.get(r.receipt_path)) || null,
-    // More than a minute between saving and the last change means it was edited afterwards.
-    edited: new Date(r.updated_at).getTime() - new Date(r.created_at).getTime() > 60_000,
+    // True only when the amount, date, category, note or receipt changed (not when it was shared).
+    edited: r.edited,
   }));
 }
 
@@ -112,5 +112,64 @@ export async function fetchExpenseTotals(
     total: Number(row?.total ?? 0),
     sharedTotal: Number(row?.shared_total ?? 0),
     count: Number(row?.expense_count ?? 0),
+  };
+}
+
+export type CategoryTotal = { category: ExpenseCategory; total: number; count: number };
+
+export type ExpenseOverview = {
+  // The expenses to list (after the category filter, capped).
+  items: ExpenseItem[];
+  // Spending by category for the chosen dates and visibility, largest first.
+  breakdown: CategoryTotal[];
+  total: number;
+  sharedTotal: number;
+  count: number;
+  // How many expenses match every filter (the list may show fewer).
+  matching: number;
+};
+
+const MAX_ROWS = 2000;
+
+// One query for the chart and the list. It runs as the signed-in person, so the numbers can
+// only ever cover expenses that person is allowed to see: a homeowner's chart contains only
+// shared expenses.
+export async function fetchExpenseOverview(
+  supabase: SupabaseClient,
+  projectId: string,
+  filters: ExpenseFilters,
+  listLimit: number,
+): Promise<ExpenseOverview> {
+  let query = supabase
+    .from("expenses")
+    .select(EXPENSE_COLUMNS)
+    .eq("project_id", projectId)
+    .order("expense_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(MAX_ROWS);
+  if (filters.from) query = query.gte("expense_date", filters.from);
+  if (filters.to) query = query.lte("expense_date", filters.to);
+  if (filters.show === "shared") query = query.eq("client_visible", true);
+  if (filters.show === "hidden") query = query.eq("client_visible", false);
+
+  const rows = ((await query).data ?? []) as Row[];
+
+  const totals = new Map<ExpenseCategory, CategoryTotal>();
+  for (const r of rows) {
+    const entry = totals.get(r.category) ?? { category: r.category, total: 0, count: 0 };
+    entry.total += Number(r.amount);
+    entry.count += 1;
+    totals.set(r.category, entry);
+  }
+
+  const matchingRows = filters.category ? rows.filter((r) => r.category === filters.category) : rows;
+
+  return {
+    items: await toExpenseItems(supabase, matchingRows.slice(0, listLimit)),
+    breakdown: [...totals.values()].sort((a, b) => b.total - a.total),
+    total: rows.reduce((sum, r) => sum + Number(r.amount), 0),
+    sharedTotal: rows.filter((r) => r.client_visible).reduce((sum, r) => sum + Number(r.amount), 0),
+    count: rows.length,
+    matching: matchingRows.length,
   };
 }

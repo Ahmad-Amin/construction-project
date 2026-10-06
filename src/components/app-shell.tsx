@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
+  Archive,
   Banknote,
   Bell,
   Camera,
@@ -23,17 +24,20 @@ import {
 import { signOut } from "@/app/login/actions";
 import { Avatar } from "@/components/avatar";
 import { CompanyBadge } from "@/components/company-badge";
+import { NotificationBell } from "@/components/notification-bell";
 import { Logo } from "@/components/logo";
 import { button } from "@/lib/ui";
 import type { ProjectStatus } from "@/lib/types";
 
-export type ShellProject = { id: string; name: string; status: ProjectStatus; awaiting: number };
+export type ShellProject = { id: string; name: string; status: ProjectStatus; awaiting: number; archived: boolean };
 
 export type ShellProps = {
   user: { name: string; email: string; roleLabel: string };
   company: { name: string; logoUrl: string | null } | null;
   projects: ShellProject[];
   isOwner: boolean;
+  // Notifications the person hasn't opened yet.
+  unread: number;
   children: React.ReactNode;
 };
 
@@ -108,6 +112,7 @@ function SidebarContent({
   onNavigate?: () => void;
 }) {
   const { user, company, projects, isOwner } = props;
+  const [showArchived, setShowArchived] = useState(false);
   const match = pathname.match(/^\/dashboard\/projects\/([0-9a-f-]{36})/);
   const currentId = match?.[1] ?? null;
   const base = currentId ? `/dashboard/projects/${currentId}` : "";
@@ -121,44 +126,12 @@ function SidebarContent({
     { href: `${base}/payments`, label: "Payments", icon: Banknote },
   ];
 
-  return (
-    <div className="flex h-full flex-col">
-      <div className="px-4 pb-3 pt-4">
-        <Logo href="/dashboard" />
-      </div>
+  const live = projects.filter((p) => !p.archived);
+  const archived = projects.filter((p) => p.archived);
+  // Archived projects stay tucked away, but open up when you are looking at one.
+  const archivedOpen = showArchived || archived.some((p) => p.id === currentId);
 
-      {company && (
-        <div className="mx-3 mb-3 flex items-center gap-3 rounded-xl border border-line bg-surface-2/60 px-3 py-2.5">
-          <CompanyBadge name={company.name} logoUrl={company.logoUrl} size="md" />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{company.name}</p>
-            <p className="text-xs text-muted">{user.roleLabel}</p>
-          </div>
-        </div>
-      )}
-
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" aria-label="Main">
-        {isOwner && (
-          <Link href="/dashboard/projects/new" onClick={onNavigate} className={`${button("primary", "sm")} mb-4 w-full`}>
-            <Plus className="size-4" aria-hidden /> New project
-          </Link>
-        )}
-
-        <div className="space-y-0.5">
-          <Nav href="/dashboard" icon={LayoutDashboard} active={pathname === "/dashboard"} onNavigate={onNavigate}>
-            Dashboard
-          </Nav>
-        </div>
-
-        <p className="mb-1.5 mt-6 px-3 text-xs font-semibold uppercase tracking-wide text-muted">
-          {company ? "Projects" : "Your projects"}
-        </p>
-
-        {projects.length === 0 ? (
-          <p className="px-3 py-2 text-sm text-muted">No projects yet.</p>
-        ) : (
-          <ul className="space-y-0.5">
-            {projects.map((p) => {
+  const renderProject = (p: ShellProject) => {
               const isCurrent = p.id === currentId;
               return (
                 <li key={p.id}>
@@ -216,8 +189,72 @@ function SidebarContent({
                   )}
                 </li>
               );
-            })}
+  };
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="px-4 pb-3 pt-4">
+        <Logo href="/dashboard" />
+      </div>
+
+      {company && (
+        <div className="mx-3 mb-3 flex items-center gap-3 rounded-xl border border-line bg-surface-2/60 px-3 py-2.5">
+          <CompanyBadge name={company.name} logoUrl={company.logoUrl} size="md" />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{company.name}</p>
+            <p className="text-xs text-muted">{user.roleLabel}</p>
+          </div>
+        </div>
+      )}
+
+      <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" aria-label="Main">
+        {isOwner && (
+          <Link href="/dashboard/projects/new" onClick={onNavigate} className={`${button("primary", "sm")} mb-4 w-full`}>
+            <Plus className="size-4" aria-hidden /> New project
+          </Link>
+        )}
+
+        <div className="space-y-0.5">
+          <Nav href="/dashboard" icon={LayoutDashboard} active={pathname === "/dashboard"} onNavigate={onNavigate}>
+            Dashboard
+          </Nav>
+          <Nav
+            href="/dashboard/notifications"
+            icon={Bell}
+            active={pathname.startsWith("/dashboard/notifications")}
+            badge={props.unread}
+            onNavigate={onNavigate}
+          >
+            Notifications
+          </Nav>
+        </div>
+
+        <p className="mb-1.5 mt-6 px-3 text-xs font-semibold uppercase tracking-wide text-muted">
+          {company ? "Projects" : "Your projects"}
+        </p>
+
+        {projects.length === 0 ? (
+          <p className="px-3 py-2 text-sm text-muted">No projects yet.</p>
+        ) : (
+          <ul className="space-y-0.5">
+            {live.map(renderProject)}
           </ul>
+        )}
+
+        {archived.length > 0 && (
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => setShowArchived((v) => !v)}
+              aria-expanded={archivedOpen}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted hover:bg-surface-2"
+            >
+              <Archive className="size-3.5" aria-hidden />
+              Archived ({archived.length})
+              <ChevronRight className={`ml-auto size-3.5 transition-transform ${archivedOpen ? "rotate-90" : ""}`} aria-hidden />
+            </button>
+            {archivedOpen && <ul className="mt-0.5 space-y-0.5">{archived.map(renderProject)}</ul>}
+          </div>
         )}
       </nav>
 
@@ -317,7 +354,14 @@ export function AppShell(props: ShellProps) {
       router.refresh();
     };
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    // And once a minute while the tab stays open, so new notifications appear on their own.
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, 60_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(timer);
+    };
   }, [router]);
 
   useEffect(() => {
@@ -357,33 +401,24 @@ export function AppShell(props: ShellProps) {
             </button>
             <Logo href="/dashboard" />
             <div className="ml-auto flex items-center gap-1">
-              {firstAwaiting && (
-                <Link
-                  href={`/dashboard/projects/${firstAwaiting.id}/payments`}
-                  aria-label={`${awaitingTotal} payment${awaitingTotal === 1 ? "" : "s"} waiting for you`}
-                  className="relative flex size-10 items-center justify-center rounded-lg text-muted hover:bg-surface-2"
-                >
-                  <Bell className="size-5" aria-hidden />
-                  <span className="absolute right-1.5 top-1.5 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                    {awaitingTotal}
-                  </span>
-                </Link>
-              )}
+              <NotificationBell unread={props.unread} pathname={pathname} />
             </div>
           </header>
 
           {/* Desktop top bar */}
           <div className="sticky top-0 z-20 hidden h-14 items-center justify-between gap-4 border-b border-line bg-background/85 px-8 backdrop-blur lg:flex">
             <Breadcrumbs pathname={pathname} projects={props.projects} />
-            {firstAwaiting && (
-              <Link
-                href={`/dashboard/projects/${firstAwaiting.id}/payments`}
-                className="flex shrink-0 items-center gap-2 rounded-full bg-primary-soft px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary/25"
-              >
-                <Bell className="size-4 text-data-accent" aria-hidden />
-                {awaitingTotal} {awaitingTotal === 1 ? "payment" : "payments"} waiting for you
-              </Link>
-            )}
+            <div className="flex shrink-0 items-center gap-3">
+              {firstAwaiting && (
+                <Link
+                  href={`/dashboard/projects/${firstAwaiting.id}/payments`}
+                  className="flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary/25"
+                >
+                  {awaitingTotal} {awaitingTotal === 1 ? "payment" : "payments"} waiting for you
+                </Link>
+              )}
+              <NotificationBell unread={props.unread} pathname={pathname} />
+            </div>
           </div>
 
           {props.children}

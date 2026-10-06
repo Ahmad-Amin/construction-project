@@ -21,6 +21,8 @@ export type DashboardProject = {
   daysSinceUpdate: number | null;
   // Payments this person still has to confirm.
   awaitingMe: number;
+  // Archived projects are kept but left out of totals, alerts and activity.
+  archived: boolean;
 };
 
 export type AttentionItem = {
@@ -74,6 +76,7 @@ type ProjectRow = {
   company: { name: string } | { name: string }[] | null;
   milestones: { progress_percent: number }[];
   project_updates: { update_date: string; text: string }[];
+  archived_at: string | null;
   budget: { amount: number } | { amount: number }[] | null;
 };
 type PaymentRow = {
@@ -136,7 +139,7 @@ export async function fetchDashboard(
     supabase
       .from("projects")
       .select(
-        "id, name, location, status, client:clients(name), company:companies(name), milestones(progress_percent), project_updates(update_date, text), budget:project_budgets(amount)",
+        "id, name, location, status, archived_at, client:clients(name), company:companies(name), milestones(progress_percent), project_updates(update_date, text), budget:project_budgets(amount)",
       )
       .order("created_at", { ascending: false })
       .order("update_date", { referencedTable: "project_updates", ascending: false })
@@ -203,6 +206,7 @@ export async function fetchDashboard(
       lastUpdate: last ? { date: last.update_date, text: last.text } : null,
       daysSinceUpdate: last ? today - dayNumber(last.update_date) : null,
       // Pending payments recorded by the other side are the ones waiting on this person.
+      archived: !!row.archived_at,
       awaitingMe: side
         ? mine.filter((p) => p.status === "pending" && p.side !== side).length
         : 0,
@@ -210,24 +214,30 @@ export async function fetchDashboard(
   });
   const nameOf = new Map(projects.map((p) => [p.id, p.name]));
 
+  // Everything below describes current work, so archived projects are left out.
+  const live = projects.filter((p) => !p.archived);
+  const liveIds = new Set(live.map((p) => p.id));
+  const livePayments = payments.filter((p) => liveIds.has(p.project_id));
+  const liveExpenses = expenses.filter((e) => liveIds.has(e.project_id));
+
   // Totals and the trend lines behind the stat tiles.
   const months = lastMonths(MONTHS);
   const receivedByMonth = new Map(months.map((m) => [m, 0]));
   const spentByMonth = new Map(months.map((m) => [m, 0]));
-  for (const p of payments) {
+  for (const p of livePayments) {
     const key = p.payment_date.slice(0, 7);
     if (p.status === "confirmed" && receivedByMonth.has(key)) {
       receivedByMonth.set(key, receivedByMonth.get(key)! + Number(p.amount));
     }
   }
-  for (const e of expenses) {
+  for (const e of liveExpenses) {
     const key = e.expense_date.slice(0, 7);
     if (spentByMonth.has(key)) spentByMonth.set(key, spentByMonth.get(key)! + Number(e.amount));
   }
 
   // What needs a person's attention, most urgent first.
   const attention: AttentionItem[] = [];
-  for (const p of projects) {
+  for (const p of live) {
     if (p.awaitingMe > 0) {
       attention.push({
         id: `pay-${p.id}`,
@@ -243,7 +253,7 @@ export async function fetchDashboard(
     }
   }
   if (side === "contractor") {
-    for (const p of projects) {
+    for (const p of live) {
       if (p.status !== "active") continue;
       if (p.daysSinceUpdate === null || p.daysSinceUpdate > STALE_AFTER_DAYS) {
         attention.push({
@@ -263,7 +273,7 @@ export async function fetchDashboard(
 
   // A mixed feed across all projects, newest first.
   const activity: ActivityItem[] = [
-    ...updates.map<ActivityItem>((u) => ({
+    ...updates.filter((u) => liveIds.has(u.project_id)).map<ActivityItem>((u) => ({
       id: `update-${u.id}`,
       kind: "update",
       projectId: u.project_id,
@@ -272,7 +282,7 @@ export async function fetchDashboard(
       actor: u.author_name,
       title: u.text,
     })),
-    ...payments.slice(0, 8).map<ActivityItem>((p) => ({
+    ...livePayments.slice(0, 8).map<ActivityItem>((p) => ({
       id: `payment-${p.id}`,
       kind: "payment",
       projectId: p.project_id,
@@ -283,7 +293,7 @@ export async function fetchDashboard(
       amount: Number(p.amount),
       status: p.status,
     })),
-    ...expenses.slice(0, 8).map<ActivityItem>((e) => ({
+    ...liveExpenses.slice(0, 8).map<ActivityItem>((e) => ({
       id: `expense-${e.id}`,
       kind: "expense",
       projectId: e.project_id,
@@ -301,7 +311,7 @@ export async function fetchDashboard(
   const photos: FreshPhoto[] = [];
   for (const p of photoRows) {
     const url = photoUrl(p);
-    if (url && photos.length < 8) {
+    if (url && liveIds.has(p.project_id) && photos.length < 8) {
       photos.push({ id: p.id, url, projectId: p.project_id, projectName: nameOf.get(p.project_id) ?? "" });
     }
   }
@@ -309,15 +319,15 @@ export async function fetchDashboard(
   return {
     projects,
     kpis: {
-      active: projects.filter((p) => p.status === "active").length,
-      onHold: projects.filter((p) => p.status === "on_hold").length,
-      completed: projects.filter((p) => p.status === "completed").length,
-      received: projects.reduce((s, p) => s + p.received, 0),
-      pendingReceived: payments
+      active: live.filter((p) => p.status === "active").length,
+      onHold: live.filter((p) => p.status === "on_hold").length,
+      completed: live.filter((p) => p.status === "completed").length,
+      received: live.reduce((s, p) => s + p.received, 0),
+      pendingReceived: livePayments
         .filter((p) => p.status === "pending")
         .reduce((s, p) => s + Number(p.amount), 0),
-      spent: projects.reduce((s, p) => s + p.spent, 0),
-      budget: projects.reduce((s, p) => s + (p.budget ?? 0), 0),
+      spent: live.reduce((s, p) => s + p.spent, 0),
+      budget: live.reduce((s, p) => s + (p.budget ?? 0), 0),
       receivedSeries: months.map((m) => receivedByMonth.get(m) ?? 0),
       spentSeries: months.map((m) => spentByMonth.get(m) ?? 0),
     },

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BellRing, Banknote, Hammer, Plus, Receipt } from "lucide-react";
+import { Archive, BellRing, Banknote, ChevronDown, Hammer, Plus, Receipt, Trash2 } from "lucide-react";
 import { AuthForm } from "@/components/auth-form";
 import {
   ActivityFeed,
@@ -11,7 +11,10 @@ import {
 import { ProjectCard } from "@/components/project-card";
 import { SiteIllustration } from "@/components/site-illustration";
 import { StatTile } from "@/components/viz";
+import { GettingStartedCard } from "@/components/getting-started-card";
 import { fetchDashboard } from "@/lib/dashboard";
+import { isDemoEmail } from "@/lib/demo";
+import { fetchGettingStarted } from "@/lib/getting-started";
 import { formatPKRCompact } from "@/lib/format";
 import { viewerSide } from "@/lib/payments";
 import { createClient } from "@/lib/supabase/server";
@@ -27,7 +30,12 @@ function greetingFor(hourInKarachi: number) {
   return "Good evening";
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ deleted?: string }>;
+}) {
+  const { deleted } = await searchParams;
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
 
@@ -56,15 +64,20 @@ export default async function DashboardPage() {
 
   // RLS decides what comes back: a company sees its projects, a homeowner only their own.
   const supabase = await createClient();
-  const [dashboard, profile] = await Promise.all([
+  // The first-run checklist is for owners only, and not for the shared demo account.
+  const wantsChecklist = isOwner && !isDemoEmail(viewer.email);
+  const [dashboard, profile, gettingStarted] = await Promise.all([
     fetchDashboard(supabase, side),
     supabase.from("profiles").select("name").eq("id", viewer.userId).maybeSingle(),
+    wantsChecklist ? fetchGettingStarted(supabase, viewer.userId, !!viewer.company?.logoUrl) : Promise.resolve(null),
   ]);
-  const { projects, kpis, attention, activity, photos } = dashboard;
+  const { kpis, attention, activity, photos } = dashboard;
+  const projects = dashboard.projects.filter((p) => !p.archived);
+  const archivedProjects = dashboard.projects.filter((p) => p.archived);
 
   // A homeowner with a single project goes straight to it.
-  if (!isCompany && projects.length === 1) {
-    redirect(`/dashboard/projects/${projects[0].id}`);
+  if (!isCompany && dashboard.projects.length === 1) {
+    redirect(`/dashboard/projects/${dashboard.projects[0].id}`);
   }
 
   const firstName = (profile.data?.name ?? "").trim().split(/\s+/)[0];
@@ -100,6 +113,15 @@ export default async function DashboardPage() {
         summary={summary}
         action={projects.length > 0 ? newProjectButton : undefined}
       />
+
+      {gettingStarted && <GettingStartedCard data={gettingStarted} />}
+
+      {deleted && (
+        <p role="status" className="animate-rise flex items-center gap-2 rounded-xl bg-surface-2 px-4 py-3 text-sm font-medium">
+          <Trash2 className="size-4 shrink-0 text-muted" aria-hidden />
+          Deleted &ldquo;{deleted}&rdquo; and everything in it.
+        </p>
+      )}
 
       {isOwner && projects.length > 0 && (
         <section aria-label="Overview" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -161,12 +183,18 @@ export default async function DashboardPage() {
               <div className="flex flex-col items-center rounded-3xl border border-dashed border-line bg-surface px-6 py-12 text-center">
                 <SiteIllustration className="w-64 max-w-full" />
                 <h3 className="mt-4 text-lg font-semibold">
-                  {isOwner ? "Your first project starts here" : "No projects yet"}
+                  {archivedProjects.length > 0
+                    ? "All your projects are archived"
+                    : isOwner
+                      ? "Your first project starts here"
+                      : "No projects yet"}
                 </h3>
                 <p className="mt-1 max-w-sm text-sm text-muted">
-                  {isOwner
-                    ? "Add a project and your client, share one link, and they can follow progress, payments and site photos on their phone."
-                    : "Projects shared with you will appear here."}
+                  {archivedProjects.length > 0
+                    ? "Start a new one, or open an archived project below to restore it."
+                    : isOwner
+                      ? "Add a project and your client, share one link, and they can follow progress, payments and site photos on their phone."
+                      : "Projects shared with you will appear here."}
                 </p>
                 {newProjectButton && <div className="mt-6">{newProjectButton}</div>}
               </div>
@@ -180,6 +208,27 @@ export default async function DashboardPage() {
           </section>
 
           {projects.length > 0 && <FreshPhotos photos={photos} />}
+
+          {archivedProjects.length > 0 && (
+            <details className="group rounded-2xl border border-line bg-surface">
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-4 font-semibold [&::-webkit-details-marker]:hidden">
+                <Archive className="size-4 text-muted" aria-hidden />
+                Archived
+                <span className="text-sm font-normal text-muted">{archivedProjects.length}</span>
+                <ChevronDown className="ml-auto size-4 text-muted transition-transform group-open:rotate-180" aria-hidden />
+              </summary>
+              <div className="border-t border-line p-5">
+                <p className="mb-4 text-sm text-muted">
+                  Kept for your records and left out of the totals above.
+                </p>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {archivedProjects.map((p, i) => (
+                    <ProjectCard key={p.id} project={p} perspective={isCompany ? "company" : "client"} index={i} />
+                  ))}
+                </div>
+              </div>
+            </details>
+          )}
         </div>
 
         {projects.length > 0 && activity.length > 0 && (

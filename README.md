@@ -48,6 +48,26 @@ Staff accounts are not invitable yet; the role exists in the database for when t
 - The owner's project Overview has a **What your client sees** card that summarises what is shared and what is hidden, from the live data.
 - Set `NEXT_PUBLIC_CONTACT_EMAIL` and `NEXT_PUBLIC_OPERATOR_NAME` before sharing the product (see `.env.example`). The page promises deletion within `DELETION_DAYS` (30) of a request; keep that promise or change the number.
 
+## Project lifecycle
+
+- **Templates and first run:** a new project starts from a milestone template (`src/lib/templates.ts`: new house, extra floor, renovation, shop or office fit-out, or blank). Owners also see a **Get started** checklist on the dashboard (`src/lib/getting-started.ts`), built from what they have actually done and hidden for good once dismissed. It does not show for the shared demo account.
+- **Complete:** the Overview's **Mark complete** lists loose ends (unfinished stages, payments awaiting or disputed), then marks the project complete, records the date, notifies the client and offers the final statement. **Reopen** undoes it.
+- **Archive:** hides a project from the owner's lists and dashboard totals, reversible, and the client keeps their view.
+- **Delete:** permanent and for mistakes and test projects. It needs the project's name typed in, removes everything including the photo and receipt files, and **is refused once the project has confirmed payments** (the client has agreed to those records; archive it instead). Enforced by `delete_project` in the database.
+- **Expenses:** the tab shows a "Where the money went" chart by category, with date presets, a custom range, and (owner only) an All / Shared / Hidden switch. A homeowner's chart is computed only from expenses shared with them. An expense is marked **Edited** only when its amount, date, category, note or receipt changes, not when it is shared.
+
+## Notifications
+
+People are told when something needs them: a payment waiting for their confirmation, a payment confirmed or disputed, a new site update, a finished milestone, or a client joining. Each notification shows in the **bell** (top bar), on `/dashboard/notifications`, and, unless they switch it off in **Settings → Notifications**, arrives by email.
+
+- **Created by the database** (`supabase/migrations/…_notifications.sql` triggers), so every path that changes a payment, update or milestone notifies the right person, and a failure to notify can never break the real action. Nobody is notified about their own actions.
+- **Emails** are sent by the server after the action finishes (`queueEmailDelivery()` in `src/lib/notifications.ts`). The person who caused a notification claims it from the database (`claim_email_notifications`), sends it, and reports back (`finish_email_notification`). This needs no elevated key. A failed send is retried up to 3 times, the next time that person acts.
+- **Provider** is chosen in `.env.local` (`src/lib/email.ts`):
+  - `EMAIL_PROVIDER=ethereal` (default in development): a fake inbox, so nothing reaches a real address. Create a free account at https://ethereal.email/create, put its login in `ETHEREAL_USER` / `ETHEREAL_PASS`, and read every email at https://ethereal.email/login. Without them a new inbox is created on each server start and its login is printed in the server console. The console also prints a preview link for every email.
+  - `EMAIL_PROVIDER=smtp` with `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` (for example Gmail with an app password).
+  - `EMAIL_PROVIDER=resend` with `RESEND_API_KEY` (production). This path is written but has not been tried against a real Resend account yet.
+- To add a channel later (WhatsApp, push), read the same pending notifications and send them there.
+
 ## Sharing with clients
 
 - **WhatsApp:** one-tap, pre-written messages that open the client's chat (click-to-chat links; nothing is sent automatically). Available on each site update, on the project Overview ("Share progress"), right after posting an update, and as a reminder on payments that are waiting for the other side to confirm. Messages are built in `src/lib/whatsapp.ts` and contain only progress, update text and payments, never expenses.

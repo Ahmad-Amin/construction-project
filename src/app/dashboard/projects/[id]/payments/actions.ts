@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { FormState } from "@/app/login/actions";
 import { dateOrNull, parseAmount, snapshot, text } from "@/lib/forms";
+import { queueEmailDelivery } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 
 const GENERIC = "Something went wrong saving this payment. Please try again.";
@@ -71,6 +72,7 @@ export async function createPayment(
   }
 
   refresh(projectId);
+  queueEmailDelivery();
   redirect(`/dashboard/projects/${projectId}/payments`);
 }
 
@@ -136,5 +138,6 @@ export async function respondToPayment(
   if (error) return { error: friendly(error) };
 
   refresh(projectId);
+  queueEmailDelivery();
   return {};
 }

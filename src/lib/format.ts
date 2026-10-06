@@ -72,6 +72,11 @@ export function timeAgo(iso: string) {
   return formatDate(new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" }));
 }
 
+// The Pakistan calendar day (yyyy-mm-dd) of a moment in time, such as when a project was completed.
+export function karachiDay(iso: string) {
+  return new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+}
+
 // Today's calendar date (yyyy-mm-dd) in Pakistan, where the work happens.
 // Computed from a fixed timezone so server and browser always agree.
 export function todayInKarachi() {

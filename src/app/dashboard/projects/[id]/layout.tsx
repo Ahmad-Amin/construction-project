@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, MapPin } from "lucide-react";
+import { ArchivedBanner } from "@/components/archived-banner";
 import { CompanyBadge } from "@/components/company-badge";
+import { CompletedBanner } from "@/components/completed-banner";
 import { ProjectContent } from "@/components/project-content";
 import { ProjectTabs } from "@/components/project-tabs";
 import { StatusBadge } from "@/components/project-bits";
-import { formatDate } from "@/lib/format";
+import { formatDate, karachiDay } from "@/lib/format";
 import { getProjectBasic } from "@/lib/projects";
+import { getViewer } from "@/lib/viewer";
 
 // Shared header and tabs for every screen of one project.
 export default async function ProjectLayout({
@@ -19,6 +22,8 @@ export default async function ProjectLayout({
   const { id } = await params;
   const project = await getProjectBasic(id);
   if (!project) notFound();
+  const viewer = await getViewer();
+  const isOwner = viewer?.company?.id === project.company_id && viewer?.company?.role === "owner";
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -54,6 +59,16 @@ export default async function ProjectLayout({
         </div>
         <StatusBadge status={project.status} />
       </div>
+
+      {project.status === "completed" && (
+        <CompletedBanner
+          projectId={id}
+          completedOn={project.completed_at ? karachiDay(project.completed_at) : null}
+          isOwner={isOwner}
+          canGetStatement={isOwner || !viewer?.company}
+        />
+      )}
+      {project.archived_at && <ArchivedBanner projectId={id} canRestore={isOwner} />}
 
       <ProjectTabs projectId={id} />
       <ProjectContent projectId={id}>{children}</ProjectContent>

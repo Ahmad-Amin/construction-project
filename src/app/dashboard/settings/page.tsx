@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Building2, Database, KeyRound, LogOut, Palette, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, Bell, Building2, Database, KeyRound, LogOut, Palette, ShieldCheck, UserRound } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { Avatar } from "@/components/avatar";
 import { AuthForm } from "@/components/auth-form";
 import { CompanyBadge } from "@/components/company-badge";
 import { DataExport } from "@/components/data-export";
+import { EmailToggle } from "@/components/email-toggle";
 import { LogoUploader } from "@/components/logo-uploader";
 import { PasswordForm } from "@/components/password-form";
 import { SettingsSection } from "@/components/settings-section";
@@ -32,7 +33,7 @@ export default async function SettingsPage({
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, created_at")
+    .select("name, created_at, email_notifications")
     .eq("id", viewer.userId)
     .maybeSingle();
 
@@ -92,6 +93,14 @@ export default async function SettingsPage({
               { name: "email", label: "Email", defaultValue: viewer.email, readOnly: true },
             ]}
           />
+        </SettingsSection>
+
+        <SettingsSection
+          icon={Bell}
+          title="Notifications"
+          description="Choose whether you also get an email when something needs your attention."
+        >
+          <EmailToggle initial={profile?.email_notifications ?? true} />
         </SettingsSection>
 
         <SettingsSection

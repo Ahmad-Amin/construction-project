@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { queueEmailDelivery } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 
 export type ActionResult = { error?: string };
@@ -41,6 +42,7 @@ export async function createUpdate(input: NewUpdate): Promise<ActionResult> {
   if (error) return { error: error.code === "P0001" ? error.message : GENERIC };
 
   refresh(input.projectId);
+  queueEmailDelivery();
   return {};
 }
 

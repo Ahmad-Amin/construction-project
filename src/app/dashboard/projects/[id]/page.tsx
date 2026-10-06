@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { ClientVisibilityCard } from "@/components/client-visibility-card";
+import { CompleteProjectButton } from "@/components/complete-project-button";
 import { InvitePanel } from "@/components/invite-panel";
 import { PhotoStrip } from "@/components/photo-strip";
 import { StatementButtons } from "@/components/statement-buttons";
@@ -21,7 +22,7 @@ import { StageStrip } from "@/components/stage-strip";
 import { TimelineFeed } from "@/components/timeline-feed";
 import { MoneyBars, ProgressRing } from "@/components/viz";
 import { fetchExpenseTotals } from "@/lib/expenses";
-import { daysFromToday, formatDate, formatPKR, formatRelativeDate } from "@/lib/format";
+import { daysFromToday, formatDate, formatPKR, formatRelativeDate, karachiDay } from "@/lib/format";
 import { awaitingMyResponse, fetchPaymentTotals, viewerSide } from "@/lib/payments";
 import { getOrigin } from "@/lib/origin";
 import { overallProgress } from "@/lib/project";
@@ -123,7 +124,9 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
   const daysToGo = project.expected_completion_date ? daysFromToday(project.expected_completion_date) : null;
   const dueText =
     project.status === "completed"
-      ? "Completed"
+      ? project.completed_at
+        ? `Completed on ${formatDate(karachiDay(project.completed_at))}`
+        : "Completed"
       : daysToGo === null
         ? null
         : daysToGo > 0
@@ -168,6 +171,17 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
           <Link href={`${base}/edit`} className={button("secondary", "sm")}>
             <Pencil className="size-4" aria-hidden /> Edit project
           </Link>
+        )}
+        {isOwner && (
+          <CompleteProjectButton
+            projectId={id}
+            projectName={project.name}
+            completed={project.status === "completed"}
+            openStages={milestones.filter((m) => m.progress_percent < 100).length}
+            totalStages={milestones.length}
+            pendingPayments={paymentTotals.pendingCount}
+            disputedPayments={paymentTotals.disputedCount}
+          />
         )}
         {progressShare && <WhatsAppButton href={progressShare}>Share progress</WhatsAppButton>}
         {(isOwner || !isTeam) && <StatementButtons projectId={id} projectName={project.name} />}

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { FormState } from "@/app/login/actions";
 import { dateOrNull, parseAmount, snapshot, text } from "@/lib/forms";
+import { queueEmailDelivery } from "@/lib/notifications";
+import { removeProjectFiles } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
 
 const GENERIC_ERROR = "Something went wrong saving this project. Please try again.";
@@ -104,4 +106,65 @@ export async function updateProject(
   // The name and status also show in the side navigation.
   revalidatePath("/dashboard", "layout");
   redirect(`/dashboard/projects/${id}`);
+}
+
+// Archive hides a project from the owner's lists and dashboard totals. Nothing is lost.
+export async function archiveProject(projectId: string, archived: boolean): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  // Row-level security ignores updates you aren't allowed to make, so check a row came back.
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq("id", projectId)
+    .select("id");
+  if (error) return { error: GENERIC_ERROR };
+  if (!data?.length) return { error: "Only the company owner can archive a project." };
+
+  revalidatePath("/dashboard", "layout");
+  return {};
+}
+
+// Permanent. The person must type the project's name, and the database refuses when the
+// project has confirmed payments.
+export async function deleteProject(projectId: string, typedName: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+
+  const { data: project } = await supabase.from("projects").select("name").eq("id", projectId).maybeSingle();
+  if (!project) return { error: "We couldn't find that project." };
+  if (typedName.trim() !== project.name.trim()) {
+    return { error: "The name you typed doesn't match. Please type the project name exactly." };
+  }
+
+  // Ask first, so we never remove the photos of a project the database then refuses to delete.
+  const { data: blocker } = await supabase.rpc("delete_project_blocker", { p_project_id: projectId });
+  if (blocker) return { error: blocker as string };
+
+  await removeProjectFiles(supabase, projectId);
+
+  const { error } = await supabase.rpc("delete_project", { p_project_id: projectId });
+  if (error) return { error: friendly(error) };
+
+  revalidatePath("/dashboard", "layout");
+  redirect(`/dashboard?deleted=${encodeURIComponent(project.name)}`);
+}
+
+// Mark a project complete (the client is told) or reopen it.
+export async function setProjectStatus(
+  projectId: string,
+  status: "active" | "on_hold" | "completed",
+): Promise<{ error?: string }> {
+  if (!STATUSES.includes(status)) return { error: "Please choose a valid status." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ status })
+    .eq("id", projectId)
+    .select("id");
+  if (error) return { error: GENERIC_ERROR };
+  if (!data?.length) return { error: "Only the company owner can change a project's status." };
+
+  revalidatePath("/dashboard", "layout");
+  queueEmailDelivery();
+  return {};
 }

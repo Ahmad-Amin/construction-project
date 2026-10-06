@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import type { FormState } from "@/app/login/actions";
-import { DEFAULT_MILESTONES } from "@/lib/project";
+import { DEFAULT_TEMPLATE_ID, MILESTONE_TEMPLATES } from "@/lib/templates";
 import { button, inputClass } from "@/lib/ui";
 
 export type ProjectFormValues = {
@@ -77,10 +77,20 @@ export function ProjectForm({
   // After a failed save, show what was just submitted rather than the original defaults.
   const v = (key: keyof ProjectFormValues) => state.values?.[key] ?? String(defaults[key]);
   const visible = state.values ? state.values.budget_visible === "on" : defaults.budget_visible;
-  const nextId = useRef(DEFAULT_MILESTONES.length);
+  const defaultTemplate = MILESTONE_TEMPLATES.find((t) => t.id === DEFAULT_TEMPLATE_ID)!;
+  const nextId = useRef(defaultTemplate.milestones.length);
+  const [templateId, setTemplateId] = useState<string | null>(DEFAULT_TEMPLATE_ID);
   const [milestones, setMilestones] = useState(() =>
-    DEFAULT_MILESTONES.map((name, id) => ({ id, name })),
+    defaultTemplate.milestones.map((name, id) => ({ id, name })),
   );
+
+  // Picking a template replaces the list below. You can still edit it freely afterwards.
+  function applyTemplate(id: string) {
+    const template = MILESTONE_TEMPLATES.find((t) => t.id === id);
+    if (!template) return;
+    setTemplateId(id);
+    setMilestones(template.milestones.map((name) => ({ id: nextId.current++, name })));
+  }
 
   return (
     <form action={formAction} className="space-y-5">
@@ -170,8 +180,31 @@ export function ProjectForm({
       {mode === "create" && (
         <Section title="Milestones">
           <p className="-mt-2 text-sm text-muted">
-            The main stages of the build. You can change these later.
+            Start from a template, then change anything you like. You can edit stages later too.
           </p>
+          <div role="radiogroup" aria-label="Milestone template" className="grid gap-2 sm:grid-cols-2">
+            {MILESTONE_TEMPLATES.map((t) => {
+              const active = templateId === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => applyTemplate(t.id)}
+                  className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                    active ? "border-primary bg-primary-soft" : "border-line hover:bg-surface-2"
+                  }`}
+                >
+                  <span className="block text-sm font-semibold">{t.name}</span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    {t.milestones.length > 0 ? `${t.milestones.length} stages · ` : ""}
+                    {t.description}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
           <ul className="space-y-2">
             {milestones.map((m) => (
               <li key={m.id} className="flex gap-2">

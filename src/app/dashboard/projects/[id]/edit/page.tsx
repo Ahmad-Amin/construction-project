@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { ProjectDangerZone } from "@/components/project-danger-zone";
 import { ProjectForm } from "@/components/project-form";
 import { createClient } from "@/lib/supabase/server";
 import { one, type ClientInfo } from "@/lib/types";
@@ -20,11 +21,23 @@ export default async function EditProjectPage({
   const { data: project } = await supabase
     .from("projects")
     .select(
-      "id, name, location, start_date, expected_completion_date, status, client:clients(id, name, email, phone, user_id), budget:project_budgets(amount, visible_to_client)",
+      "id, name, location, start_date, expected_completion_date, status, archived_at, client:clients(id, name, email, phone, user_id), budget:project_budgets(amount, visible_to_client)",
     )
     .eq("id", id)
     .maybeSingle();
   if (!project) notFound();
+
+  // What deleting would remove, shown to the owner before they confirm.
+  const head = { count: "exact", head: true } as const;
+  const [milestones, updates, photos, expenses, receipts, payments, blocker] = await Promise.all([
+    supabase.from("milestones").select("id", head).eq("project_id", id),
+    supabase.from("project_updates").select("id", head).eq("project_id", id),
+    supabase.from("project_photos").select("id", head).eq("project_id", id),
+    supabase.from("expenses").select("id", head).eq("project_id", id),
+    supabase.from("expenses").select("id", head).eq("project_id", id).not("receipt_path", "is", null),
+    supabase.from("payments").select("id", head).eq("project_id", id),
+    supabase.rpc("delete_project_blocker", { p_project_id: id }),
+  ]);
 
   const client = one(project.client as ClientInfo | ClientInfo[] | null);
   const budget = one(
@@ -50,6 +63,20 @@ export default async function EditProjectPage({
           client_name: client?.name ?? "",
           client_email: client?.email ?? "",
           client_phone: client?.phone ?? "",
+        }}
+      />
+      <ProjectDangerZone
+        projectId={id}
+        projectName={project.name}
+        archived={!!project.archived_at}
+        blocker={(blocker.data as string | null) ?? null}
+        counts={{
+          milestones: milestones.count ?? 0,
+          updates: updates.count ?? 0,
+          photos: photos.count ?? 0,
+          expenses: expenses.count ?? 0,
+          receipts: receipts.count ?? 0,
+          payments: payments.count ?? 0,
         }}
       />
     </div>
