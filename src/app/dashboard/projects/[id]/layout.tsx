@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, MapPin } from "lucide-react";
 import { CompanyBadge } from "@/components/company-badge";
+import { ProjectContent } from "@/components/project-content";
 import { ProjectTabs } from "@/components/project-tabs";
 import { StatusBadge } from "@/components/project-bits";
 import { formatDate } from "@/lib/format";
@@ -20,10 +21,10 @@ export default async function ProjectLayout({
   if (!project) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8">
+    <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <Link
         href="/dashboard"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground lg:hidden"
       >
         <ArrowLeft className="size-4" aria-hidden /> All projects
       </Link>
@@ -55,7 +56,7 @@ export default async function ProjectLayout({
       </div>
 
       <ProjectTabs projectId={id} />
-      <div className="mt-6">{children}</div>
+      <ProjectContent projectId={id}>{children}</ProjectContent>
     </main>
   );
 }

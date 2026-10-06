@@ -3,11 +3,16 @@ import {
   ArrowRight,
   Banknote,
   Camera,
+  EyeOff,
+  FileDown,
   History,
+  Lock,
+  ShieldCheck,
   TrendingUp,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { DemoButtons } from "@/components/demo-buttons";
+import { PublicFooter } from "@/components/public-chrome";
 import { ProjectPreview } from "@/components/project-preview";
 import { button } from "@/lib/ui";
 
@@ -32,6 +37,13 @@ const features = [
     title: "One timeline",
     body: "Every update, expense and payment in a single history. No more digging through WhatsApp.",
   },
+];
+
+const trust = [
+  { icon: EyeOff, title: "You choose what clients see", body: "Expenses start hidden. Share only the ones you want, receipts included." },
+  { icon: Lock, title: "Every company is separate", body: "Enforced by the database, so no one can see another company's projects." },
+  { icon: ShieldCheck, title: "Both sides confirm payments", body: "Each payment is acknowledged by the other party, with who and when." },
+  { icon: FileDown, title: "Your data is yours", body: "Download everything as spreadsheets any time. We never sell it." },
 ];
 
 const steps = [
@@ -145,6 +157,27 @@ export default function Home() {
         </section>
 
         <section className="mx-auto w-full max-w-6xl px-4 py-16">
+          <p className="text-sm font-semibold uppercase tracking-wide text-data-accent">Private by design</p>
+          <h2 className="mt-1 max-w-xl text-2xl font-bold tracking-tight sm:text-3xl">
+            Handing over client and money details? Here&apos;s how they&apos;re protected.
+          </h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {trust.map(({ icon: Icon, title, body }) => (
+              <div key={title} className="rounded-2xl border border-line bg-surface p-5">
+                <span className="flex size-10 items-center justify-center rounded-lg bg-primary-soft text-data-accent">
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <h3 className="mt-4 font-semibold">{title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted">{body}</p>
+              </div>
+            ))}
+          </div>
+          <Link href="/trust" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold underline underline-offset-4">
+            Read how we handle your data <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </section>
+
+        <section className="mx-auto w-full max-w-6xl px-4 pb-16">
           <div className="rounded-3xl bg-foreground px-6 py-12 text-center text-background sm:px-12">
             <h2 className="mx-auto max-w-xl text-2xl font-bold tracking-tight sm:text-3xl">
               Put your next project on the portal.
@@ -160,9 +193,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-line py-6 text-center text-xs text-muted">
-        © {new Date().getFullYear()} Client Portal
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

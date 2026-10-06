@@ -16,7 +16,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
   ];
 
   return (
-    <nav aria-label="Project sections" className="-mx-4 mt-5 overflow-x-auto border-b border-line px-4">
+    <nav aria-label="Project sections" className="-mx-4 mt-5 overflow-x-auto border-b border-line px-4 lg:hidden">
       <ul className="flex gap-1">
         {tabs.map((t) => {
           // Sub-pages (like /updates/new) keep their section's tab lit.

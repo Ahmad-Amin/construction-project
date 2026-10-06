@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import {
   ArrowRight,
@@ -12,8 +11,11 @@ import {
   Phone,
   SlidersHorizontal,
 } from "lucide-react";
+import { ClientVisibilityCard } from "@/components/client-visibility-card";
 import { InvitePanel } from "@/components/invite-panel";
 import { PhotoStrip } from "@/components/photo-strip";
+import { StatementButtons } from "@/components/statement-buttons";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { SiteIllustration } from "@/components/site-illustration";
 import { StageStrip } from "@/components/stage-strip";
 import { TimelineFeed } from "@/components/timeline-feed";
@@ -21,6 +23,7 @@ import { MoneyBars, ProgressRing } from "@/components/viz";
 import { fetchExpenseTotals } from "@/lib/expenses";
 import { daysFromToday, formatDate, formatPKR, formatRelativeDate } from "@/lib/format";
 import { awaitingMyResponse, fetchPaymentTotals, viewerSide } from "@/lib/payments";
+import { getOrigin } from "@/lib/origin";
 import { overallProgress } from "@/lib/project";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
@@ -29,6 +32,7 @@ import { one, type ClientInfo, type Milestone } from "@/lib/types";
 import { button } from "@/lib/ui";
 import { fetchProjectPhotos } from "@/lib/updates";
 import { getViewer } from "@/lib/viewer";
+import { progressMessage, whatsappHref } from "@/lib/whatsapp";
 
 type Budget = { amount: number; visible_to_client: boolean };
 
@@ -85,7 +89,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
   const milestones = (details?.milestones ?? []) as Milestone[];
   const percent = overallProgress(milestones);
 
-  const [photos, timeline, expenseTotals, paymentTotals, lastUpdateRow] = await Promise.all([
+  const [photos, timeline, expenseTotals, paymentTotals, lastUpdateRow, updateCount, sharedExpenseCount] = await Promise.all([
     fetchProjectPhotos(supabase, id, 10),
     fetchTimeline(supabase, id, 5),
     fetchExpenseTotals(supabase, id),
@@ -97,6 +101,13 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
       .order("update_date", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    // Counts for the owner's "what your client sees" summary.
+    supabase.from("project_updates").select("id", { count: "exact", head: true }).eq("project_id", id),
+    supabase
+      .from("expenses")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", id)
+      .eq("client_visible", true),
   ]);
   const waitingOnMe = awaitingMyResponse(paymentTotals, side);
   const cover = photos[0]?.full ?? null;
@@ -126,22 +137,41 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
   if (isOwner && client && !client.user_id) {
     const { data: token } = await supabase.rpc("get_client_invite_token", { p_client_id: client.id });
     if (token) {
-      const h = await headers();
-      const host = h.get("x-forwarded-host") ?? h.get("host");
-      const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
-      inviteLink = `${proto}://${host}/invite/${token}`;
+      inviteLink = `${await getOrigin()}/invite/${token}`;
     }
   }
 
   const base = `/dashboard/projects/${id}`;
 
+  // A ready-to-send WhatsApp message to the client, built from progress only.
+  const progressShare =
+    isTeam && client
+      ? whatsappHref(
+          client.phone,
+          progressMessage({
+            clientName: client.name,
+            companyName: viewer?.company?.name ?? "",
+            projectName: project.name,
+            progress: percent,
+            currentStage: current?.name ?? null,
+            currentPercent: current?.progress_percent ?? null,
+            dueText,
+            link: `${await getOrigin()}${base}`,
+          }),
+        )
+      : null;
+
   return (
     <div className="space-y-5">
-      {isOwner && (
-        <Link href={`${base}/edit`} className={button("secondary", "sm")}>
-          <Pencil className="size-4" aria-hidden /> Edit project
-        </Link>
-      )}
+      <div className="flex flex-wrap items-center gap-2">
+        {isOwner && (
+          <Link href={`${base}/edit`} className={button("secondary", "sm")}>
+            <Pencil className="size-4" aria-hidden /> Edit project
+          </Link>
+        )}
+        {progressShare && <WhatsAppButton href={progressShare}>Share progress</WhatsAppButton>}
+        {(isOwner || !isTeam) && <StatementButtons projectId={id} projectName={project.name} />}
+      </div>
 
       {/* Hero: the latest site photo, with one number that matters most. */}
       <section className="animate-rise relative isolate overflow-hidden rounded-3xl bg-stone-900 text-white">
@@ -240,6 +270,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
         <StageStrip milestones={milestones} href={`${base}/progress`} />
       </Card>
 
+      <div className={`grid items-start gap-5 ${isOwner ? "lg:grid-cols-2" : ""}`}>
       <Card
         title="Money"
         action={
@@ -279,6 +310,20 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
         )}
       </Card>
 
+      {isOwner && (
+        <ClientVisibilityCard
+          projectId={id}
+          updates={updateCount.count ?? 0}
+          payments={paymentTotals.confirmedCount + paymentTotals.pendingCount + paymentTotals.disputedCount}
+          expensesShared={sharedExpenseCount.count ?? 0}
+          expensesTotal={expenseTotals.count}
+          sharedAmount={expenseTotals.sharedTotal}
+          hiddenAmount={expenseTotals.total - expenseTotals.sharedTotal}
+          budgetShown={budget ? budget.visible_to_client : null}
+        />
+      )}
+      </div>
+
       {photos.length > 0 && (
         <Card
           title="Latest photos"
@@ -292,6 +337,8 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
         </Card>
       )}
 
+      <div className={`grid items-start gap-5 ${isTeam && client ? "lg:grid-cols-5" : ""}`}>
+        <div className="lg:col-span-3">
       <Card
         title="Recent activity"
         action={
@@ -306,7 +353,8 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
           <p className="text-sm text-muted">Nothing here yet. Updates, shared expenses and payments will appear as they happen.</p>
         )}
       </Card>
-
+        </div>
+        <div className="lg:col-span-2">
       {isTeam && client && (
         <Card title="Client">
           <p className="font-medium">{client.name}</p>
@@ -338,6 +386,9 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
           ) : null}
         </Card>
       )}
+        </div>
+      </div>
+
     </div>
   );
 }

@@ -1,51 +1,54 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Settings } from "lucide-react";
-import { CompanyBadge } from "@/components/company-badge";
-import { Logo } from "@/components/logo";
-import { signOut } from "@/app/login/actions";
-import { isDemoEmail } from "@/lib/demo";
+import { AppShell } from "@/components/app-shell";
+import { viewerSide } from "@/lib/payments";
+import { createClient } from "@/lib/supabase/server";
+import type { ProjectStatus } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
-import { button } from "@/lib/ui";
 
 // Everything behind login lives under /dashboard. The proxy does a quick
-// signed-in check; this is the real one, and it also sets up the shared header.
+// signed-in check; this is the real one, and it also builds the side navigation.
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
 
+  const isOwner = viewer.company?.role === "owner";
+  const side = viewerSide(!!viewer.company, isOwner);
+
+  // Row-level security decides which projects come back: a company sees its own,
+  // a homeowner only theirs. Payments waiting on this person show as badges.
+  const supabase = await createClient();
+  const [projectsRes, pendingRes] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("id, name, status")
+      .order("created_at", { ascending: false })
+      .limit(40),
+    side
+      ? supabase.from("payments").select("project_id").eq("status", "pending").neq("side", side).limit(1000)
+      : Promise.resolve({ data: [] as { project_id: string }[] }),
+  ]);
+
+  const awaiting = new Map<string, number>();
+  for (const row of (pendingRes.data ?? []) as { project_id: string }[]) {
+    awaiting.set(row.project_id, (awaiting.get(row.project_id) ?? 0) + 1);
+  }
+  const projects = ((projectsRes.data ?? []) as { id: string; name: string; status: ProjectStatus }[]).map((p) => ({
+    ...p,
+    awaiting: awaiting.get(p.id) ?? 0,
+  }));
+
   return (
-    <div className="min-h-full">
-      {isDemoEmail(viewer.email) && (
-        <p className="bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground">
-          You&apos;re exploring a demo project with sample data.
-        </p>
-      )}
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-3">
-          <Logo href="/dashboard" />
-          <div className="flex items-center gap-2">
-            {viewer.company && (
-              <span className="hidden max-w-56 items-center gap-2 text-sm text-muted sm:flex">
-                <CompanyBadge name={viewer.company.name} logoUrl={viewer.company.logoUrl} size="sm" />
-                <span className="truncate">{viewer.company.name}</span>
-              </span>
-            )}
-            <Link
-              href="/dashboard/settings"
-              aria-label="Settings"
-              title="Settings"
-              className="flex size-10 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
-            >
-              <Settings className="size-5" aria-hidden />
-            </Link>
-            <form action={signOut}>
-              <button className={button("secondary", "sm")}>Sign out</button>
-            </form>
-          </div>
-        </div>
-      </header>
+    <AppShell
+      user={{
+        name: viewer.name,
+        email: viewer.email,
+        roleLabel: isOwner ? "Owner" : viewer.company ? "Site team" : "Homeowner",
+      }}
+      company={viewer.company ? { name: viewer.company.name, logoUrl: viewer.company.logoUrl } : null}
+      projects={projects}
+      isOwner={isOwner}
+    >
       {children}
-    </div>
+    </AppShell>
   );
 }

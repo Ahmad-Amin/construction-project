@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Building2, KeyRound, LogOut, Palette, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, Building2, Database, KeyRound, LogOut, Palette, ShieldCheck, UserRound } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { Avatar } from "@/components/avatar";
 import { AuthForm } from "@/components/auth-form";
 import { CompanyBadge } from "@/components/company-badge";
+import { DataExport } from "@/components/data-export";
 import { LogoUploader } from "@/components/logo-uploader";
 import { PasswordForm } from "@/components/password-form";
 import { SettingsSection } from "@/components/settings-section";
@@ -160,6 +161,16 @@ export default async function SettingsPage({
                 </div>
               </div>
             </div>
+          </SettingsSection>
+        )}
+
+        {isOwner && (
+          <SettingsSection
+            icon={Database}
+            title="Your data"
+            description="Your records belong to you. Download them any time, and leave whenever you like."
+          >
+            <DataExport />
           </SettingsSection>
         )}
       </div>

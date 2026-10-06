@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock, Pencil, User } from "lucide-react";
 import { DeletePaymentButton, PaymentResponse } from "@/components/payment-controls";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { formatDate, formatPKR, formatTimestamp } from "@/lib/format";
 import { sideLabel, type PaymentItem, type PaymentSide } from "@/lib/payments";
 
@@ -15,12 +16,15 @@ export function PaymentCard({
   projectId,
   viewerId,
   side,
+  nudgeHref,
 }: {
   payment: PaymentItem;
   projectId: string;
   viewerId: string | undefined;
   // Which side the viewer is on; null for site staff, who can only look.
   side: PaymentSide | null;
+  // WhatsApp link that reminds the other side to confirm (only when this person is waiting on them).
+  nudgeHref?: string | null;
 }) {
   const isRecorder = p.createdBy === viewerId;
   const otherSide: PaymentSide = p.side === "contractor" ? "client" : "contractor";
@@ -91,6 +95,9 @@ export function PaymentCard({
               </span>
             </p>
             {canRespond && <PaymentResponse projectId={projectId} paymentId={p.id} />}
+            {!canRespond && nudgeHref && (
+              <WhatsAppButton href={nudgeHref}>Remind the {sideLabel[otherSide].toLowerCase()} on WhatsApp</WhatsAppButton>
+            )}
           </div>
         )}
 

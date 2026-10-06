@@ -20,6 +20,8 @@ const friendly = (error: { code?: string; message: string }) =>
 
 function refresh(projectId: string) {
   revalidatePath(`/dashboard/projects/${projectId}`, "layout");
+  // The side navigation shows how many payments are waiting for you.
+  revalidatePath("/dashboard", "layout");
 }
 
 type PaymentFields = { amount: number; payment_date: string; reference: string; note: string };

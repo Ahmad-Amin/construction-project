@@ -132,7 +132,7 @@ export function UpdateForm({
         setError(result.error);
         return;
       }
-      router.push(`/dashboard/projects/${projectId}/updates`);
+      router.push(`/dashboard/projects/${projectId}/updates?posted=${updateId.current}`);
     } catch {
       setError("Something went wrong. Please check your connection and try again.");
     } finally {
@@ -276,6 +276,10 @@ export function UpdateForm({
           }}
         />
       </section>
+
+      <p className="rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">
+        Your client sees this update and its photos as soon as you post it.
+      </p>
 
       {error && (
         <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">

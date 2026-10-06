@@ -2,17 +2,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, Banknote, Clock, Plus } from "lucide-react";
 import { PaymentCard } from "@/components/payment-card";
-import { formatPKR } from "@/lib/format";
+import { formatDate, formatPKR } from "@/lib/format";
 import {
   awaitingMyResponse,
   fetchPayments,
   fetchPaymentTotals,
   viewerSide,
 } from "@/lib/payments";
+import { getOrigin } from "@/lib/origin";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
+import { one } from "@/lib/types";
 import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
+import { paymentReminder, whatsappHref } from "@/lib/whatsapp";
 
 export const metadata = { title: "Payments" };
 
@@ -34,6 +37,31 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
     fetchPaymentTotals(supabase, id),
   ]);
   const waitingOnMe = awaitingMyResponse(totals, side);
+
+  // Until there are notifications, the person waiting can nudge the other side on WhatsApp.
+  const { data: info } = await supabase
+    .from("projects")
+    .select("client:clients(name, phone)")
+    .eq("id", id)
+    .maybeSingle();
+  const client = one(info?.client as { name: string; phone: string | null } | { name: string; phone: string | null }[] | null);
+  const link = `${await getOrigin()}/dashboard/projects/${id}/payments`;
+  const nudgeFor = (p: (typeof payments)[number]) => {
+    if (!side || p.status !== "pending" || p.createdBy !== viewer?.userId || p.side !== side) return null;
+    const fromContractor = side === "contractor";
+    return whatsappHref(
+      fromContractor ? client?.phone : null, // we don't keep the contractor's number
+      paymentReminder({
+        to: fromContractor ? (client?.name ?? null) : null,
+        from: fromContractor ? (viewer?.company?.name ?? "") : (client?.name ?? ""),
+        recordedBy: side,
+        projectName: project.name,
+        amount: p.amount,
+        date: formatDate(p.date),
+        link,
+      }),
+    );
+  };
   const total = totals.confirmedCount + totals.pendingCount + totals.disputedCount;
 
   return (
@@ -101,7 +129,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
       ) : (
         <div className="space-y-3">
           {payments.map((p) => (
-            <PaymentCard key={p.id} payment={p} projectId={id} viewerId={viewer?.userId} side={side} />
+            <PaymentCard key={p.id} payment={p} projectId={id} viewerId={viewer?.userId} side={side} nudgeHref={nudgeFor(p)} />
           ))}
           {total > PAGE_SIZE && (
             <p className="text-center text-sm text-muted">Showing the latest {PAGE_SIZE} payments.</p>

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { FormState } from "@/app/login/actions";
 import { dateOrNull, parseAmount, snapshot, text } from "@/lib/forms";
@@ -34,6 +35,8 @@ export async function createProject(_: FormState, formData: FormData): Promise<F
   });
 
   if (error || !data) return fail(formData, error ? friendly(error) : GENERIC_ERROR);
+  // The side navigation lists projects, so it has to reload to include this one.
+  revalidatePath("/dashboard", "layout");
   redirect(`/dashboard/projects/${data}`);
 }
 
@@ -98,5 +101,7 @@ export async function updateProject(
     if (budgetError) return fail(formData, GENERIC_ERROR);
   }
 
+  // The name and status also show in the side navigation.
+  revalidatePath("/dashboard", "layout");
   redirect(`/dashboard/projects/${id}`);
 }

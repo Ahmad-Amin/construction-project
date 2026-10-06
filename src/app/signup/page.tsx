@@ -28,6 +28,12 @@ export default function SignupPage() {
           { name: "password", label: "Password (8+ characters)", type: "password", autoComplete: "new-password" },
         ]}
       />
+      <p className="mt-4 text-center text-xs text-muted">
+        Your data stays yours.{" "}
+        <Link href="/trust" className="font-medium underline underline-offset-4">
+          See how we protect it
+        </Link>
+      </p>
     </AuthShell>
   );
 }

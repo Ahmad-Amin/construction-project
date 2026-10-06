@@ -11,6 +11,7 @@
     "seed:demo": "node scripts/seed-demo.mjs"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.9.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.2",
     "browser-image-compression": "^2.0.2",

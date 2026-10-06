@@ -1,6 +1,7 @@
 import { Flag, User } from "lucide-react";
 import { DeleteUpdateButton } from "@/components/delete-update-button";
 import { PhotoGallery } from "@/components/photo-gallery";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { formatDate, formatRelativeDate } from "@/lib/format";
 import type { UpdateItem } from "@/lib/updates";
 
@@ -8,10 +9,13 @@ export function UpdateCard({
   update,
   projectId,
   canDelete,
+  shareHref,
 }: {
   update: UpdateItem;
   projectId: string;
   canDelete: boolean;
+  // WhatsApp link to send this update to the client (team only).
+  shareHref?: string | null;
 }) {
   return (
     <article className="rounded-2xl border border-line bg-surface p-5">
@@ -36,7 +40,10 @@ export function UpdateCard({
             )}
           </p>
         </div>
-        {canDelete && <DeleteUpdateButton projectId={projectId} updateId={update.id} />}
+        <div className="flex shrink-0 items-center gap-1">
+          {shareHref && <WhatsAppButton href={shareHref} variant="ghost">Share</WhatsAppButton>}
+          {canDelete && <DeleteUpdateButton projectId={projectId} updateId={update.id} />}
+        </div>
       </header>
 
       <p className="mt-3 whitespace-pre-line leading-relaxed">{update.text}</p>

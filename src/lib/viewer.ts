@@ -6,6 +6,7 @@ type CompanyRow = { id: string; name: string; logo_url: string | null };
 
 export type Viewer = {
   userId: string;
+  name: string;
   email: string;
   company: { id: string; name: string; logoUrl: string | null; role: "owner" | "staff" } | null;
   isClient: boolean;
@@ -20,9 +21,10 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   if (!claims) return null;
 
   const userId = claims.sub;
-  const [membership, client] = await Promise.all([
+  const [membership, client, profile] = await Promise.all([
     supabase.from("company_members").select("role, companies(id, name, logo_url)").limit(1),
     supabase.from("clients").select("id").eq("user_id", userId).limit(1),
+    supabase.from("profiles").select("name").eq("id", userId).maybeSingle(),
   ]);
 
   const row = membership.data?.[0] as
@@ -32,6 +34,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
 
   return {
     userId,
+    name: (profile.data?.name as string | undefined) ?? "",
     email: typeof claims.email === "string" ? claims.email : "",
     company:
       row && company

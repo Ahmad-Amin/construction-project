@@ -93,7 +93,7 @@ export default async function DashboardPage() {
   ) : undefined;
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-8 px-4 py-6 sm:py-8">
+    <main className="mx-auto w-full max-w-6xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <GreetingHero
         greeting={`${greetingFor(hour)}${firstName ? `, ${firstName}` : ""}`}
         dateText={dateText}
@@ -102,7 +102,7 @@ export default async function DashboardPage() {
       />
 
       {isOwner && projects.length > 0 && (
-        <section aria-label="Overview" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <section aria-label="Overview" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <StatTile
             icon={Hammer}
             label="Active projects"
@@ -145,40 +145,49 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {projects.length > 0 && attention.length > 0 && <AttentionPanel items={attention} />}
+      <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_21rem]">
+        <div className="min-w-0 space-y-8">
+          {projects.length > 0 && attention.length > 0 && <AttentionPanel items={attention} />}
 
-      <section aria-label="Projects">
-        <div className="mb-4 flex items-baseline justify-between gap-3">
-          <h2 className="text-lg font-semibold">
-            {isCompany ? "Projects" : "Your projects"}
-            <span className="ml-2 text-sm font-normal text-muted">{projects.length}</span>
-          </h2>
+          <section aria-label="Projects">
+            <div className="mb-4 flex items-baseline justify-between gap-3">
+              <h2 className="text-lg font-semibold">
+                {isCompany ? "Projects" : "Your projects"}
+                <span className="ml-2 text-sm font-normal text-muted">{projects.length}</span>
+              </h2>
+            </div>
+
+            {projects.length === 0 ? (
+              <div className="flex flex-col items-center rounded-3xl border border-dashed border-line bg-surface px-6 py-12 text-center">
+                <SiteIllustration className="w-64 max-w-full" />
+                <h3 className="mt-4 text-lg font-semibold">
+                  {isOwner ? "Your first project starts here" : "No projects yet"}
+                </h3>
+                <p className="mt-1 max-w-sm text-sm text-muted">
+                  {isOwner
+                    ? "Add a project and your client, share one link, and they can follow progress, payments and site photos on their phone."
+                    : "Projects shared with you will appear here."}
+                </p>
+                {newProjectButton && <div className="mt-6">{newProjectButton}</div>}
+              </div>
+            ) : (
+              <div className="grid gap-5 sm:grid-cols-2">
+                {projects.map((p, i) => (
+                  <ProjectCard key={p.id} project={p} perspective={isCompany ? "company" : "client"} index={i} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {projects.length > 0 && <FreshPhotos photos={photos} />}
         </div>
 
-        {projects.length === 0 ? (
-          <div className="flex flex-col items-center rounded-3xl border border-dashed border-line bg-surface px-6 py-12 text-center">
-            <SiteIllustration className="w-64 max-w-full" />
-            <h3 className="mt-4 text-lg font-semibold">
-              {isOwner ? "Your first project starts here" : "No projects yet"}
-            </h3>
-            <p className="mt-1 max-w-sm text-sm text-muted">
-              {isOwner
-                ? "Add a project and your client, share one link, and they can follow progress, payments and site photos on their phone."
-                : "Projects shared with you will appear here."}
-            </p>
-            {newProjectButton && <div className="mt-6">{newProjectButton}</div>}
-          </div>
-        ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((p, i) => (
-              <ProjectCard key={p.id} project={p} perspective={isCompany ? "company" : "client"} index={i} />
-            ))}
-          </div>
+        {projects.length > 0 && activity.length > 0 && (
+          <aside className="xl:sticky xl:top-20">
+            <ActivityFeed items={activity} />
+          </aside>
         )}
-      </section>
-
-      {projects.length > 0 && <FreshPhotos photos={photos} />}
-      {projects.length > 0 && <ActivityFeed items={activity} />}
+      </div>
     </main>
   );
 }

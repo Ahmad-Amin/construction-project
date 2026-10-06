@@ -41,6 +41,18 @@ Payments are two-sided: whoever records one, the other side confirms or disputes
 
 Staff accounts are not invitable yet; the role exists in the database for when that is added.
 
+## Privacy and your data
+
+- `/trust` ("Private by design") explains, in plain words, who sees what, how hidden expenses work, and how people take their data or leave. Every claim on it matches how the product behaves, so **update it when behaviour changes** (and bump `LEGAL_UPDATED` in `src/lib/site.ts`).
+- Owners can download their records as CSV from **Settings → Your data**: projects, milestones, site updates, expenses (including hidden ones) and payments. The route is `src/app/dashboard/export/[kind]/route.ts`; it is owner-only and cell values that look like spreadsheet formulas are neutralised.
+- The owner's project Overview has a **What your client sees** card that summarises what is shared and what is hidden, from the live data.
+- Set `NEXT_PUBLIC_CONTACT_EMAIL` and `NEXT_PUBLIC_OPERATOR_NAME` before sharing the product (see `.env.example`). The page promises deletion within `DELETION_DAYS` (30) of a request; keep that promise or change the number.
+
+## Sharing with clients
+
+- **WhatsApp:** one-tap, pre-written messages that open the client's chat (click-to-chat links; nothing is sent automatically). Available on each site update, on the project Overview ("Share progress"), right after posting an update, and as a reminder on payments that are waiting for the other side to confirm. Messages are built in `src/lib/whatsapp.ts` and contain only progress, update text and payments, never expenses.
+- **Statement PDF:** `GET /dashboard/projects/<id>/statement` renders a document with the logo, progress, money summary, payments (with who confirmed and when), shared expenses and recent updates and photos. It is always built from the client's point of view (hidden expenses excluded, budget only if shared), so the owner can send it as is. The owner and the project's client can download it; on phones, **Share PDF** hands the file to WhatsApp or any other app. Built with `@react-pdf/renderer` in `src/lib/statement-pdf.tsx`. Names written only in Urdu script will not render in the PDF until an Urdu font is added.
+
 ## Demo mode
 
 A polished sample project (Ahmed Residence, DHA Lahore) for sales conversations.
