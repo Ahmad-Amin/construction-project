@@ -224,3 +224,56 @@ body {
   z-index: 40;
   max-width: calc(100vw - 2rem);
 }
+
+/* The date picker calendar (DayPicker), in our colours so it follows the light and dark themes. */
+.date-field .rdp-root {
+  --rdp-accent-color: var(--primary);
+  --rdp-accent-background-color: var(--primary-soft);
+  --rdp-day-height: 2.5rem;
+  --rdp-day-width: 2.5rem;
+  --rdp-day_button-height: 2.25rem;
+  --rdp-day_button-width: 2.25rem;
+  --rdp-day_button-border-radius: 0.5rem;
+  --rdp-selected-border: 2px solid var(--primary);
+  --rdp-today-color: var(--data-accent);
+  --rdp-nav_button-height: 2rem;
+  --rdp-nav_button-width: 2rem;
+  --rdp-nav-height: 2.25rem;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  margin: 0;
+}
+.date-field .rdp-selected .rdp-day_button {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+  font-weight: 700;
+}
+.date-field .rdp-today:not(.rdp-selected) .rdp-day_button {
+  font-weight: 700;
+  border-color: var(--line);
+}
+.date-field .rdp-day_button:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.date-field .rdp-selected .rdp-day_button:hover {
+  background: var(--primary-hover);
+}
+.date-field .rdp-chevron {
+  fill: var(--muted);
+}
+.date-field .rdp-dropdown_root {
+  color: var(--foreground);
+}
+.date-field .rdp-dropdown {
+  background: var(--surface);
+  color: var(--foreground);
+}
+.date-field .rdp-caption_label {
+  font-weight: 600;
+}
+.date-field .rdp-weekday {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}

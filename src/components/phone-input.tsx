@@ -48,6 +48,7 @@ export function PhoneField({
         }}
         placeholder={placeholder}
         disableDialCodeAndPrefix
+        allowMaskOverflow
         showDisabledDialCodeAndPrefix
         inputProps={{
           type: "tel",

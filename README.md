@@ -77,6 +77,12 @@ People are told when something needs them: a payment waiting for their confirmat
 - **Scheduling:** `vercel.json` registers the job with Vercel Cron: `GET /api/cron/weekly-summary` every Sunday at 13:00 UTC (18:00 in Pakistan). In the Vercel project set `CRON_SECRET` and `SUPABASE_SECRET_KEY` (Production only, mark them Sensitive, never prefix with `NEXT_PUBLIC_`), plus the usual Supabase and email variables, and optionally `SITE_URL`. Vercel sends `Authorization: Bearer $CRON_SECRET` itself; the route refuses anything else. On the free plan Vercel may start the job any time within that hour. The database remembers who was already sent this week, so calling it twice is harmless. To run it by hand: `curl -H "Authorization: Bearer $CRON_SECRET" https://<your-site>/api/cron/weekly-summary` (or `localhost:3000` locally). Vercel's project page, Settings → Cron Jobs, has a **Run** button and the logs.
 - **Failures:** an email that fails is marked failed on its notification and not retried; the next summary goes out the following week.
 
+## Phone numbers and amounts
+
+- **Phones** are picked with a country selector (`components/phone-input.tsx`, Pakistan by default) and saved in the international format, like `+923001234567` (`lib/phone.ts`, built on `libphonenumber-js`). That is what WhatsApp needs and it works for any country. Older entries such as `0300 1234567` are still understood as Pakistani numbers, and are converted the next time the project is saved. The country flags are loaded from the Twemoji set on cdnjs.cloudflare.com; self-host them if you want no third-party requests.
+- **Dates** use a proper calendar (`components/date-field.tsx`, built on DayPicker) instead of the browser's own date input. It submits `YYYY-MM-DD` like before, so nothing server-side changed. Pass `max` to stop future dates, and `today` so "Today" follows Pakistan time.
+- **Money fields** (`components/amount-input.tsx`) show commas as you type and submit plain digits.
+
 ## Sharing with clients
 
 - **WhatsApp:** one-tap, pre-written messages that open the client's chat (click-to-chat links; nothing is sent automatically). Available on each site update, on the project Overview ("Share progress"), right after posting an update, and as a reminder on payments that are waiting for the other side to confirm. Messages are built in `src/lib/whatsapp.ts` and contain only progress, update text and payments, never expenses.

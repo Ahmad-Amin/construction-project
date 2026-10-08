@@ -27,6 +27,7 @@ import { signOut } from "@/app/login/actions";
 import { Avatar } from "@/components/avatar";
 import { CompanyBadge } from "@/components/company-badge";
 import { NotificationBell } from "@/components/notification-bell";
+import { ThemeQuickToggle } from "@/components/theme-quick-toggle";
 import { Logo } from "@/components/logo";
 import { RoleTag, type Role } from "@/components/role-tag";
 import { projectStatusStyle } from "@/lib/project";
@@ -494,7 +495,14 @@ export function AppShell(props: ShellProps) {
             </button>
             <Logo href="/dashboard" />
             <div className="ml-auto flex items-center gap-1">
-              <RoleTag role={props.user.role} className="hidden min-[400px]:inline-flex" />
+              {/* Full label on wider phones, just the icon on narrow ones, nothing on the narrowest (the menu still shows it). */}
+              <span className="hidden min-[480px]:inline-flex">
+                <RoleTag role={props.user.role} />
+              </span>
+              <span className="hidden min-[380px]:inline-flex min-[480px]:hidden">
+                <RoleTag role={props.user.role} iconOnly />
+              </span>
+              <ThemeQuickToggle />
               <NotificationBell unread={props.unread} pathname={pathname} />
             </div>
           </header>
@@ -522,7 +530,10 @@ export function AppShell(props: ShellProps) {
                   {awaitingTotal} {awaitingTotal === 1 ? "payment" : "payments"} waiting for you
                 </Link>
               )}
-              <NotificationBell unread={props.unread} pathname={pathname} />
+              <div className="flex items-center gap-1">
+                <ThemeQuickToggle />
+                <NotificationBell unread={props.unread} pathname={pathname} />
+              </div>
             </div>
           </div>
 

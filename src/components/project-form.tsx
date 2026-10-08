@@ -5,6 +5,7 @@ import { useActionState, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import type { FormState } from "@/app/login/actions";
 import { AmountInput } from "@/components/amount-input";
+import { DateField } from "@/components/date-field";
 import { PhoneField } from "@/components/phone-input";
 import { DEFAULT_TEMPLATE_ID, MILESTONE_TEMPLATES } from "@/lib/templates";
 import { button, inputClass } from "@/lib/ui";
@@ -105,15 +106,10 @@ export function ProjectForm({
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Start date">
-            <input type="date" name="start_date" defaultValue={v("start_date")} className={inputClass} />
+            <DateField name="start_date" defaultValue={v("start_date")} />
           </Field>
           <Field label="Expected completion" hint="Optional">
-            <input
-              type="date"
-              name="expected_completion_date"
-              defaultValue={v("expected_completion_date")}
-              className={inputClass}
-            />
+            <DateField name="expected_completion_date" defaultValue={v("expected_completion_date")} popoverClassName="sm:right-0 sm:left-auto" />
           </Field>
         </div>
         {mode === "edit" && (

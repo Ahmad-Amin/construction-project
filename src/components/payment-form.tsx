@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import type { FormState } from "@/app/login/actions";
 import { AmountInput } from "@/components/amount-input";
+import { DateField } from "@/components/date-field";
 import { sideLabel, type PaymentSide } from "@/lib/payments";
 import { button, inputClass } from "@/lib/ui";
 
@@ -61,14 +62,7 @@ export function PaymentForm({
           <span className="mb-1.5 block text-sm font-medium">
             {received ? "Date received" : "Date paid"}
           </span>
-          <input
-            type="date"
-            name="payment_date"
-            required
-            max={today}
-            defaultValue={v("payment_date")}
-            className={inputClass}
-          />
+          <DateField name="payment_date" required max={today} today={today} defaultValue={v("payment_date")} />
         </label>
 
         <label className="block">

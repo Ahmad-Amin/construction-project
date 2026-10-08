@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CalendarRange, X } from "lucide-react";
+import { DateField } from "@/components/date-field";
 import { expenseCategoryLabel } from "@/lib/expenses";
 import { filtersToQuery, hasActiveFilters, type ExpenseFilters, type Visibility } from "@/lib/expense-filters";
 import { formatDate } from "@/lib/format";
@@ -67,11 +68,11 @@ export function ExpenseFilterBar({
             {filters.show !== "all" && <input type="hidden" name="show" value={filters.show} />}
             <label className="block text-sm font-medium">
               From
-              <input type="date" name="from" defaultValue={filters.from ?? ""} max={today} className="mt-1 w-full rounded-lg border border-line bg-surface px-3 py-2 text-base" />
+              <div className="mt-1 font-normal"><DateField name="from" defaultValue={filters.from ?? ""} max={today} today={today} placeholder="Any date" className="py-2" /></div>
             </label>
             <label className="block text-sm font-medium">
               To
-              <input type="date" name="to" defaultValue={filters.to ?? ""} max={today} className="mt-1 w-full rounded-lg border border-line bg-surface px-3 py-2 text-base" />
+              <div className="mt-1 font-normal"><DateField name="to" defaultValue={filters.to ?? ""} max={today} today={today} placeholder="Any date" className="py-2" /></div>
             </label>
             <button type="submit" className={`${button("primary", "sm")} w-full`}>Apply</button>
           </form>

@@ -9,6 +9,7 @@ import {
   updateExpense,
 } from "@/app/dashboard/projects/[id]/expenses/actions";
 import { AmountInput } from "@/components/amount-input";
+import { DateField } from "@/components/date-field";
 import { EXPENSE_CATEGORIES, expenseCategoryLabel, type ExpenseCategory } from "@/lib/expenses";
 import { parseAmount } from "@/lib/forms";
 import { newId } from "@/lib/ids";
@@ -179,14 +180,7 @@ export function ExpenseForm({
           </label>
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">Date</span>
-            <input
-              type="date"
-              value={date}
-              max={today}
-              required
-              onChange={(e) => setDate(e.target.value)}
-              className={inputClass}
-            />
+            <DateField value={date} onValueChange={setDate} max={today} today={today} required />
           </label>
         </div>
 

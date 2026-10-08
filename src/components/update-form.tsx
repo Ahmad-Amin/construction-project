@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Images, X } from "lucide-react";
 import { createUpdate } from "@/app/dashboard/projects/[id]/updates/actions";
+import { DateField } from "@/components/date-field";
 import { newId } from "@/lib/ids";
 import { prepareImage } from "@/lib/images";
 import { createClient } from "@/lib/supabase/client";
@@ -159,14 +160,7 @@ export function UpdateForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">Date</span>
-            <input
-              type="date"
-              value={date}
-              max={today}
-              required
-              onChange={(e) => setDate(e.target.value)}
-              className={inputClass}
-            />
+            <DateField value={date} onValueChange={setDate} max={today} today={today} required />
           </label>
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">Related milestone</span>
