@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { FormState } from "@/app/login/actions";
-import { queueEmailDelivery } from "@/lib/notifications";
+import { queueNotificationDelivery } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -51,7 +51,7 @@ export async function acceptInviteWithPassword(
 
   const { error: acceptError } = await supabase.rpc("accept_invite", { p_token: token });
   if (acceptError) return { error: INVALID };
-  queueEmailDelivery();
+  queueNotificationDelivery();
   redirect("/dashboard");
 }
 
@@ -63,6 +63,6 @@ export async function acceptInviteSignedIn(token: string): Promise<FormState> {
   if (error) {
     return { error: "This invite is for a different email address than the one you're signed in with." };
   }
-  queueEmailDelivery();
+  queueNotificationDelivery();
   redirect("/dashboard");
 }

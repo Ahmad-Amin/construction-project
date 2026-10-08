@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { queueEmailDelivery } from "@/lib/notifications";
+import { queueNotificationDelivery } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 
 export type ActionResult = { error?: string };
@@ -37,7 +37,7 @@ export async function setProgress(
   if (error) return { error: friendly(error) };
   if (!data?.length) return { error: "You can't update this milestone." };
   refresh(projectId);
-  queueEmailDelivery();
+  queueNotificationDelivery();
   return {};
 }
 

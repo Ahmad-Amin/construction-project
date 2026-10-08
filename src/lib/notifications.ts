@@ -2,6 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { after } from "next/server";
 import { renderNotificationEmail, sendEmail } from "@/lib/email";
 import { getOrigin } from "@/lib/origin";
+import {
+  buildWhatsAppMessage,
+  sendWhatsAppTemplate,
+  whatsappEnabled,
+  type NotificationForWhatsApp,
+} from "@/lib/whatsapp-api";
 import { createClient } from "@/lib/supabase/server";
 
 export type NotificationKind =
@@ -60,17 +66,47 @@ export async function countUnread(supabase: SupabaseClient): Promise<number> {
   return count ?? 0;
 }
 
-// Sends the emails for notifications the signed-in person just caused. Call it at the end of
-// an action that can notify someone: it runs after the response, so it never slows the page.
-// The database does the matching: this person can only claim emails they triggered.
-export function queueEmailDelivery() {
+// Sends the emails and WhatsApp messages for notifications the signed-in person just caused.
+// Call it at the end of an action that can notify someone: it runs after the response, so it
+// never slows the page. The database does the matching: this person can only claim messages
+// they triggered.
+export function queueNotificationDelivery() {
   after(async () => {
     try {
       await deliverPendingEmails();
     } catch (error) {
       console.error("[notifications] email delivery failed", error);
     }
+    try {
+      await deliverPendingWhatsApp();
+    } catch (error) {
+      console.error("[notifications] WhatsApp delivery failed", error);
+    }
   });
+}
+
+async function deliverPendingWhatsApp() {
+  if (!whatsappEnabled()) return;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("claim_whatsapp_notifications", { p_limit: 10 });
+  if (error || !data?.length) return;
+
+  const origin = await getOrigin();
+  const rows = data as (NotificationForWhatsApp & { id: string; to_phone: string })[];
+
+  await Promise.all(
+    rows.map(async (row) => {
+      const message = buildWhatsAppMessage(row, origin);
+      const result = message
+        ? await sendWhatsAppTemplate(row.to_phone, message.template, message.params)
+        : ({ ok: false, error: `No WhatsApp template for ${row.kind}.` } as const);
+      await supabase.rpc("finish_whatsapp_notification", {
+        p_id: row.id,
+        p_ok: result.ok,
+        p_error: result.ok ? null : result.error,
+      });
+    }),
+  );
 }
 
 async function deliverPendingEmails() {

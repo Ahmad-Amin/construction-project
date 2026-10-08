@@ -166,6 +166,16 @@ export default function TrustPage() {
           </p>
         </Section>
 
+        <Section title="WhatsApp and email">
+          <p>
+            We only message you on WhatsApp if you switch it on in Settings, and you can switch it off again at any
+            time. The messages say what happened and link back here; they never contain expenses or anything
+            your contractor has hidden from you. Your phone number is the one your contractor saved for you, and
+            it is used for these messages only. They are delivered through Meta&apos;s WhatsApp service, and emails
+            through an email delivery provider, so those companies handle the message while it is on its way.
+          </p>
+        </Section>
+
         <Section title="Payments are records, not money">
           <p className="flex items-start gap-2">
             <Banknote className="mt-1 size-4 shrink-0 text-data-accent" aria-hidden />

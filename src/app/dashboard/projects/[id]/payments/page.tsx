@@ -16,6 +16,7 @@ import { one } from "@/lib/types";
 import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
 import { paymentReminder, whatsappHref } from "@/lib/whatsapp";
+import { whatsappEnabled } from "@/lib/whatsapp-api";
 
 export const metadata = { title: "Payments" };
 
@@ -129,7 +130,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
       ) : (
         <div className="space-y-3">
           {payments.map((p) => (
-            <PaymentCard key={p.id} payment={p} projectId={id} viewerId={viewer?.userId} side={side} nudgeHref={nudgeFor(p)} />
+            <PaymentCard key={p.id} payment={p} projectId={id} viewerId={viewer?.userId} side={side} nudgeHref={nudgeFor(p)} sendReminders={whatsappEnabled()} />
           ))}
           {total > PAGE_SIZE && (
             <p className="text-center text-sm text-muted">Showing the latest {PAGE_SIZE} payments.</p>

@@ -68,6 +68,16 @@ People are told when something needs them: a payment waiting for their confirmat
   - `EMAIL_PROVIDER=resend` with `RESEND_API_KEY` (production). This path is written but has not been tried against a real Resend account yet.
 - To add a channel later (WhatsApp, push), read the same pending notifications and send them there.
 
+## WhatsApp messages
+
+Homeowners who switch on **Settings → Notifications → Send me updates on WhatsApp** (off by default, and only once the contractor has saved their phone number) get a WhatsApp message for: a payment waiting for their confirmation, a new site update, a finished stage, a completed project, and "your weekly update is ready". Contractors have no phone number on file, so they keep the bell and email. The tap-to-send share buttons are still there as a fallback.
+
+- **How it works:** like email. The database queues a message when it creates the notification (`…_whatsapp_notifications.sql`), the server sends it with the WhatsApp Cloud API right after the action (`lib/whatsapp-api.ts`, `queueNotificationDelivery()` in `lib/notifications.ts`), and reports back. Failed sends are retried up to 3 times; messages older than 30 minutes are never sent. The weekly job sends its own through the same code.
+- **Reminder button:** on a payment the contractor recorded that is still waiting, **Remind the homeowner** (shown when `WHATSAPP_MODE` is `log` or `live`) sends the reminder from the app: the bell and email, plus WhatsApp if the homeowner switched it on (`send_payment_reminder`, `…_payment_reminder.sql`). It can be used once per payment every 6 hours. When WhatsApp can't be used for that homeowner (switch off or no phone saved) the button says why and offers the old tap-to-send link. With `WHATSAPP_MODE=off` it is the old link only.
+- **Templates:** WhatsApp only lets a business start a chat with an approved template. The five we use are in `src/lib/whatsapp-templates.json`. `npm run whatsapp:templates` creates them in your WhatsApp Business Account and `npm run whatsapp:templates -- --status` shows whether Meta approved them. An approved template can't be edited; to change the wording, change the template's name too.
+- **Modes:** `WHATSAPP_MODE=off` (default; the switch is hidden), `log` (prints messages in the server console), `live` (sends). See `.env.example` for the values to set.
+- **Meta's free test number** only delivers to up to 5 phone numbers you verify in the Meta dashboard, so use your own number as a client's phone when testing. Going to production needs business verification, your own number and display name, and a permanent token; after that, only the three values in `.env.local` change.
+
 ## Weekly summary
 
 **Off by default:** nothing is sent until the contractor turns it on in **Settings → Client updates** (a company-wide switch, migration `…_weekly_summary_opt_in.sql`). Once on, every Sunday evening each homeowner gets one email per active project (and a bell notification) with the week's progress, finished stages, site updates and photos, and payments, sent in the contractor's company name. Weeks with nothing new and nothing waiting on the homeowner are skipped.

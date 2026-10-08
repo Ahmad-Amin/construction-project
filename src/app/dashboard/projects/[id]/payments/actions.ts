@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { FormState } from "@/app/login/actions";
 import { dateOrNull, parseAmount, snapshot, text } from "@/lib/forms";
-import { queueEmailDelivery } from "@/lib/notifications";
+import { queueNotificationDelivery } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 
 const GENERIC = "Something went wrong saving this payment. Please try again.";
@@ -72,7 +72,7 @@ export async function createPayment(
   }
 
   refresh(projectId);
-  queueEmailDelivery();
+  queueNotificationDelivery();
   redirect(`/dashboard/projects/${projectId}/payments`);
 }
 
@@ -138,6 +138,61 @@ export async function respondToPayment(
   if (error) return { error: friendly(error) };
 
   refresh(projectId);
-  queueEmailDelivery();
+  queueNotificationDelivery();
   return {};
+}
+
+export type ReminderResult = {
+  ok: boolean;
+  // What the button should tell the contractor.
+  message: string;
+  // True when WhatsApp itself could not be used and the contractor may want to send it by hand.
+  offerManual?: boolean;
+};
+
+// The contractor reminds the homeowner to confirm a payment: a bell notification and email always
+// (when the homeowner has them on), and a WhatsApp message when the homeowner switched it on.
+export async function sendPaymentReminder(projectId: string, paymentId: string): Promise<ReminderResult> {
+  if (!UUID.test(projectId) || !UUID.test(paymentId)) return { ok: false, message: GENERIC };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("send_payment_reminder", { p_payment: paymentId });
+  if (error) return { ok: false, message: friendly(error) };
+
+  const r = data as {
+    result: "sent" | "too_soon" | "not_joined";
+    client?: string;
+    minutes?: number;
+    whatsapp?: boolean;
+    email?: boolean;
+    whatsapp_reason?: "no_phone" | "not_opted_in" | "unavailable" | null;
+  };
+  const name = r.client?.trim().split(/\s+/)[0] || "Your client";
+
+  if (r.result === "not_joined") {
+    return { ok: false, message: `${name} hasn't joined yet. Send them their invite link first.` };
+  }
+  if (r.result === "too_soon") {
+    const hours = Math.floor((r.minutes ?? 0) / 60);
+    const wait = hours >= 1 ? `${hours} h` : `${r.minutes} min`;
+    return { ok: false, message: `${name} was reminded recently. You can remind them again in about ${wait}.` };
+  }
+
+  refresh(projectId);
+  queueNotificationDelivery();
+
+  if (r.whatsapp) {
+    return { ok: true, message: `Reminder sent to ${name} on WhatsApp${r.email ? " and by email" : ""}.` };
+  }
+  const why =
+    r.whatsapp_reason === "no_phone"
+      ? `there's no phone number saved for ${name}`
+      : r.whatsapp_reason === "not_opted_in"
+        ? `${name} hasn't switched on WhatsApp updates`
+        : "WhatsApp isn't available right now";
+  return {
+    ok: true,
+    offerManual: true,
+    message: `Reminder sent to ${name} in the app${r.email ? " and by email" : ""}, but not on WhatsApp because ${why}.`,
+  };
 }

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import type { FormState } from "@/app/login/actions";
 import { dateOrNull, parseAmount, snapshot, text } from "@/lib/forms";
 import { sendEmail } from "@/lib/email";
-import { queueEmailDelivery } from "@/lib/notifications";
+import { queueNotificationDelivery } from "@/lib/notifications";
 import { parsePhone } from "@/lib/phone";
 import { getOrigin } from "@/lib/origin";
 import { removeProjectFiles } from "@/lib/storage";
@@ -174,7 +174,7 @@ export async function setProjectStatus(
   if (!data?.length) return { error: "Only the company owner can change a project's status." };
 
   revalidatePath("/dashboard", "layout");
-  queueEmailDelivery();
+  queueNotificationDelivery();
   return {};
 }
 

@@ -43,6 +43,16 @@ export async function signSummaryPhotos(supabase: SupabaseClient, paths: string[
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+// One line for the WhatsApp message, like "53% complete, 2 site updates, 1 payment waiting".
+export function weeklyHeadline(s: WeeklySummary) {
+  const parts = [`${s.progress}% complete`];
+  if (s.update_count) parts.push(plural(s.update_count, "site update", "site updates"));
+  if (s.finished.length) parts.push(plural(s.finished.length, "stage finished", "stages finished"));
+  if (s.paid_count) parts.push(plural(s.paid_count, "payment confirmed", "payments confirmed"));
+  if (s.awaiting_count) parts.push(`${plural(s.awaiting_count, "payment", "payments")} waiting for you`);
+  return parts.join(", ");
+}
+
 export function weeklySummarySubject(s: WeeklySummary) {
   return `${s.project_name}: your weekly update (${s.progress}% complete)`;
 }

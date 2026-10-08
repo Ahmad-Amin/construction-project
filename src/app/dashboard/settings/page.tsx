@@ -13,10 +13,13 @@ import { PasswordForm } from "@/components/password-form";
 import { ROLE_LABEL, roleOf } from "@/components/role-tag";
 import { SettingsSection } from "@/components/settings-section";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { WhatsAppToggle } from "@/components/whatsapp-toggle";
 import { isDemoEmail } from "@/lib/demo";
+import { formatPhone } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
+import { whatsappEnabled } from "@/lib/whatsapp-api";
 import { changePassword, updateCompanyName, updateProfile } from "./actions";
 
 export const metadata = { title: "Settings" };
@@ -37,12 +40,18 @@ export default async function SettingsPage({
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, created_at, email_notifications")
+    .select("name, created_at, email_notifications, whatsapp_notifications")
     .eq("id", viewer.userId)
     .maybeSingle();
 
   const { data: companyRow } = isOwnerViewer(viewer)
     ? await supabase.from("companies").select("weekly_summary").eq("id", viewer.company!.id).maybeSingle()
+    : { data: null };
+
+  // Homeowners can ask for WhatsApp updates once sending is switched on for the product.
+  const showWhatsApp = !viewer.company && whatsappEnabled();
+  const { data: clientRow } = showWhatsApp
+    ? await supabase.from("clients").select("phone").eq("user_id", viewer.userId).limit(1).maybeSingle()
     : { data: null };
 
   const name = profile?.name ?? "";
@@ -108,7 +117,15 @@ export default async function SettingsPage({
           title="Notifications"
           description="Choose whether you also get an email when something needs your attention."
         >
-          <EmailToggle initial={profile?.email_notifications ?? true} />
+          <div className="space-y-5">
+            <EmailToggle initial={profile?.email_notifications ?? true} />
+            {showWhatsApp && (
+              <WhatsAppToggle
+                initial={profile?.whatsapp_notifications ?? false}
+                phone={clientRow?.phone ? formatPhone(clientRow.phone) : null}
+              />
+            )}
+          </div>
         </SettingsSection>
 
         {isOwner && (

@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
 import { getOrigin } from "@/lib/origin";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { renderWeeklySummaryEmail, signSummaryPhotos, type WeeklySummary } from "@/lib/weekly-summary";
+import { buildWhatsAppMessage, sendWhatsAppTemplate } from "@/lib/whatsapp-api";
+import { renderWeeklySummaryEmail, signSummaryPhotos, weeklyHeadline, type WeeklySummary } from "@/lib/weekly-summary";
 
 export const dynamic = "force-dynamic";
 // Vercel's limit on the free plan. Emails go out ten at a time, so this covers a few thousand.
@@ -32,39 +33,74 @@ export async function GET(request: Request) {
 
   const rows = (data ?? []) as {
     out_notification_id: string;
-    out_to_email: string;
+    out_to_email: string | null;
     out_project_id: string;
     out_summary: WeeklySummary;
+    out_whatsapp_to: string | null;
+    out_recipient_name: string;
   }[];
 
   const origin = process.env.SITE_URL?.replace(/\/$/, "") || (await getOrigin());
   let sent = 0;
   let failed = 0;
+  let whatsappSent = 0;
+  let whatsappFailed = 0;
 
   async function deliver(row: (typeof rows)[number]) {
-    let ok = false;
-    let reason = "";
-    try {
-      const photoUrls = await signSummaryPhotos(admin, row.out_summary.photos);
-      const result = await sendEmail(
-        renderWeeklySummaryEmail({
-          to: row.out_to_email,
-          summary: row.out_summary,
-          photoUrls,
-          projectUrl: `${origin}/dashboard/projects/${row.out_project_id}`,
-          settingsUrl: `${origin}/dashboard/settings`,
-        }),
-      );
-      ok = result.ok;
-      if (!result.ok) reason = result.error;
-    } catch (err) {
-      reason = err instanceof Error ? err.message : "Unknown error";
+    const projectUrl = `${origin}/dashboard/projects/${row.out_project_id}`;
+
+    if (row.out_to_email) {
+      let ok = false;
+      let reason = "";
+      try {
+        const photoUrls = await signSummaryPhotos(admin, row.out_summary.photos);
+        const result = await sendEmail(
+          renderWeeklySummaryEmail({
+            to: row.out_to_email,
+            summary: row.out_summary,
+            photoUrls,
+            projectUrl,
+            settingsUrl: `${origin}/dashboard/settings`,
+          }),
+        );
+        ok = result.ok;
+        if (!result.ok) reason = result.error;
+      } catch (err) {
+        reason = err instanceof Error ? err.message : "Unknown error";
+      }
+      await admin.rpc("finish_summary_email", { p_id: row.out_notification_id, p_ok: ok, p_error: reason || null });
+      if (ok) sent++;
+      else {
+        failed++;
+        console.error(`[weekly-summary] ${row.out_project_id}: ${reason}`);
+      }
     }
-    await admin.rpc("finish_summary_email", { p_id: row.out_notification_id, p_ok: ok, p_error: reason || null });
-    if (ok) sent++;
-    else {
-      failed++;
-      console.error(`[weekly-summary] ${row.out_project_id}: ${reason}`);
+
+    if (row.out_whatsapp_to) {
+      const message = buildWhatsAppMessage(
+        {
+          kind: "weekly_summary",
+          title: `Your weekly update on ${row.out_summary.project_name}`,
+          body: weeklyHeadline(row.out_summary),
+          link: `/dashboard/projects/${row.out_project_id}`,
+          project_name: row.out_summary.project_name,
+          recipient_name: row.out_recipient_name,
+        },
+        origin,
+      );
+      const result = message
+        ? await sendWhatsAppTemplate(row.out_whatsapp_to, message.template, message.params)
+        : ({ ok: false, error: "No WhatsApp template." } as const);
+      await admin.rpc("finish_summary_whatsapp", {
+        p_id: row.out_notification_id,
+        p_ok: result.ok,
+        p_error: result.ok ? null : result.error,
+      });
+      if (result.ok) whatsappSent++;
+      else {
+        whatsappFailed++;
+        console.error(`[weekly-summary] WhatsApp ${row.out_project_id}: ${result.error}`);
+      }
     }
   }
 
@@ -72,5 +108,5 @@ export async function GET(request: Request) {
     await Promise.all(rows.slice(i, i + 10).map(deliver));
   }
 
-  return NextResponse.json({ due: rows.length, sent, failed });
+  return NextResponse.json({ due: rows.length, sent, failed, whatsappSent, whatsappFailed });
 }

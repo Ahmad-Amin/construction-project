@@ -1,0 +1,45 @@
+{
+  "payment_to_confirm": {
+    "body": "Hello {{1}}, a payment of {{2}} is waiting for your confirmation on {{3}}. Please open the link to confirm or dispute it: {{4}} Thank you.",
+    "example": [
+      "Ahmed",
+      "PKR 4,000,000",
+      "Ahmed Residence",
+      "https://example.com/p/1"
+    ]
+  },
+  "site_update_posted": {
+    "body": "Hello {{1}}, your contractor has posted a new site update on your project {{2}}. You can view it here: {{3}} Thank you.",
+    "example": [
+      "Ahmed",
+      "Ahmed Residence",
+      "https://example.com/p/1"
+    ]
+  },
+  "stage_status": {
+    "body": "Hello {{1}}, the stage {{2}} on your project {{3}} has been marked complete by your contractor. You can see the progress here: {{4}} Thank you.",
+    "example": [
+      "Ahmed",
+      "Grey Structure",
+      "Ahmed Residence",
+      "https://example.com/p/1"
+    ]
+  },
+  "project_complete": {
+    "body": "Hello {{1}}, {{2}} has been marked complete by your contractor. You can download the final statement here: {{3}} Thank you.",
+    "example": [
+      "Ahmed",
+      "Ahmed Residence",
+      "https://example.com/p/1"
+    ]
+  },
+  "weekly_status": {
+    "body": "Hello {{1}}, here is the weekly status of your project {{2}}: {{3}} The full details are here: {{4}} Thank you.",
+    "example": [
+      "Ahmed",
+      "Ahmed Residence",
+      "53% complete, 2 site updates",
+      "https://example.com/p/1"
+    ]
+  }
+}
