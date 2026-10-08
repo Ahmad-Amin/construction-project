@@ -27,6 +27,7 @@ import { daysFromToday, formatDate, formatPKR, formatRelativeDate, karachiDay } 
 import { awaitingMyResponse, fetchPaymentTotals, viewerSide } from "@/lib/payments";
 import { getOrigin } from "@/lib/origin";
 import { formatPhone } from "@/lib/phone";
+import { whatsappEnabled } from "@/lib/whatsapp-api";
 import { overallProgress } from "@/lib/project";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
@@ -393,6 +394,19 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
             <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
               <Phone className="size-3.5" aria-hidden /> {formatPhone(client.phone)}
             </p>
+          )}
+
+          {!client.phone && isOwner && whatsappEnabled() && (
+            <Link
+              href={`${base}/edit`}
+              className="mt-3 flex items-center gap-2 rounded-lg bg-primary-soft px-3 py-2 text-sm font-medium text-primary-hover transition-colors hover:bg-primary/25"
+            >
+              <Phone className="size-4 shrink-0" aria-hidden />
+              <span className="min-w-0 flex-1">
+                Add {client.name.trim().split(/\s+/)[0]}&apos;s phone number so we can message them on WhatsApp.
+              </span>
+              <ArrowRight className="size-4 shrink-0" aria-hidden />
+            </Link>
           )}
 
           {client.user_id ? (
