@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Bell, Building2, Database, KeyRound, LogOut, Palette, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, Bell, Building2, CalendarDays, Database, KeyRound, LogOut, Palette, ShieldCheck, UserRound } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { Avatar } from "@/components/avatar";
 import { AuthForm } from "@/components/auth-form";
 import { CompanyBadge } from "@/components/company-badge";
+import { CompanyWeeklySummaryToggle } from "@/components/company-weekly-summary-toggle";
 import { DataExport } from "@/components/data-export";
 import { EmailToggle } from "@/components/email-toggle";
 import { LogoUploader } from "@/components/logo-uploader";
@@ -23,6 +24,8 @@ export const metadata = { title: "Settings" };
 
 const chip = "rounded-full bg-surface/80 px-3 py-1 text-xs font-medium backdrop-blur";
 
+const isOwnerViewer = (v: { company: { role: string } | null }) => v.company?.role === "owner";
+
 export default async function SettingsPage({
   searchParams,
 }: {
@@ -38,6 +41,10 @@ export default async function SettingsPage({
     .select("name, created_at, email_notifications, weekly_summary")
     .eq("id", viewer.userId)
     .maybeSingle();
+
+  const { data: companyRow } = isOwnerViewer(viewer)
+    ? await supabase.from("companies").select("weekly_summary").eq("id", viewer.company!.id).maybeSingle()
+    : { data: null };
 
   const name = profile?.name ?? "";
   const isOwner = viewer.company?.role === "owner";
@@ -107,6 +114,16 @@ export default async function SettingsPage({
             {!viewer.company && <WeeklySummaryToggle initial={profile?.weekly_summary ?? true} />}
           </div>
         </SettingsSection>
+
+        {isOwner && (
+          <SettingsSection
+            icon={CalendarDays}
+            title="Client updates"
+            description="Keep your clients informed without lifting a finger. Off until you turn it on."
+          >
+            <CompanyWeeklySummaryToggle initial={companyRow?.weekly_summary ?? false} />
+          </SettingsSection>
+        )}
 
         <SettingsSection
           icon={Palette}

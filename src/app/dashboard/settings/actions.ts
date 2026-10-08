@@ -121,3 +121,20 @@ export async function setCompanyLogo(path: string | null): Promise<{ error?: str
   refresh();
   return {};
 }
+
+// The master switch for the weekly client summary. Off until the contractor turns it on.
+export async function setCompanyWeeklySummary(enabled: boolean): Promise<{ error?: string }> {
+  const viewer = await getViewer();
+  if (viewer?.company?.role !== "owner") {
+    return { error: "Only the company owner can change company settings." };
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("companies")
+    .update({ weekly_summary: enabled })
+    .eq("id", viewer.company.id)
+    .select("id");
+  if (error || !data?.length) return { error: "We couldn't save that. Please try again." };
+  revalidatePath("/dashboard", "layout");
+  return {};
+}

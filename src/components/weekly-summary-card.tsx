@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { CalendarDays, Send } from "lucide-react";
 import { sendSummaryPreview, setWeeklySummary } from "@/app/dashboard/projects/actions";
@@ -14,6 +15,7 @@ export function WeeklySummaryCard({
   clientName,
   clientJoined,
   enabled,
+  companyEnabled,
   active,
   lastSentAt,
 }: {
@@ -21,6 +23,7 @@ export function WeeklySummaryCard({
   clientName: string;
   clientJoined: boolean;
   enabled: boolean;
+  companyEnabled: boolean;
   active: boolean;
   lastSentAt: string | null;
 }) {
@@ -33,7 +36,9 @@ export function WeeklySummaryCard({
     startTransition(async () => setResult(await sendSummaryPreview(projectId)));
   }
 
-  const status = !clientJoined
+  const status = !companyEnabled
+    ? "Weekly summaries are off for your company, so nothing is sent."
+    : !clientJoined
     ? `Starts once ${firstName} has joined the portal.`
     : !active
       ? "Only sent while the project is active."
@@ -53,9 +58,19 @@ export function WeeklySummaryCard({
         and payments. It only ever contains what they can already see. Quiet weeks are skipped.
       </p>
 
+      {!companyEnabled && (
+        <p className="mb-4 rounded-lg bg-surface-2 px-3 py-2.5 text-sm">
+          Turn it on for all your projects in{" "}
+          <Link href="/dashboard/settings" className="font-semibold underline underline-offset-4">
+            Settings → Client updates
+          </Link>
+          . You can still send yourself a preview below.
+        </p>
+      )}
+
       <PreferenceToggle
         id={`weekly-${projectId}`}
-        label="Send it to my client"
+        label="Include this project"
         description={status}
         initial={enabled}
         save={(on) => setWeeklySummary(projectId, on)}

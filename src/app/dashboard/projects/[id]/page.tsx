@@ -77,7 +77,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
   const { data: details } = await supabase
     .from("projects")
     .select(
-      "weekly_summary, last_summary_at, client:clients(id, name, email, phone, user_id), budget:project_budgets(amount, visible_to_client), milestones(id, name, position, status, progress_percent)",
+      "weekly_summary, last_summary_at, company:companies(weekly_summary), client:clients(id, name, email, phone, user_id), budget:project_budgets(amount, visible_to_client), milestones(id, name, position, status, progress_percent)",
     )
     .eq("id", id)
     .order("position", { referencedTable: "milestones" })
@@ -331,6 +331,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
           clientName={client.name}
           clientJoined={!!client.user_id}
           enabled={details?.weekly_summary ?? true}
+          companyEnabled={one(details?.company as { weekly_summary: boolean } | { weekly_summary: boolean }[] | null)?.weekly_summary ?? false}
           active={project.status === "active" && !project.archived_at}
           lastSentAt={details?.last_summary_at ?? null}
         />
