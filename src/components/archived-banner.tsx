@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Archive, ArchiveRestore } from "lucide-react";
 import { archiveProject } from "@/app/dashboard/projects/actions";
+import { Spinner } from "@/components/spinner";
 import { button } from "@/lib/ui";
 
 // Shown at the top of an archived project. The owner can restore it; everyone else just sees the note.
@@ -32,7 +33,7 @@ export function ArchivedBanner({ projectId, canRestore }: { projectId: string; c
             }
             className={`${button("secondary", "sm")} shrink-0`}
           >
-            <ArchiveRestore className="size-4" aria-hidden /> Restore
+            {pending ? <Spinner /> : <ArchiveRestore className="size-4" aria-hidden />} {pending ? "Restoring…" : "Restore"}
           </button>
         </div>
       )}

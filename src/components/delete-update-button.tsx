@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
+import { Spinner } from "@/components/spinner";
 import { deleteUpdate } from "@/app/dashboard/projects/[id]/updates/actions";
 
 export function DeleteUpdateButton({
@@ -30,7 +31,7 @@ export function DeleteUpdateButton({
         }}
         className="flex size-10 items-center justify-center rounded-lg text-danger transition-colors hover:bg-surface-2 disabled:opacity-40"
       >
-        <Trash2 className="size-4" aria-hidden />
+        {pending ? <Spinner /> : <Trash2 className="size-4" aria-hidden />}
       </button>
       {error && (
         <p role="alert" className="mt-1 max-w-48 text-xs text-danger">

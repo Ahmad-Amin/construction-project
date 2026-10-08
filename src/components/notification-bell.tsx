@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
-import { Bell, CheckCheck } from "lucide-react";
+import { Bell, Check, CheckCheck } from "lucide-react";
 import {
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/app/dashboard/notifications/actions";
 import { NotificationRow } from "@/components/notification-row";
+import { Spinner } from "@/components/spinner";
 import type { NotificationItem } from "@/lib/notifications";
 
 // The bell in the top bar: an unread count, and a dropdown of the latest notifications.
@@ -18,6 +19,11 @@ export function NotificationBell({ unread, pathname }: { unread: number; pathnam
   const open = openOn === pathname;
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [, startTransition] = useTransition();
+  // Everything was just marked read: the badge clears at once, while the server catches up.
+  const [clearing, startClearing] = useTransition();
+  const [clearedFor, setClearedFor] = useState<number | null>(null);
+  // Only counts while the server still reports the same number, so a new notification brings the badge back.
+  const cleared = clearedFor !== null && unread === clearedFor;
 
   useEffect(() => {
     if (!open) return;
@@ -41,24 +47,28 @@ export function NotificationBell({ unread, pathname }: { unread: number; pathnam
 
   function markAll() {
     setItems((list) => list?.map((n) => ({ ...n, read: true })) ?? null);
-    startTransition(() => markAllNotificationsRead());
+    setClearedFor(unread);
+    startClearing(async () => {
+      await markAllNotificationsRead();
+    });
   }
 
-  const hasUnread = unread > 0 || (items?.some((n) => !n.read) ?? false);
+  const shownUnread = cleared ? 0 : unread;
+  const hasUnread = !cleared && (unread > 0 || (items?.some((n) => !n.read) ?? false));
 
   return (
     <div className="relative">
       <button
         type="button"
         onClick={toggle}
-        aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+        aria-label={shownUnread > 0 ? `Notifications, ${shownUnread} unread` : "Notifications"}
         aria-expanded={open}
         className="relative flex size-10 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
       >
         <Bell className="size-5" aria-hidden />
-        {unread > 0 && (
+        {shownUnread > 0 && (
           <span className="absolute right-1 top-1 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-4 text-primary-foreground">
-            {unread > 99 ? "99+" : unread}
+            {shownUnread > 99 ? "99+" : shownUnread}
           </span>
         )}
       </button>
@@ -78,7 +88,7 @@ export function NotificationBell({ unread, pathname }: { unread: number; pathnam
           >
             <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <h2 className="font-semibold">Notifications</h2>
-              {hasUnread && (
+              {hasUnread ? (
                 <button
                   type="button"
                   onClick={markAll}
@@ -86,7 +96,12 @@ export function NotificationBell({ unread, pathname }: { unread: number; pathnam
                 >
                   <CheckCheck className="size-4" aria-hidden /> Mark all read
                 </button>
-              )}
+              ) : cleared ? (
+                <span role="status" className="flex items-center gap-1.5 text-sm font-medium text-success">
+                  {clearing ? <Spinner /> : <Check className="size-4" aria-hidden />}
+                  {clearing ? "Marking…" : "All read"}
+                </span>
+              ) : null}
             </div>
 
             <div className="max-h-[min(26rem,65vh)] overflow-y-auto">

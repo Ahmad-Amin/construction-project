@@ -1,5 +1,6 @@
 import { HardHat, Home } from "lucide-react";
 import { enterDemo } from "@/app/demo/actions";
+import { SubmitButton } from "@/components/submit-button";
 import { getDemoConfig } from "@/lib/demo";
 import { button } from "@/lib/ui";
 
@@ -17,12 +18,24 @@ export function DemoButtons({ align = "start", compact = false }: { align?: "sta
         action={enterDemo}
         className={compact ? "grid grid-cols-2 gap-2" : `flex flex-wrap gap-2 ${align === "center" ? "justify-center" : ""}`}
       >
-        <button name="as" value="contractor" className={button("secondary", "sm")}>
-          <HardHat className="size-4" aria-hidden /> {compact ? "Contractor" : "View as contractor"}
-        </button>
-        <button name="as" value="client" className={button("secondary", "sm")}>
-          <Home className="size-4" aria-hidden /> {compact ? "Homeowner" : "View as homeowner"}
-        </button>
+        <SubmitButton
+          name="as"
+          value="contractor"
+          icon={<HardHat className="size-4" aria-hidden />}
+          pendingLabel="Opening…"
+          className={button("secondary", "sm")}
+        >
+          {compact ? "Contractor" : "View as contractor"}
+        </SubmitButton>
+        <SubmitButton
+          name="as"
+          value="client"
+          icon={<Home className="size-4" aria-hidden />}
+          pendingLabel="Opening…"
+          className={button("secondary", "sm")}
+        >
+          {compact ? "Homeowner" : "View as homeowner"}
+        </SubmitButton>
       </form>
     </div>
   );

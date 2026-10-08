@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { Spinner } from "@/components/spinner";
 import {
   deleteExpense,
   setExpenseVisibility,
@@ -53,7 +54,7 @@ export function VisibilityToggle({
         title={visible ? "Tap to hide from the client" : "Tap to show to the client"}
         className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-opacity disabled:opacity-50 ${style}`}
       >
-        <Icon className="size-3.5" aria-hidden /> {label}
+        {pending ? <Spinner className="size-3.5" /> : <Icon className="size-3.5" aria-hidden />} {label}
       </button>
       {error && (
         <span role="alert" className="mt-1 block text-xs text-danger">
@@ -89,7 +90,7 @@ export function DeleteExpenseButton({
         }}
         className="flex size-9 items-center justify-center rounded-lg text-danger transition-colors hover:bg-surface-2 disabled:opacity-40"
       >
-        <Trash2 className="size-4" aria-hidden />
+        {pending ? <Spinner /> : <Trash2 className="size-4" aria-hidden />}
       </button>
       {error && (
         <span role="alert" className="mt-1 block max-w-40 text-xs text-danger">

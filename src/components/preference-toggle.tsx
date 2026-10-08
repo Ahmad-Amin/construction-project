@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Check } from "lucide-react";
+import { Spinner } from "@/components/spinner";
 
 // A labelled switch that saves as soon as it is flipped, and goes back if the save fails.
 export function PreferenceToggle({
@@ -19,17 +21,22 @@ export function PreferenceToggle({
   const [enabled, setEnabled] = useState(initial);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   function flip() {
     const next = !enabled;
     setEnabled(next);
     setError(null);
+    setSaved(false);
     startTransition(async () => {
       const result = await save(next);
       if (result.error) {
         setEnabled(!next);
         setError(result.error);
+        return;
       }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     });
   }
 
@@ -40,6 +47,17 @@ export function PreferenceToggle({
           <p id={`${id}-label`} className="text-sm font-medium">{label}</p>
           <p className="mt-0.5 text-sm text-muted">{description}</p>
         </div>
+        <span className="mt-1 flex h-6 w-16 shrink-0 items-center justify-end gap-1 text-xs font-medium text-muted" aria-live="polite">
+          {pending ? (
+            <>
+              <Spinner className="size-3.5" /> Saving
+            </>
+          ) : saved ? (
+            <span className="flex items-center gap-1 text-success">
+              <Check className="size-3.5" aria-hidden /> Saved
+            </span>
+          ) : null}
+        </span>
         <button
           type="button"
           role="switch"

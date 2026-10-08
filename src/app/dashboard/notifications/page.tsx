@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { BellOff, Settings } from "lucide-react";
+import { MarkAllReadButton } from "@/components/mark-all-read-button";
 import { NotificationRow } from "@/components/notification-row";
 import { fetchNotifications } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
-import { markAllNotificationsRead } from "./actions";
 
 export const metadata = { title: "Notifications" };
 
@@ -23,11 +23,7 @@ export default async function NotificationsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {unread > 0 && (
-            <form action={markAllNotificationsRead}>
-              <button className={button("secondary", "sm")}>Mark all as read</button>
-            </form>
-          )}
+          <MarkAllReadButton unread={unread} />
           <Link href="/dashboard/settings" className={button("ghost", "sm")}>
             <Settings className="size-4" aria-hidden /> Email settings
           </Link>

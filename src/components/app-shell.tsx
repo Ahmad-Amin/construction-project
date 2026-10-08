@@ -29,7 +29,9 @@ import { CompanyBadge } from "@/components/company-badge";
 import { NotificationBell } from "@/components/notification-bell";
 import { ThemeQuickToggle } from "@/components/theme-quick-toggle";
 import { Logo } from "@/components/logo";
+import { LinkPending } from "@/components/link-pending";
 import { RoleTag, type Role } from "@/components/role-tag";
+import { SubmitButton } from "@/components/submit-button";
 import { projectStatusStyle } from "@/lib/project";
 import { SIDEBAR_COOKIE } from "@/lib/sidebar";
 import { button } from "@/lib/ui";
@@ -99,6 +101,13 @@ function Nav({
     >
       <Icon className={`size-[18px] shrink-0 ${active ? "text-data-accent" : ""}`} aria-hidden />
       <span className={collapsed ? "sr-only" : "min-w-0 flex-1 truncate"}>{children}</span>
+      {collapsed ? (
+        <span className="absolute right-1 top-1">
+          <LinkPending className="size-3" />
+        </span>
+      ) : (
+        <LinkPending />
+      )}
       {badge ? (
         collapsed ? (
           <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-primary ring-2 ring-surface" aria-label={`${badge} waiting`} />
@@ -227,6 +236,7 @@ function SidebarContent({
         >
           <span className={`size-2 shrink-0 rounded-full ${projectStatusStyle[p.archived ? "archived" : p.status].dot}`} aria-hidden />
           <span className="min-w-0 flex-1 truncate">{p.name}</span>
+          <LinkPending />
           {p.awaiting > 0 && (
             <span
               title={`${p.awaiting} payment${p.awaiting === 1 ? "" : "s"} waiting for you`}
@@ -351,13 +361,12 @@ function SidebarContent({
             </div>
           )}
           <form action={signOut}>
-            <button
-              aria-label="Sign out"
+            <SubmitButton
+              ariaLabel="Sign out"
               title="Sign out"
+              icon={<LogOut className="size-[18px]" aria-hidden />}
               className="flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
-            >
-              <LogOut className="size-[18px]" aria-hidden />
-            </button>
+            />
           </form>
         </div>
       </div>

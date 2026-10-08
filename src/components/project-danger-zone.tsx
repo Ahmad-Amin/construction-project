@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Archive, ArchiveRestore, Trash2, TriangleAlert } from "lucide-react";
 import { archiveProject, deleteProject } from "@/app/dashboard/projects/actions";
+import { Spinner } from "@/components/spinner";
 import { button, inputClass } from "@/lib/ui";
 
 export type DeleteCounts = {
@@ -68,8 +69,8 @@ export function ProjectDangerZone({
           </p>
         </div>
         <button type="button" onClick={toggleArchive} disabled={pending} className={`${button("secondary", "sm")} shrink-0`}>
-          {archived ? <ArchiveRestore className="size-4" aria-hidden /> : <Archive className="size-4" aria-hidden />}
-          {archived ? "Restore project" : "Archive project"}
+          {pending ? <Spinner /> : archived ? <ArchiveRestore className="size-4" aria-hidden /> : <Archive className="size-4" aria-hidden />}
+          {pending ? (archived ? "Restoring…" : "Archiving…") : archived ? "Restore project" : "Archive project"}
         </button>
       </div>
 

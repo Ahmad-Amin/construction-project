@@ -12,6 +12,7 @@ import { LogoUploader } from "@/components/logo-uploader";
 import { PasswordForm } from "@/components/password-form";
 import { ROLE_LABEL, roleOf } from "@/components/role-tag";
 import { SettingsSection } from "@/components/settings-section";
+import { SubmitButton } from "@/components/submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WhatsAppToggle } from "@/components/whatsapp-toggle";
 import { isDemoEmail } from "@/lib/demo";
@@ -159,9 +160,13 @@ export default async function SettingsPage({
             <PasswordForm action={changePassword} />
           )}
           <form action={signOut} className="mt-6 border-t border-line pt-5">
-            <button className={button("secondary", "sm")}>
-              <LogOut className="size-4" aria-hidden /> Sign out on this device
-            </button>
+            <SubmitButton
+              pendingLabel="Signing out…"
+              icon={<LogOut className="size-4" aria-hidden />}
+              className={button("secondary", "sm")}
+            >
+              Sign out on this device
+            </SubmitButton>
           </form>
         </SettingsSection>
 

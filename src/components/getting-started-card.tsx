@@ -3,6 +3,7 @@ import { ArrowRight, Check, Lock, PartyPopper } from "lucide-react";
 import { dismissGettingStarted } from "@/app/dashboard/actions";
 import { ProgressBar } from "@/components/project-bits";
 import type { GettingStarted } from "@/lib/getting-started";
+import { SubmitButton } from "@/components/submit-button";
 import { button } from "@/lib/ui";
 
 // A short checklist for a new contractor: it shows what's done, highlights the next step,
@@ -25,9 +26,12 @@ export function GettingStartedCard({ data }: { data: GettingStarted }) {
           </p>
         </div>
         <form action={dismissGettingStarted}>
-          <button className="text-sm font-medium text-muted underline underline-offset-4 hover:text-foreground">
+          <SubmitButton
+            pendingLabel="Hiding…"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted underline underline-offset-4 hover:text-foreground"
+          >
             {data.complete ? "Hide this" : "Hide checklist"}
-          </button>
+          </SubmitButton>
         </form>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Check, Trash2 } from "lucide-react";
+import { Spinner } from "@/components/spinner";
 import {
   deletePayment,
   respondToPayment,
@@ -36,7 +37,7 @@ export function DeletePaymentButton({
         }}
         className="flex size-9 items-center justify-center rounded-lg text-danger transition-colors hover:bg-surface-2 disabled:opacity-40"
       >
-        <Trash2 className="size-4" aria-hidden />
+        {pending ? <Spinner /> : <Trash2 className="size-4" aria-hidden />}
       </button>
       {error && (
         <span role="alert" className="mt-1 block max-w-40 text-xs text-danger">
@@ -121,7 +122,7 @@ export function PaymentResponse({
           onClick={() => respond("confirm")}
           className={button("primary", "sm")}
         >
-          <Check className="size-4" aria-hidden /> {pending ? "Confirming…" : "Confirm"}
+          {pending ? <Spinner /> : <Check className="size-4" aria-hidden />} {pending ? "Confirming…" : "Confirm"}
         </button>
         <button
           type="button"
