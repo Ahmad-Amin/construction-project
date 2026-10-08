@@ -1,199 +1,293 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Banknote,
-  Camera,
-  EyeOff,
-  FileDown,
-  History,
-  Lock,
-  ShieldCheck,
-  TrendingUp,
-} from "lucide-react";
-import { Logo } from "@/components/logo";
+import { ArrowRight, Banknote, Camera, CheckCircle2, Clock, Eye, EyeOff, TrendingUp } from "lucide-react";
 import { DemoButtons } from "@/components/demo-buttons";
-import { PublicFooter } from "@/components/public-chrome";
-import { ProjectPreview } from "@/components/project-preview";
+import { LandingVisual } from "@/components/landing-visual";
+import { PublicFooter, PublicHeader } from "@/components/public-chrome";
+import { SiteIllustration } from "@/components/site-illustration";
+import { PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
 
-const features = [
+export const metadata = {
+  title: { absolute: `${PRODUCT_NAME}: show your clients how the work is going` },
+};
+
+const wrap = "mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12";
+
+// A day with the portal, told plainly.
+const day = [
   {
-    icon: TrendingUp,
-    title: "Clear progress",
-    body: "Milestones with percentages, so homeowners see what's done and what's next.",
+    when: "On site",
+    body: "Take a photo, write a line, tick off the stage. It takes a minute, and you do it from your phone.",
   },
   {
-    icon: Banknote,
-    title: "Money in, money out",
-    body: "Payments received and expenses recorded, with the receipt for each one.",
+    when: "At your client's home",
+    body: "They open their own link and see the progress, the photos and what has been paid. Nobody has to phone you.",
   },
   {
-    icon: Camera,
-    title: "Site updates",
-    body: "Photos and notes posted straight from a phone, as the work happens.",
-  },
-  {
-    icon: History,
-    title: "One timeline",
-    body: "Every update, expense and payment in a single history. No more digging through WhatsApp.",
+    when: "At the end of the month",
+    body: "Every payment is confirmed by both of you, so there is one record that nobody has to argue about.",
   },
 ];
 
-const trust = [
-  { icon: EyeOff, title: "You choose what clients see", body: "Expenses start hidden. Share only the ones you want, receipts included." },
-  { icon: Lock, title: "Every company is separate", body: "Enforced by the database, so no one can see another company's projects." },
-  { icon: ShieldCheck, title: "Both sides confirm payments", body: "Each payment is acknowledged by the other party, with who and when." },
-  { icon: FileDown, title: "Your data is yours", body: "Download everything as spreadsheets any time. We never sell it." },
+const questions = [
+  {
+    q: "Does my client need to install anything?",
+    a: "No. They open a link on their phone, choose a password, and that's it.",
+  },
+  {
+    q: "Can my client see what I spend?",
+    a: "Only what you choose to share. New expenses start hidden, and the totals your client sees never include them.",
+  },
+  {
+    q: "Is it only for big projects?",
+    a: "No. A house, an extra floor, a renovation, a shop fit-out. If you have a client who keeps asking for updates, it fits.",
+  },
+  {
+    q: "What if my client disagrees with a payment?",
+    a: "They can dispute it and say why. You both see the result, and nothing counts towards the total until it's sorted.",
+  },
 ];
 
-const steps = [
-  {
-    title: "Create the project",
-    body: "Add the client, the location and a few milestones. It takes about a minute.",
-  },
-  {
-    title: "Post from the site",
-    body: "Your team adds updates, expenses and payments from their phones.",
-  },
-  {
-    title: "Your client stays informed",
-    body: "They sign in and see progress, money and photos, without calling you.",
-  },
+const anchors = [
+  { href: "#day", label: "How it works" },
+  { href: "#inside", label: "What's inside" },
+  { href: "#privacy", label: "Privacy" },
+  { href: "#questions", label: "Questions" },
 ];
 
 // Public landing page. Anything behind login lives under /dashboard.
 export default function Home() {
   return (
     <div className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-10 border-b border-line/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3">
-          <Logo />
-          <nav className="flex items-center gap-1">
-            <span className="hidden sm:block">
-              <a href="#how-it-works" className={button("ghost", "sm")}>
-                How it works
-              </a>
-            </span>
-            <Link href="/login" className={button("ghost", "sm")}>
-              Sign in
-            </Link>
-            <Link href="/signup" className={button("primary", "sm")}>
-              Get started
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <PublicHeader wide>
+        <nav aria-label="Page sections" className="hidden items-center gap-1 lg:flex">
+          {anchors.map((a) => (
+            <a key={a.href} href={a.href} className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground">
+              {a.label}
+            </a>
+          ))}
+        </nav>
+      </PublicHeader>
 
       <main className="flex-1">
-        <section className="relative overflow-hidden">
-          <div className="bg-blueprint absolute inset-0 -z-10" aria-hidden />
-          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 py-14 sm:py-20 lg:grid-cols-2">
-            <div>
-              <p className="mb-4 inline-flex rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-muted">
-                Built for residential contractors
-              </p>
-              <h1 className="text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-                Show your clients exactly where their project stands.
-              </h1>
-              <p className="mt-5 max-w-xl text-lg text-muted">
-                A professional portal for contractors and homeowners. Progress,
-                payments, receipts and site updates, all in one place.
-              </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link href="/signup" className={button("primary")}>
-                  Create contractor account
-                  <ArrowRight className="size-4" aria-hidden />
-                </Link>
-                <Link href="/login" className={button("secondary")}>
-                  Homeowner sign in
-                </Link>
-              </div>
-              <p className="mt-4 text-sm text-muted">
-                Works on any phone. No app to install.
-              </p>
-              <div className="mt-8">
-                <DemoButtons />
-              </div>
+        {/* Hero */}
+        <section className={`${wrap} grid items-center gap-14 pb-20 pt-10 sm:pt-14 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:pb-28 lg:pt-20`}>
+          <div>
+            <p className="animate-rise inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm text-muted">
+              <span className="size-2 rounded-full bg-primary" aria-hidden /> Made for home builders and renovators
+            </p>
+            <h1 className="animate-rise mt-6 text-balance text-5xl font-semibold leading-[1.04] tracking-tight sm:text-6xl lg:text-7xl" style={{ animationDelay: "60ms" }}>
+              Your client keeps asking how it&apos;s going.{" "}
+              <span className="text-muted">Now they can just look.</span>
+            </h1>
+            <p className="animate-rise mt-7 max-w-xl text-lg leading-relaxed text-muted sm:text-xl" style={{ animationDelay: "120ms" }}>
+              One private page for each project: photos from the site, what has been paid, and what comes next.
+              You post from your phone. They look whenever they like.
+            </p>
+            <div className="animate-rise mt-9 flex flex-col gap-3 sm:flex-row sm:items-center" style={{ animationDelay: "180ms" }}>
+              <Link href="/signup" className={button("primary")}>
+                Create your account
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+              <Link href="/login" className="px-2 py-3 text-base font-medium text-muted underline-offset-4 hover:text-foreground hover:underline">
+                Homeowner? Sign in
+              </Link>
             </div>
-
-            <div className="flex justify-center lg:justify-end">
-              <ProjectPreview />
+            <ul className="animate-rise mt-9 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted" style={{ animationDelay: "240ms" }}>
+              {["Works on any phone", "Nothing to install", "Set up in a few minutes"].map((t) => (
+                <li key={t} className="flex items-center gap-1.5">
+                  <CheckCircle2 className="size-4 text-success" aria-hidden /> {t}
+                </li>
+              ))}
+            </ul>
+            <div className="animate-rise mt-9 border-t border-line pt-6" style={{ animationDelay: "300ms" }}>
+              <DemoButtons />
             </div>
           </div>
+
+          <LandingVisual />
         </section>
 
-        <section className="mx-auto w-full max-w-6xl px-4 py-16">
-          <h2 className="max-w-xl text-2xl font-bold tracking-tight sm:text-3xl">
-            Everything a homeowner asks about, answered before they call.
-          </h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map(({ icon: Icon, title, body }) => (
-              <div key={title} className="rounded-2xl border border-line bg-surface p-5">
-                <span className="flex size-10 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                  <Icon className="size-5" aria-hidden />
-                </span>
-                <h3 className="mt-4 font-semibold">{title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted">{body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="how-it-works" className="border-y border-line bg-surface-2/60">
-          <div className="mx-auto w-full max-w-6xl px-4 py-16">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">How it works</h2>
-            <ol className="mt-8 grid gap-8 sm:grid-cols-3">
-              {steps.map((s, i) => (
-                <li key={s.title}>
-                  <span className="flex size-9 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
-                    {i + 1}
-                  </span>
-                  <h3 className="mt-4 font-semibold">{s.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted">{s.body}</p>
+        {/* A normal day */}
+        <section id="day" className="scroll-mt-20 border-t border-line">
+          <div className={`${wrap} grid gap-10 py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-16 lg:py-28`}>
+            <div className="lg:sticky lg:top-28 lg:self-start">
+              <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">A normal day with it</h2>
+              <p className="mt-4 max-w-sm text-lg leading-relaxed text-muted">
+                Three small moments, and nobody has to chase anybody.
+              </p>
+            </div>
+            <ol className="divide-y divide-line border-y border-line">
+              {day.map(({ when, body }, i) => (
+                <li key={when} className="grid gap-3 py-8 sm:grid-cols-[4rem_1fr] sm:gap-6">
+                  <span className="font-mono text-sm text-muted">0{i + 1}</span>
+                  <div>
+                    <h3 className="text-xl font-semibold tracking-tight">{when}</h3>
+                    <p className="mt-2 max-w-xl text-lg leading-relaxed text-muted">{body}</p>
+                  </div>
                 </li>
               ))}
             </ol>
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-6xl px-4 py-16">
-          <p className="text-sm font-semibold uppercase tracking-wide text-data-accent">Private by design</p>
-          <h2 className="mt-1 max-w-xl text-2xl font-bold tracking-tight sm:text-3xl">
-            Handing over client and money details? Here&apos;s how they&apos;re protected.
-          </h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {trust.map(({ icon: Icon, title, body }) => (
-              <div key={title} className="rounded-2xl border border-line bg-surface p-5">
-                <span className="flex size-10 items-center justify-center rounded-lg bg-primary-soft text-data-accent">
-                  <Icon className="size-5" aria-hidden />
+        {/* What's inside */}
+        <section id="inside" className="scroll-mt-20 bg-surface-2/60">
+          <div className={`${wrap} py-20 lg:py-28`}>
+            <h2 className="max-w-2xl text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+              Everything they ask about, in one place
+            </h2>
+            <div className="mt-12 grid gap-5 lg:grid-cols-6">
+              {/* Progress */}
+              <div className="rounded-3xl border border-line bg-surface p-7 lg:col-span-3">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-data-accent">
+                  <TrendingUp className="size-5" aria-hidden />
                 </span>
-                <h3 className="mt-4 font-semibold">{title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted">{body}</p>
+                <h3 className="mt-5 text-xl font-semibold tracking-tight">Progress, stage by stage</h3>
+                <p className="mt-2 text-muted">Stages with percentages, so it&apos;s clear what&apos;s done and what&apos;s next.</p>
+                <ul className="mt-6 space-y-4" aria-label="Sample stages">
+                  {[
+                    ["Foundation", 100],
+                    ["Grey structure", 85],
+                    ["Electrical", 40],
+                  ].map(([name, pct]) => (
+                    <li key={name}>
+                      <div className="mb-1.5 flex justify-between text-sm">
+                        <span>{name}</span>
+                        <span className="text-muted tabular-nums">{pct}%</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ))}
+
+              {/* Payments */}
+              <div className="rounded-3xl border border-line bg-surface p-7 lg:col-span-3">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-data-accent">
+                  <Banknote className="size-5" aria-hidden />
+                </span>
+                <h3 className="mt-5 text-xl font-semibold tracking-tight">Payments you both agree on</h3>
+                <p className="mt-2 text-muted">Whoever records a payment, the other side confirms it. Only confirmed ones count.</p>
+                <ul className="mt-6 space-y-3" aria-label="Sample payments">
+                  <li className="flex items-center justify-between rounded-xl bg-surface-2 px-4 py-3">
+                    <span>
+                      <span className="block text-sm font-medium">PKR 4,000,000</span>
+                      <span className="block text-xs text-muted">Bank transfer</span>
+                    </span>
+                    <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-xs font-semibold text-success">
+                      <CheckCircle2 className="size-3.5" aria-hidden /> Confirmed
+                    </span>
+                  </li>
+                  <li className="flex items-center justify-between rounded-xl bg-surface-2 px-4 py-3">
+                    <span>
+                      <span className="block text-sm font-medium">PKR 1,500,000</span>
+                      <span className="block text-xs text-muted">Cheque</span>
+                    </span>
+                    <span className="flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-data-accent">
+                      <Clock className="size-3.5" aria-hidden /> Waiting
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Photos */}
+              <div className="rounded-3xl border border-line bg-surface p-7 lg:col-span-4">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-data-accent">
+                  <Camera className="size-5" aria-hidden />
+                </span>
+                <h3 className="mt-5 text-xl font-semibold tracking-tight">Photos as the work happens</h3>
+                <p className="mt-2 max-w-md text-muted">
+                  Post an update from the site. Your client sees it the same day, with a note on what changed.
+                </p>
+                <div className="mt-6 grid grid-cols-3 gap-3" aria-hidden>
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="bg-hero aspect-[4/3] overflow-hidden rounded-2xl">
+                      <SiteIllustration className={`size-full object-cover ${i === 1 ? "scale-150 origin-bottom-left" : i === 2 ? "scale-125 origin-bottom-right" : ""}`} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Private costs */}
+              <div className="rounded-3xl border border-line bg-surface p-7 lg:col-span-2">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-primary-soft text-data-accent">
+                  <EyeOff className="size-5" aria-hidden />
+                </span>
+                <h3 className="mt-5 text-xl font-semibold tracking-tight">Your costs stay private</h3>
+                <p className="mt-2 text-muted">
+                  Expenses are hidden from your client until you choose to share them.
+                </p>
+                <ul className="mt-6 space-y-2.5 text-sm" aria-label="Sample expenses">
+                  <li className="flex items-center justify-between gap-3 rounded-xl bg-surface-2 px-3.5 py-2.5">
+                    <span>Site office</span>
+                    <span className="flex items-center gap-1.5 text-xs text-muted"><EyeOff className="size-3.5" aria-hidden /> Hidden</span>
+                  </li>
+                  <li className="flex items-center justify-between gap-3 rounded-xl bg-surface-2 px-3.5 py-2.5">
+                    <span>Steel, Ittefaq</span>
+                    <span className="flex items-center gap-1.5 text-xs text-success"><Eye className="size-3.5" aria-hidden /> Shared</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
-          <Link href="/trust" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold underline underline-offset-4">
-            Read how we handle your data <ArrowRight className="size-4" aria-hidden />
-          </Link>
         </section>
 
-        <section className="mx-auto w-full max-w-6xl px-4 pb-16">
-          <div className="rounded-3xl bg-foreground px-6 py-12 text-center text-background sm:px-12">
-            <h2 className="mx-auto max-w-xl text-2xl font-bold tracking-tight sm:text-3xl">
-              Put your next project on the portal.
-            </h2>
-            <p className="mx-auto mt-3 max-w-md opacity-70">
-              Set up your company and your first project in minutes.
-            </p>
-            <Link href="/signup" className={`${button("primary")} mt-7`}>
-              Get started
+        {/* Privacy */}
+        <section id="privacy" className={`${wrap} scroll-mt-20 py-20 lg:py-28`}>
+          <div className="rounded-[2rem] bg-foreground px-7 py-12 text-background sm:px-12 sm:py-16 lg:px-16">
+            <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
+              <div>
+                <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">Your numbers stay yours</h2>
+                <Link
+                  href="/trust"
+                  className="mt-8 inline-flex items-center gap-1.5 font-medium underline underline-offset-4 opacity-90 hover:opacity-100"
+                >
+                  How we look after your data <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              </div>
+              <ul className="space-y-6 text-lg leading-relaxed opacity-80">
+                <li>Your client sees progress, photos and payments. They don&apos;t see your costs until you decide to share them, receipt and all.</li>
+                <li>Every company&apos;s projects are kept apart by the database itself, not just hidden on screen.</li>
+                <li>Download everything as a spreadsheet whenever you like. We don&apos;t sell your data.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Questions */}
+        <section id="questions" className="scroll-mt-20 border-t border-line">
+          <div className={`${wrap} py-20 lg:py-28`}>
+            <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">Questions you might have</h2>
+            <dl className="mt-12 grid gap-x-16 gap-y-10 md:grid-cols-2">
+              {questions.map(({ q, a }) => (
+                <div key={q}>
+                  <dt className="text-lg font-semibold tracking-tight">{q}</dt>
+                  <dd className="mt-2 max-w-lg leading-relaxed text-muted">{a}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        {/* Closing */}
+        <section className={`${wrap} pb-24`}>
+          <div className="flex flex-col items-start justify-between gap-8 border-t border-line pt-14 md:flex-row md:items-end">
+            <div>
+              <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">Try it on your next project.</h2>
+              <p className="mt-4 max-w-md text-lg text-muted">Set up your company and your first project in a few minutes.</p>
+            </div>
+            <Link href="/signup" className={`${button("primary")} shrink-0`}>
+              Create your account
               <ArrowRight className="size-4" aria-hidden />
             </Link>
           </div>
         </section>
       </main>
 
-      <PublicFooter />
+      <PublicFooter wide />
     </div>
   );
 }

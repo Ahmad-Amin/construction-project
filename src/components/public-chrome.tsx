@@ -3,11 +3,13 @@ import { Logo } from "@/components/logo";
 import { CONTACT_EMAIL, OPERATOR_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
 
-export function PublicHeader() {
+// `wide` is for the landing page; the text pages (privacy) use the narrow width.
+export function PublicHeader({ wide = false, children }: { wide?: boolean; children?: React.ReactNode }) {
   return (
-    <header className="sticky top-0 z-10 border-b border-line/60 bg-background/80 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3">
+    <header className="sticky top-0 z-10 bg-background/85 backdrop-blur">
+      <div className={`mx-auto flex w-full items-center justify-between gap-4 px-5 py-4 sm:px-6 ${wide ? "max-w-7xl lg:px-12" : "max-w-3xl"}`}>
         <Logo />
+        {children}
         <nav className="flex items-center gap-1">
           <Link href="/login" className={button("ghost", "sm")}>
             Sign in
@@ -21,10 +23,10 @@ export function PublicHeader() {
   );
 }
 
-export function PublicFooter() {
+export function PublicFooter({ wide = false }: { wide?: boolean }) {
   return (
-    <footer className="border-t border-line py-8 text-center text-sm text-muted">
-      <nav className="mb-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2" aria-label="Footer">
+    <footer className={`mx-auto w-full px-5 pb-10 pt-4 text-sm text-muted sm:px-6 ${wide ? "max-w-7xl lg:px-12" : "max-w-3xl"}`}>
+      <nav className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2" aria-label="Footer">
         <Link href="/trust" className="font-medium hover:text-foreground">
           Private by design
         </Link>

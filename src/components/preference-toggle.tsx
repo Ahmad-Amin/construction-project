@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Check } from "lucide-react";
 import { Spinner } from "@/components/spinner";
 
@@ -22,12 +22,24 @@ export function PreferenceToggle({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const saveSucceeded = useRef(false);
+
+  // Show the tick once the page has finished catching up with the save, not when the server
+  // first answers (the two can be seconds apart on a slow connection).
+  useEffect(() => {
+    if (pending || !saveSucceeded.current) return;
+    saveSucceeded.current = false;
+    setSaved(true);
+    const timer = setTimeout(() => setSaved(false), 2000);
+    return () => clearTimeout(timer);
+  }, [pending]);
 
   function flip() {
     const next = !enabled;
     setEnabled(next);
     setError(null);
     setSaved(false);
+    saveSucceeded.current = false;
     startTransition(async () => {
       const result = await save(next);
       if (result.error) {
@@ -35,8 +47,7 @@ export function PreferenceToggle({
         setError(result.error);
         return;
       }
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      saveSucceeded.current = true;
     });
   }
 
