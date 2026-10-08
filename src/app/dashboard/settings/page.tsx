@@ -55,7 +55,7 @@ export default async function SettingsPage({
     : null;
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:py-8">
+    <main className="w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <Link
         href="/dashboard"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"

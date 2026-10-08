@@ -325,18 +325,6 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
         )}
       </Card>
 
-      {isOwner && client && (
-        <WeeklySummaryCard
-          projectId={id}
-          clientName={client.name}
-          clientJoined={!!client.user_id}
-          enabled={details?.weekly_summary ?? true}
-          companyEnabled={one(details?.company as { weekly_summary: boolean } | { weekly_summary: boolean }[] | null)?.weekly_summary ?? false}
-          active={project.status === "active" && !project.archived_at}
-          lastSentAt={details?.last_summary_at ?? null}
-        />
-      )}
-
       {isOwner && (
         <ClientVisibilityCard
           projectId={id}
@@ -348,6 +336,20 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
           hiddenAmount={expenseTotals.total - expenseTotals.sharedTotal}
           budgetShown={budget ? budget.visible_to_client : null}
         />
+      )}
+
+      {isOwner && client && (
+        <div className="lg:col-span-2">
+        <WeeklySummaryCard
+          projectId={id}
+          clientName={client.name}
+          clientJoined={!!client.user_id}
+          enabled={details?.weekly_summary ?? true}
+          companyEnabled={one(details?.company as { weekly_summary: boolean } | { weekly_summary: boolean }[] | null)?.weekly_summary ?? false}
+          active={project.status === "active" && !project.archived_at}
+          lastSentAt={details?.last_summary_at ?? null}
+        />
+        </div>
       )}
       </div>
 

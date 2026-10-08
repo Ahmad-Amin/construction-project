@@ -16,6 +16,8 @@
   --success-soft: #dcfce7;
   --danger: #b91c1c;
   --danger-soft: #fee2e2;
+  --info: #1d4ed8;
+  --info-soft: #dbeafe;
   /* Chart marks. A deeper amber than the brand colour so thin bars clear 3:1 on white. */
   --data-accent: #d97706;
   --data-neutral: #57534e;
@@ -39,6 +41,8 @@
     --success-soft: #0f2a1a;
     --danger: #f87171;
     --danger-soft: #3b1212;
+    --info: #60a5fa;
+    --info-soft: #14233f;
     --data-accent: #f59e0b;
     --data-neutral: #d6d3d1;
     --hero-from: #2b1d07;
@@ -64,6 +68,8 @@
   --success-soft: #dcfce7;
   --danger: #b91c1c;
   --danger-soft: #fee2e2;
+  --info: #1d4ed8;
+  --info-soft: #dbeafe;
   --data-accent: #d97706;
   --data-neutral: #57534e;
   --hero-from: #fff6df;
@@ -86,6 +92,8 @@
   --success-soft: #0f2a1a;
   --danger: #f87171;
   --danger-soft: #3b1212;
+  --info: #60a5fa;
+  --info-soft: #14233f;
   --data-accent: #f59e0b;
   --data-neutral: #d6d3d1;
   --hero-from: #2b1d07;
@@ -107,6 +115,8 @@
   --color-success-soft: var(--success-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
   --color-data-accent: var(--data-accent);
   --color-data-neutral: var(--data-neutral);
   --font-sans: var(--font-geist-sans);

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Building2, ChevronRight, Clock, MapPin, User } from "lucide-react";
+import { StatusBadge } from "@/components/project-bits";
 import { ProgressRing } from "@/components/viz";
 import { SiteIllustration } from "@/components/site-illustration";
 import { formatPKRCompact, formatRelativeDate } from "@/lib/format";
 import type { DashboardProject } from "@/lib/dashboard";
-import { projectStatusLabel } from "@/lib/project";
 
 // A project as a card: the latest site photo as its cover, progress as a ring,
 // and the money picture in one line.
@@ -41,9 +41,7 @@ export function ProjectCard({
         )}
         <div className="absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-black/45 to-transparent" aria-hidden />
 
-        <span className="absolute left-3 top-3 rounded-full bg-surface/90 px-2.5 py-1 text-xs font-semibold backdrop-blur">
-          {p.archived ? "Archived" : projectStatusLabel[p.status]}
-        </span>
+        <StatusBadge status={p.status} archived={p.archived} className="absolute left-3 top-3 shadow-sm ring-1 ring-black/5" />
         {p.awaitingMe > 0 && (
           <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow">
             <Clock className="size-3" aria-hidden /> {p.awaitingMe} to confirm

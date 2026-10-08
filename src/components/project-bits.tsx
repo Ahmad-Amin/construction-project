@@ -1,16 +1,24 @@
-import { projectStatusLabel } from "@/lib/project";
+import { projectStatusStyle } from "@/lib/project";
 import type { ProjectStatus } from "@/lib/types";
 
-const statusStyles: Record<ProjectStatus, string> = {
-  active: "bg-success-soft text-success",
-  on_hold: "bg-primary-soft text-primary-hover",
-  completed: "bg-surface-2 text-muted",
-};
-
-export function StatusBadge({ status }: { status: ProjectStatus }) {
+// The one place a project's status is drawn: project header, dashboard cards and anywhere else.
+// Pass `archived` to show "Archived" in grey instead of the status.
+export function StatusBadge({
+  status,
+  archived = false,
+  className = "",
+}: {
+  status: ProjectStatus;
+  archived?: boolean;
+  className?: string;
+}) {
+  const style = projectStatusStyle[archived ? "archived" : status];
   return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[status]}`}>
-      {projectStatusLabel[status]}
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${style.badge} ${className}`}
+    >
+      <span className={`size-1.5 rounded-full ${style.dot}`} aria-hidden />
+      {style.label}
     </span>
   );
 }

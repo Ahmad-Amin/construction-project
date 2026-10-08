@@ -1,8 +1,10 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { roleOf } from "@/components/role-tag";
 import { countUnread } from "@/lib/notifications";
 import { viewerSide } from "@/lib/payments";
+import { SIDEBAR_COOKIE } from "@/lib/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import type { ProjectStatus } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
@@ -13,6 +15,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
 
+  const collapsed = (await cookies()).get(SIDEBAR_COOKIE)?.value === "collapsed";
   const isOwner = viewer.company?.role === "owner";
   const side = viewerSide(!!viewer.company, isOwner);
 
@@ -56,6 +59,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       projects={projects}
       isOwner={isOwner}
       unread={unread}
+      initialCollapsed={collapsed}
     >
       {children}
     </AppShell>

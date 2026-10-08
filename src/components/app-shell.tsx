@@ -16,6 +16,8 @@ import {
   LogOut,
   Menu,
   Pencil,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Receipt,
   Settings,
@@ -27,6 +29,8 @@ import { CompanyBadge } from "@/components/company-badge";
 import { NotificationBell } from "@/components/notification-bell";
 import { Logo } from "@/components/logo";
 import { RoleTag, type Role } from "@/components/role-tag";
+import { projectStatusStyle } from "@/lib/project";
+import { SIDEBAR_COOKIE } from "@/lib/sidebar";
 import { button } from "@/lib/ui";
 import type { ProjectStatus } from "@/lib/types";
 
@@ -39,14 +43,11 @@ export type ShellProps = {
   isOwner: boolean;
   // Notifications the person hasn't opened yet.
   unread: number;
+  // Whether the person folded the desktop sidebar away (remembered in a cookie).
+  initialCollapsed: boolean;
   children: React.ReactNode;
 };
 
-const statusDot: Record<ProjectStatus, string> = {
-  active: "bg-success",
-  on_hold: "bg-primary",
-  completed: "bg-muted",
-};
 
 const SECTION_LABELS: Record<string, string> = {
   timeline: "Timeline",
@@ -68,6 +69,7 @@ function Nav({
   badge,
   active,
   indent = false,
+  collapsed = false,
   onNavigate,
 }: {
   href: string;
@@ -76,28 +78,34 @@ function Nav({
   badge?: number;
   active: boolean;
   indent?: boolean;
+  collapsed?: boolean;
   onNavigate?: () => void;
 }) {
+  const label = typeof children === "string" ? children : undefined;
   return (
     <Link
       href={href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-        indent ? "py-1.5" : ""
+      title={collapsed ? label : undefined}
+      className={`group relative flex items-center rounded-lg text-sm font-medium transition-colors ${
+        collapsed ? "h-10 justify-center" : `gap-3 px-3 py-2 ${indent ? "py-1.5" : ""}`
       } ${
         active
           ? "bg-primary-soft text-foreground"
           : "text-muted hover:bg-surface-2 hover:text-foreground"
       }`}
     >
-      {active && <span className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-primary" aria-hidden />}
       <Icon className={`size-[18px] shrink-0 ${active ? "text-data-accent" : ""}`} aria-hidden />
-      <span className="min-w-0 flex-1 truncate">{children}</span>
+      <span className={collapsed ? "sr-only" : "min-w-0 flex-1 truncate"}>{children}</span>
       {badge ? (
-        <span className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground">
-          {badge}
-        </span>
+        collapsed ? (
+          <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-primary ring-2 ring-surface" aria-label={`${badge} waiting`} />
+        ) : (
+          <span className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground">
+            {badge}
+          </span>
+        )
       ) : null}
     </Link>
   );
@@ -107,10 +115,13 @@ function SidebarContent({
   props,
   pathname,
   onNavigate,
+  collapsed = false,
 }: {
   props: ShellProps;
   pathname: string;
   onNavigate?: () => void;
+  // Icons only. Used by the desktop sidebar when the person has folded it away.
+  collapsed?: boolean;
 }) {
   const { user, company, projects, isOwner } = props;
   const [showArchived, setShowArchived] = useState(false);
@@ -132,92 +143,150 @@ function SidebarContent({
   // Archived projects stay tucked away, but open up when you are looking at one.
   const archivedOpen = showArchived || archived.some((p) => p.id === currentId);
 
-  const renderProject = (p: ShellProject) => {
-              const isCurrent = p.id === currentId;
-              return (
-                <li key={p.id}>
-                  <Link
-                    href={`/dashboard/projects/${p.id}`}
-                    onClick={onNavigate}
-                    aria-current={isCurrent && pathname === `/dashboard/projects/${p.id}` ? "page" : undefined}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isCurrent ? "text-foreground" : "text-muted hover:bg-surface-2 hover:text-foreground"
-                    }`}
-                  >
-                    <span className={`size-2 shrink-0 rounded-full ${statusDot[p.status]}`} aria-hidden />
-                    <span className="min-w-0 flex-1 truncate">{p.name}</span>
-                    {p.awaiting > 0 && (
-                      <span
-                        title={`${p.awaiting} payment${p.awaiting === 1 ? "" : "s"} waiting for you`}
-                        className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground"
-                      >
-                        {p.awaiting}
-                      </span>
-                    )}
-                    <ChevronRight
-                      className={`size-4 shrink-0 transition-transform ${isCurrent ? "rotate-90" : ""}`}
-                      aria-hidden
-                    />
-                  </Link>
+  const renderSections = (p: ShellProject) => (
+    <>
+      {sections.map((s) => {
+        const active = s.exact ? pathname === s.href : pathname.startsWith(s.href);
+        return (
+          <li key={s.label}>
+            <Nav
+              href={s.href}
+              icon={s.icon}
+              active={active}
+              indent
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+              badge={s.label === "Payments" ? p.awaiting : undefined}
+            >
+              {s.label}
+            </Nav>
+          </li>
+        );
+      })}
+      {isOwner && (
+        <li>
+          <Nav
+            href={`${base}/edit`}
+            icon={Pencil}
+            active={pathname.startsWith(`${base}/edit`)}
+            indent
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          >
+            Edit project
+          </Nav>
+        </li>
+      )}
+    </>
+  );
 
-                  {isCurrent && (
-                    <ul className="ml-[1.1rem] mt-0.5 space-y-0.5 border-l border-line pl-2.5" aria-label={`${p.name} sections`}>
-                      {sections.map((s) => {
-                        const active = s.exact ? pathname === s.href : pathname.startsWith(s.href);
-                        return (
-                          <li key={s.label}>
-                            <Nav
-                              href={s.href}
-                              icon={s.icon}
-                              active={active}
-                              indent
-                              onNavigate={onNavigate}
-                              badge={s.label === "Payments" ? p.awaiting : undefined}
-                            >
-                              {s.label}
-                            </Nav>
-                          </li>
-                        );
-                      })}
-                      {isOwner && (
-                        <li>
-                          <Nav href={`${base}/edit`} icon={Pencil} active={pathname.startsWith(`${base}/edit`)} indent onNavigate={onNavigate}>
-                            Edit project
-                          </Nav>
-                        </li>
-                      )}
-                    </ul>
-                  )}
-                </li>
-              );
+  const renderProject = (p: ShellProject) => {
+    const isCurrent = p.id === currentId;
+
+    if (collapsed) {
+      return (
+        <li key={p.id}>
+          <Link
+            href={`/dashboard/projects/${p.id}`}
+            onClick={onNavigate}
+            title={p.name}
+            aria-label={p.name}
+            aria-current={isCurrent && pathname === `/dashboard/projects/${p.id}` ? "page" : undefined}
+            className={`relative flex h-10 items-center justify-center rounded-lg text-sm font-bold transition-colors ${
+              isCurrent ? "bg-surface-2 text-foreground" : "text-muted hover:bg-surface-2 hover:text-foreground"
+            }`}
+          >
+            {p.name.trim().charAt(0).toUpperCase() || "?"}
+            <span className={`absolute left-2 top-2 size-2 rounded-full ${projectStatusStyle[p.archived ? "archived" : p.status].dot}`} aria-hidden />
+            {p.awaiting > 0 && (
+              <span
+                title={`${p.awaiting} payment${p.awaiting === 1 ? "" : "s"} waiting for you`}
+                className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-primary ring-2 ring-surface"
+              />
+            )}
+          </Link>
+          {isCurrent && (
+            <ul className="mt-0.5 space-y-0.5 border-b border-line pb-1" aria-label={`${p.name} sections`}>
+              {renderSections(p)}
+            </ul>
+          )}
+        </li>
+      );
+    }
+
+    return (
+      <li key={p.id}>
+        <Link
+          href={`/dashboard/projects/${p.id}`}
+          onClick={onNavigate}
+          aria-current={isCurrent && pathname === `/dashboard/projects/${p.id}` ? "page" : undefined}
+          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            isCurrent ? "text-foreground" : "text-muted hover:bg-surface-2 hover:text-foreground"
+          }`}
+        >
+          <span className={`size-2 shrink-0 rounded-full ${projectStatusStyle[p.archived ? "archived" : p.status].dot}`} aria-hidden />
+          <span className="min-w-0 flex-1 truncate">{p.name}</span>
+          {p.awaiting > 0 && (
+            <span
+              title={`${p.awaiting} payment${p.awaiting === 1 ? "" : "s"} waiting for you`}
+              className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground"
+            >
+              {p.awaiting}
+            </span>
+          )}
+          <ChevronRight
+            className={`size-4 shrink-0 transition-transform ${isCurrent ? "rotate-90" : ""}`}
+            aria-hidden
+          />
+        </Link>
+
+        {isCurrent && (
+          <ul className="ml-[1.1rem] mt-0.5 space-y-0.5 border-l border-line pl-2.5" aria-label={`${p.name} sections`}>
+            {renderSections(p)}
+          </ul>
+        )}
+      </li>
+    );
   };
 
   return (
     <div className="flex h-full flex-col">
-      <div className="px-4 pb-3 pt-4">
-        <Logo href="/dashboard" />
-        <RoleTag role={user.role} className="mt-3" />
+      <div className={collapsed ? "flex flex-col items-center gap-3 px-2 pb-3 pt-4" : "px-4 pb-3 pt-4"}>
+        <Logo href="/dashboard" compact={collapsed} />
+        <RoleTag role={user.role} iconOnly={collapsed} className={collapsed ? "" : "mt-3"} />
       </div>
 
-      {company && (
-        <div className="mx-3 mb-3 flex items-center gap-3 rounded-xl border border-line bg-surface-2/60 px-3 py-2.5">
-          <CompanyBadge name={company.name} logoUrl={company.logoUrl} size="md" />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{company.name}</p>
-            <p className="text-xs text-muted">Your company</p>
+      {company &&
+        (collapsed ? (
+          <div className="mb-3 flex justify-center" title={company.name}>
+            <CompanyBadge name={company.name} logoUrl={company.logoUrl} size="md" />
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="mx-3 mb-3 flex items-center gap-3 rounded-xl border border-line bg-surface-2/60 px-3 py-2.5">
+            <CompanyBadge name={company.name} logoUrl={company.logoUrl} size="md" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{company.name}</p>
+              <p className="text-xs text-muted">Your company</p>
+            </div>
+          </div>
+        ))}
 
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" aria-label="Main">
+      <nav className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-3 ${collapsed ? "px-2" : "px-3"}`} aria-label="Main">
         {isOwner && (
-          <Link href="/dashboard/projects/new" onClick={onNavigate} className={`${button("primary", "sm")} mb-4 w-full`}>
-            <Plus className="size-4" aria-hidden /> New project
+          <Link
+            href="/dashboard/projects/new"
+            onClick={onNavigate}
+            title={collapsed ? "New project" : undefined}
+            aria-label="New project"
+            className={`${button("primary", "sm")} mb-4 w-full ${collapsed ? "px-0" : ""}`}
+          >
+            <Plus className="size-4" aria-hidden />
+            {!collapsed && "New project"}
           </Link>
         )}
 
         <div className="space-y-0.5">
-          <Nav href="/dashboard" icon={LayoutDashboard} active={pathname === "/dashboard"} onNavigate={onNavigate}>
+          <Nav href="/dashboard" icon={LayoutDashboard} active={pathname === "/dashboard"} collapsed={collapsed} onNavigate={onNavigate}>
             Dashboard
           </Nav>
           <Nav
@@ -225,25 +294,31 @@ function SidebarContent({
             icon={Bell}
             active={pathname.startsWith("/dashboard/notifications")}
             badge={props.unread}
+            collapsed={collapsed}
             onNavigate={onNavigate}
           >
             Notifications
           </Nav>
         </div>
 
-        <p className="mb-1.5 mt-6 px-3 text-xs font-semibold uppercase tracking-wide text-muted">
-          {company ? "Projects" : "Your projects"}
-        </p>
+        {collapsed ? (
+          <div className="my-4 border-t border-line" />
+        ) : (
+          <p className="mb-1.5 mt-6 px-3 text-xs font-semibold uppercase tracking-wide text-muted">
+            {company ? "Projects" : "Your projects"}
+          </p>
+        )}
 
         {projects.length === 0 ? (
-          <p className="px-3 py-2 text-sm text-muted">No projects yet.</p>
+          !collapsed && <p className="px-3 py-2 text-sm text-muted">No projects yet.</p>
         ) : (
           <ul className="space-y-0.5">
             {live.map(renderProject)}
+            {collapsed && archived.filter((p) => p.id === currentId).map(renderProject)}
           </ul>
         )}
 
-        {archived.length > 0 && (
+        {!collapsed && archived.length > 0 && (
           <div className="mt-4">
             <button
               type="button"
@@ -260,16 +335,20 @@ function SidebarContent({
         )}
       </nav>
 
-      <div className="border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <Nav href="/dashboard/settings" icon={Settings} active={pathname.startsWith("/dashboard/settings")} onNavigate={onNavigate}>
+      <div className={`border-t border-line pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 ${collapsed ? "px-2" : "px-3"}`}>
+        <Nav href="/dashboard/settings" icon={Settings} active={pathname.startsWith("/dashboard/settings")} collapsed={collapsed} onNavigate={onNavigate}>
           Settings
         </Nav>
-        <div className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2">
-          <Avatar name={user.name || user.email} size="sm" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{user.name || "Your account"}</p>
-            <p className="truncate text-xs text-muted">{user.email}</p>
-          </div>
+        <div className={collapsed ? "mt-2 flex flex-col items-center gap-1 py-1" : "mt-2 flex items-center gap-3 rounded-xl px-3 py-2"}>
+          <span title={collapsed ? user.name || user.email : undefined}>
+            <Avatar name={user.name || user.email} size="sm" />
+          </span>
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">{user.name || "Your account"}</p>
+              <p className="truncate text-xs text-muted">{user.email}</p>
+            </div>
+          )}
           <form action={signOut}>
             <button
               aria-label="Sign out"
@@ -342,6 +421,14 @@ export function AppShell(props: ShellProps) {
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === pathname;
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [collapsed, setCollapsed] = useState(props.initialCollapsed);
+
+  function toggleCollapsed() {
+    const next = !collapsed;
+    setCollapsed(next);
+    // A cookie, not local storage, so the server can draw the right width on the first paint.
+    document.cookie = `${SIDEBAR_COOKIE}=${next ? "collapsed" : "open"}; path=/; max-age=31536000; samesite=lax`;
+  }
 
   const awaitingTotal = props.projects.reduce((sum, p) => sum + p.awaiting, 0);
   const firstAwaiting = props.projects.find((p) => p.awaiting > 0);
@@ -385,8 +472,12 @@ export function AppShell(props: ShellProps) {
     <div className="min-h-full">
       <div className="lg:flex">
         {/* Desktop sidebar */}
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-line bg-surface lg:block">
-          <SidebarContent props={props} pathname={pathname} />
+        <aside
+          className={`sticky top-0 hidden h-screen shrink-0 border-r border-line bg-surface transition-[width] duration-200 lg:block ${
+            collapsed ? "w-[4.5rem]" : "w-64"
+          }`}
+        >
+          <SidebarContent props={props} pathname={pathname} collapsed={collapsed} />
         </aside>
 
         <div className="min-w-0 flex-1">
@@ -410,7 +501,18 @@ export function AppShell(props: ShellProps) {
 
           {/* Desktop top bar */}
           <div className="sticky top-0 z-20 hidden h-14 items-center justify-between gap-4 border-b border-line bg-background/85 px-8 backdrop-blur lg:flex">
-            <Breadcrumbs pathname={pathname} projects={props.projects} />
+            <div className="flex min-w-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleCollapsed}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                className="-ml-2 flex size-9 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+              >
+                {collapsed ? <PanelLeftOpen className="size-[18px]" aria-hidden /> : <PanelLeftClose className="size-[18px]" aria-hidden />}
+              </button>
+              <Breadcrumbs pathname={pathname} projects={props.projects} />
+            </div>
             <div className="flex shrink-0 items-center gap-3">
               {firstAwaiting && (
                 <Link

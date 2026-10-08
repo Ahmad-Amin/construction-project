@@ -143,16 +143,16 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <section aria-label="Recent activity">
-      <h2 className="mb-3 font-semibold">Recent activity</h2>
-      <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
-        {items.map((item, i) => {
+    <section className="animate-rise rounded-2xl border border-line bg-surface p-2" aria-label="Recent activity">
+      <h2 className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted">Recent activity</h2>
+      <ul>
+        {items.map((item) => {
           const Icon = kindIcon[item.kind];
           return (
-            <li key={item.id} className="animate-rise" style={{ animationDelay: `${i * 50}ms` }}>
+            <li key={item.id}>
               <Link
                 href={`/dashboard/projects/${item.projectId}/${item.kind === "update" ? "updates" : item.kind === "payment" ? "payments" : "expenses"}`}
-                className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-surface-2"
+                className="flex items-start gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-surface-2"
               >
                 <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-data-accent">
                   <Icon className="size-[18px]" aria-hidden />

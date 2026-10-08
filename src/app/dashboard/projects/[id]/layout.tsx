@@ -26,7 +26,7 @@ export default async function ProjectLayout({
   const isOwner = viewer?.company?.id === project.company_id && viewer?.company?.role === "owner";
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <main className="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <Link
         href="/dashboard"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground lg:hidden"
