@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, Clock, Pencil, User } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Paperclip, Pencil, User } from "lucide-react";
 import { DeletePaymentButton, PaymentResponse } from "@/components/payment-controls";
 import { PaymentReminderButton } from "@/components/payment-reminder-button";
 import { WhatsAppButton } from "@/components/whatsapp-button";
@@ -55,6 +55,21 @@ export function PaymentCard({
       </div>
 
       {p.note && <p className="mt-3 text-sm leading-relaxed">{p.note}</p>}
+
+      {p.receiptUrl && (
+        <a
+          href={p.receiptUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-flex items-center gap-3 rounded-xl border border-line bg-surface-2/60 p-2 pr-4 transition-colors hover:bg-surface-2"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- signed, expiring URL */}
+          <img src={p.receiptUrl} alt="" loading="lazy" className="size-14 rounded-lg object-cover" />
+          <span className="flex items-center gap-1.5 text-sm font-medium">
+            <Paperclip className="size-4 text-muted" aria-hidden /> View receipt
+          </span>
+        </a>
+      )}
 
       <p className="mt-3 flex items-center gap-1 text-xs text-muted">
         <User className="size-3" aria-hidden />

@@ -22,6 +22,9 @@ export type PaymentItem = {
   respondedByName: string;
   respondedAt: string | null;
   disputeReason: string | null;
+  // Optional proof of payment (a photo). The link is signed and short-lived; null when there is none.
+  receiptPath: string | null;
+  receiptUrl: string | null;
 };
 
 type Row = {
@@ -38,10 +41,11 @@ type Row = {
   responded_by_name: string;
   responded_at: string | null;
   dispute_reason: string | null;
+  receipt_path: string | null;
 };
 
 export const PAYMENT_COLUMNS =
-  "id, amount, payment_date, reference, note, side, status, created_by, created_by_name, edited, responded_by_name, responded_at, dispute_reason";
+  "id, amount, payment_date, reference, note, side, status, created_by, created_by_name, edited, responded_by_name, responded_at, dispute_reason, receipt_path";
 
 export function toPaymentItem(r: Row): PaymentItem {
   return {
@@ -58,7 +62,19 @@ export function toPaymentItem(r: Row): PaymentItem {
     respondedByName: r.responded_by_name,
     respondedAt: r.responded_at,
     disputeReason: r.dispute_reason,
+    receiptPath: r.receipt_path,
+    receiptUrl: null,
   };
+}
+
+// Adds a signed link to every payment that has a receipt. Row-level security decides who may
+// read each file, so a link is only ever made for someone allowed to see it.
+export async function withReceiptUrls(supabase: SupabaseClient, items: PaymentItem[]): Promise<PaymentItem[]> {
+  const paths = items.flatMap((p) => (p.receiptPath ? [p.receiptPath] : []));
+  if (paths.length === 0) return items;
+  const { data } = await supabase.storage.from("project-media").createSignedUrls(paths, 3600);
+  const urls = new Map((data ?? []).flatMap((e) => (e.path && e.signedUrl ? [[e.path, e.signedUrl] as const] : [])));
+  return items.map((p) => ({ ...p, receiptUrl: p.receiptPath ? (urls.get(p.receiptPath) ?? null) : null }));
 }
 
 export async function fetchPayments(
@@ -73,7 +89,7 @@ export async function fetchPayments(
     .order("payment_date", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(limit);
-  return ((data ?? []) as Row[]).map(toPaymentItem);
+  return withReceiptUrls(supabase, ((data ?? []) as Row[]).map(toPaymentItem));
 }
 
 export type PaymentTotals = {

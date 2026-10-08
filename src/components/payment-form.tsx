@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { FormState } from "@/app/login/actions";
 import { AmountInput } from "@/components/amount-input";
 import { DateField } from "@/components/date-field";
+import { PaymentReceiptField } from "@/components/payment-receipt-field";
 import { sideLabel, type PaymentSide } from "@/lib/payments";
 import { button, inputClass } from "@/lib/ui";
 
@@ -19,6 +20,8 @@ export function PaymentForm({
   action,
   projectId,
   draftId,
+  paymentId,
+  receipt,
   initial,
   today,
   mode,
@@ -28,6 +31,10 @@ export function PaymentForm({
   projectId: string;
   // Present when creating, so a double tap can never record the payment twice.
   draftId?: string;
+  // Present when editing: the payment being changed.
+  paymentId?: string;
+  // The receipt photo already attached (when editing).
+  receipt?: { path: string; url: string | null } | null;
   initial: PaymentFormValues;
   today: string;
   mode: "create" | "edit";
@@ -35,6 +42,7 @@ export function PaymentForm({
   side: PaymentSide;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
+  const [uploading, setUploading] = useState(false);
   // After a failed save, show what was just submitted rather than the original values.
   const v = (key: keyof PaymentFormValues) => state.values?.[key] ?? initial[key];
   const received = side === "contractor";
@@ -100,12 +108,20 @@ export function PaymentForm({
         </p>
       )}
 
+      <PaymentReceiptField
+        projectId={projectId}
+        paymentId={(draftId ?? paymentId)!}
+        initialPath={receipt?.path ?? null}
+        initialUrl={receipt?.url ?? null}
+        onBusyChange={setUploading}
+      />
+
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Link href={`/dashboard/projects/${projectId}/payments`} className={button("secondary")}>
           Cancel
         </Link>
-        <button type="submit" disabled={pending} className={button("primary")}>
-          {pending ? "Saving…" : mode === "create" ? "Record payment" : "Save changes"}
+        <button type="submit" disabled={pending || uploading} className={button("primary")}>
+          {uploading ? "Uploading receipt…" : pending ? "Saving…" : mode === "create" ? "Record payment" : "Save changes"}
         </button>
       </div>
     </form>

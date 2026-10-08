@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { PaymentForm } from "@/components/payment-form";
 import { todayInKarachi } from "@/lib/format";
-import { PAYMENT_COLUMNS, toPaymentItem, viewerSide } from "@/lib/payments";
+import { PAYMENT_COLUMNS, toPaymentItem, viewerSide, withReceiptUrls } from "@/lib/payments";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
@@ -32,7 +32,7 @@ export default async function EditPaymentPage({
     .eq("project_id", id)
     .maybeSingle();
   if (!data) notFound();
-  const payment = toPaymentItem(data);
+  const [payment] = await withReceiptUrls(supabase, [toPaymentItem(data)]);
 
   // Only whoever recorded it can change it, and not once the other side has confirmed.
   if (payment.createdBy !== viewer.userId || payment.status === "confirmed") {
@@ -52,6 +52,8 @@ export default async function EditPaymentPage({
         side={side}
         projectId={id}
         today={todayInKarachi()}
+        paymentId={paymentId}
+        receipt={payment.receiptPath ? { path: payment.receiptPath, url: payment.receiptUrl } : null}
         action={updatePayment.bind(null, id, paymentId)}
         initial={{
           amount: String(payment.amount),

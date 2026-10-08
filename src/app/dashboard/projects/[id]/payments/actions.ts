@@ -25,16 +25,29 @@ function refresh(projectId: string) {
   revalidatePath("/dashboard", "layout");
 }
 
-type PaymentFields = { amount: number; payment_date: string; reference: string; note: string };
+type PaymentFields = {
+  amount: number;
+  payment_date: string;
+  reference: string;
+  note: string;
+  receipt_path: string | null;
+};
 
 function readPayment(
   formData: FormData,
+  folder: string,
 ): { ok: false; error: string } | { ok: true; value: PaymentFields } {
   const amount = parseAmount(text(formData, "amount"), "the amount");
   if (amount.error) return { ok: false, error: amount.error };
   if (!amount.value) return { ok: false, error: "Please enter the amount." };
   const date = dateOrNull(text(formData, "payment_date"));
   if (!date) return { ok: false, error: "Please choose the date of the payment." };
+  // The receipt photo is uploaded straight to storage by the form; here we only accept a file
+  // that sits in this payment's own folder.
+  const receipt = text(formData, "receipt_path");
+  if (receipt && !receipt.startsWith(folder)) {
+    return { ok: false, error: "The receipt didn't upload properly. Please attach it again." };
+  }
   return {
     ok: true,
     value: {
@@ -42,6 +55,7 @@ function readPayment(
       payment_date: date,
       reference: text(formData, "reference"),
       note: text(formData, "note"),
+      receipt_path: receipt || null,
     },
   };
 }
@@ -55,7 +69,7 @@ export async function createPayment(
 ): Promise<FormState> {
   const id = text(formData, "id");
   if (!UUID.test(id)) return fail(formData, GENERIC);
-  const parsed = readPayment(formData);
+  const parsed = readPayment(formData, `${projectId}/payments/${id}/`);
   if (!parsed.ok) return fail(formData, parsed.error);
 
   const supabase = await createClient();
@@ -82,10 +96,16 @@ export async function updatePayment(
   _: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = readPayment(formData);
+  const parsed = readPayment(formData, `${projectId}/payments/${paymentId}/`);
   if (!parsed.ok) return fail(formData, parsed.error);
 
   const supabase = await createClient();
+  const { data: before } = await supabase
+    .from("payments")
+    .select("receipt_path")
+    .eq("id", paymentId)
+    .eq("project_id", projectId)
+    .maybeSingle();
   // RLS ignores updates you aren't allowed to make, so check a row came back.
   const { data, error } = await supabase
     .from("payments")
@@ -98,6 +118,11 @@ export async function updatePayment(
     return fail(formData, "Only the person who recorded this payment can edit it, and not once it's confirmed.");
   }
 
+  // A replaced or removed receipt photo is tidied away.
+  if (before?.receipt_path && before.receipt_path !== parsed.value.receipt_path) {
+    await supabase.storage.from("project-media").remove([before.receipt_path]);
+  }
+
   refresh(projectId);
   redirect(`/dashboard/projects/${projectId}/payments`);
 }
@@ -107,6 +132,12 @@ export async function deletePayment(
   paymentId: string,
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("payments")
+    .select("receipt_path")
+    .eq("id", paymentId)
+    .eq("project_id", projectId)
+    .maybeSingle();
   const { data, error } = await supabase
     .from("payments")
     .delete()
@@ -116,6 +147,9 @@ export async function deletePayment(
   if (error) return { error: "We couldn't delete that payment. Please try again." };
   if (!data?.length) {
     return { error: "Only the person who recorded this payment can delete it, and not once it's confirmed." };
+  }
+  if (existing?.receipt_path) {
+    await supabase.storage.from("project-media").remove([existing.receipt_path]);
   }
 
   refresh(projectId);

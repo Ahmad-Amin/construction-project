@@ -37,7 +37,7 @@ No Docker is needed. Everything runs against the hosted project.
 | Payments | record, respond | read | record, respond |
 | Timeline | read | read | read |
 
-Payments are two-sided: whoever records one, the other side confirms or disputes it. Only confirmed payments count toward the total, and confirmed payments are locked. The timeline shows only expenses that are shared with the client.
+Payments can carry an **optional receipt photo** (bank transfer, cheque or receipt), attached by whoever records the payment and visible to both sides. It is uploaded from the form (`components/payment-receipt-field.tsx`), stored privately at `<project>/payments/<payment>/…`, and locked with the payment once confirmed; adding, replacing or removing it sends the payment back for confirmation. Payments are two-sided: whoever records one, the other side confirms or disputes it. Only confirmed payments count toward the total, and confirmed payments are locked. The timeline shows only expenses that are shared with the client.
 
 Staff accounts are not invitable yet; the role exists in the database for when that is added.
 

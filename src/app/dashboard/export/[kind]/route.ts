@@ -119,7 +119,7 @@ async function build(kind: Kind, supabase: SupabaseClient): Promise<Built> {
 
   const { data } = await supabase
     .from("payments")
-    .select("project_id, payment_date, amount, side, status, reference, note, created_by_name, responded_by_name, responded_at, dispute_reason")
+    .select("project_id, payment_date, amount, side, status, reference, note, created_by_name, responded_by_name, responded_at, dispute_reason, receipt_path")
     .order("payment_date", { ascending: false })
     .limit(LIMIT);
   type Row = {
@@ -134,13 +134,14 @@ async function build(kind: Kind, supabase: SupabaseClient): Promise<Built> {
     responded_by_name: string;
     responded_at: string | null;
     dispute_reason: string | null;
+    receipt_path: string | null;
   };
   return {
-    headers: ["Project", "Date", "Amount (PKR)", "Recorded by", "Recorded as", "Status", "Reference", "Note", "Confirmed or disputed by", "Responded on", "Dispute reason"],
+    headers: ["Project", "Date", "Amount (PKR)", "Recorded by", "Recorded as", "Status", "Reference", "Note", "Confirmed or disputed by", "Responded on", "Dispute reason", "Receipt attached"],
     rows: ((data ?? []) as Row[]).map((p) => [
       nameOf(p.project_id), p.payment_date, Number(p.amount), p.created_by_name,
       p.side === "contractor" ? "Contractor" : "Homeowner", p.status, p.reference, p.note,
-      p.responded_by_name, karachiDay(p.responded_at), p.dispute_reason,
+      p.responded_by_name, karachiDay(p.responded_at), p.dispute_reason, yesNo(!!p.receipt_path),
     ]),
   };
 }
