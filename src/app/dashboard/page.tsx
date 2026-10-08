@@ -168,7 +168,7 @@ export default async function DashboardPage({
         </section>
       )}
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_21rem]">
         <div className="min-w-0 space-y-6">
           {projects.length > 0 && attention.length > 0 && <AttentionPanel items={attention} />}
 
@@ -233,7 +233,7 @@ export default async function DashboardPage({
         </div>
 
         {projects.length > 0 && activity.length > 0 && (
-          <aside className="xl:sticky xl:top-20">
+          <aside className="min-w-0 xl:sticky xl:top-20">
             <ActivityFeed items={activity} />
           </aside>
         )}

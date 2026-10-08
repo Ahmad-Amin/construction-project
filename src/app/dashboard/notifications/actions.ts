@@ -23,7 +23,7 @@ export async function markAllNotificationsRead(): Promise<void> {
   revalidatePath("/dashboard", "layout");
 }
 
-async function saveProfileFlag(column: "email_notifications" | "weekly_summary", enabled: boolean): Promise<{ error?: string }> {
+async function saveProfileFlag(column: "email_notifications", enabled: boolean): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims?.sub;
@@ -42,8 +42,4 @@ async function saveProfileFlag(column: "email_notifications" | "weekly_summary",
 
 export async function setEmailNotifications(enabled: boolean) {
   return saveProfileFlag("email_notifications", enabled);
-}
-
-export async function setWeeklySummaryPreference(enabled: boolean) {
-  return saveProfileFlag("weekly_summary", enabled);
 }

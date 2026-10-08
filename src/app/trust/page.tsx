@@ -161,8 +161,8 @@ export default function TrustPage() {
           </p>
           <p className="mt-3">
             The one exception is the weekly summary email a homeowner receives: it shows a few of the week&apos;s
-            photos, so those links last seven days. It is off unless the contractor turns it on. Homeowners can switch it off in Settings, and
-            contractors can pause it for a project.
+            photos, so those links last seven days. It is off unless the contractor turns it on, and the contractor can pause it for any project.
+            Homeowners can stop the email by turning off email notifications in Settings.
           </p>
         </Section>
 

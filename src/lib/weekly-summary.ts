@@ -88,7 +88,7 @@ export function renderWeeklySummaryEmail(input: {
     "",
     "---",
     `Sent by ${PRODUCT_NAME} on behalf of ${s.company_name}, every Sunday while your project is active.`,
-    `Turn weekly summaries off: ${settingsUrl}`,
+    `Stop all emails from ${PRODUCT_NAME}: ${settingsUrl}`,
   );
 
   // ----- html -----
@@ -181,7 +181,7 @@ export function renderWeeklySummaryEmail(input: {
         </td></tr>
         <tr><td style="padding:0 24px 24px 24px;font-size:12px;line-height:1.6;color:#78716c;">
           Sent by ${e(PRODUCT_NAME)} on behalf of ${e(s.company_name)}, every Sunday while your project is active.
-          <a href="${e(settingsUrl)}" style="color:#78716c;">Turn weekly summaries off</a> in your settings any time.
+          <a href="${e(settingsUrl)}" style="color:#78716c;">Turn off emails</a> in your settings any time, or ask ${e(s.company_name)} to stop sending this summary.
         </td></tr>
       </table>
     </td></tr>

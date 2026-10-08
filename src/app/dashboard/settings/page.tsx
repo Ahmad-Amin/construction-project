@@ -13,7 +13,6 @@ import { PasswordForm } from "@/components/password-form";
 import { ROLE_LABEL, roleOf } from "@/components/role-tag";
 import { SettingsSection } from "@/components/settings-section";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { WeeklySummaryToggle } from "@/components/weekly-summary-toggle";
 import { isDemoEmail } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
@@ -38,7 +37,7 @@ export default async function SettingsPage({
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, created_at, email_notifications, weekly_summary")
+    .select("name, created_at, email_notifications")
     .eq("id", viewer.userId)
     .maybeSingle();
 
@@ -109,10 +108,7 @@ export default async function SettingsPage({
           title="Notifications"
           description="Choose whether you also get an email when something needs your attention."
         >
-          <div className="space-y-5">
-            <EmailToggle initial={profile?.email_notifications ?? true} />
-            {!viewer.company && <WeeklySummaryToggle initial={profile?.weekly_summary ?? true} />}
-          </div>
+          <EmailToggle initial={profile?.email_notifications ?? true} />
         </SettingsSection>
 
         {isOwner && (

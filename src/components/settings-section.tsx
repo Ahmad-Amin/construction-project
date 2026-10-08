@@ -13,7 +13,7 @@ export function SettingsSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="animate-rise grid gap-4 md:grid-cols-[14rem_1fr] md:gap-8">
+    <section className="animate-rise grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[14rem_minmax(0,1fr)] md:gap-8">
       <div>
         <h2 className="flex items-center gap-2 font-semibold">
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary-soft text-data-accent">
@@ -23,7 +23,7 @@ export function SettingsSection({
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted">{description}</p>
       </div>
-      <div className="rounded-2xl border border-line bg-surface p-5 sm:p-6">{children}</div>
+      <div className="min-w-0 rounded-2xl border border-line bg-surface p-5 sm:p-6">{children}</div>
     </section>
   );
 }
