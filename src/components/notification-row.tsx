@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, Banknote, Camera, CheckCircle2, Flag, PartyPopper, UserPlus, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Banknote, Camera, CalendarDays, CheckCircle2, Flag, PartyPopper, UserPlus, type LucideIcon } from "lucide-react";
 import { timeAgo } from "@/lib/format";
 import type { NotificationItem, NotificationKind } from "@/lib/notifications";
 
@@ -11,6 +11,7 @@ const icons: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   milestone_completed: { icon: Flag, tone: "bg-success-soft text-success" },
   client_joined: { icon: UserPlus, tone: "bg-primary-soft text-data-accent" },
   project_completed: { icon: PartyPopper, tone: "bg-success-soft text-success" },
+  weekly_summary: { icon: CalendarDays, tone: "bg-primary-soft text-data-accent" },
 };
 
 // One notification, used in the bell's dropdown and on the Notifications page.

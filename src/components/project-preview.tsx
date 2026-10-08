@@ -7,7 +7,7 @@ const milestones = [
 ];
 
 // Illustrative sample of what a homeowner sees. Not live data.
-export function ProjectPreview() {
+export function ProjectPreview({ compact = false }: { compact?: boolean }) {
   return (
     <div
       className="w-full max-w-md rounded-2xl border border-line bg-surface p-5 shadow-xl shadow-black/5"
@@ -35,6 +35,7 @@ export function ProjectPreview() {
         </div>
       </div>
 
+      {!compact && (
       <ul className="mt-5 space-y-3">
         {milestones.map((m) => (
           <li key={m.name}>
@@ -51,6 +52,7 @@ export function ProjectPreview() {
           </li>
         ))}
       </ul>
+      )}
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div className="rounded-xl bg-surface-2 p-3">

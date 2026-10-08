@@ -159,6 +159,11 @@ export default function TrustPage() {
             expires after about an hour, and only to people allowed to see that project. Photos are resized on the
             phone before upload, and the location information phones put inside photos is removed.
           </p>
+          <p className="mt-3">
+            The one exception is the weekly summary email a homeowner receives: it shows a few of the week&apos;s
+            photos, so those links last seven days. Homeowners can switch the summary off in Settings, and
+            contractors can pause it for a project.
+          </p>
         </Section>
 
         <Section title="Payments are records, not money">

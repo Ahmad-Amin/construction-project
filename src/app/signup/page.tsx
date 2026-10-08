@@ -8,6 +8,7 @@ export const metadata = { title: "Create your account" };
 export default function SignupPage() {
   return (
     <AuthShell
+      aside
       title="Create your contractor account"
       subtitle="Set up in a minute, then add your first project."
       footer={

@@ -4,9 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { FormState } from "@/app/login/actions";
 import { dateOrNull, parseAmount, snapshot, text } from "@/lib/forms";
+import { sendEmail } from "@/lib/email";
 import { queueEmailDelivery } from "@/lib/notifications";
+import { getOrigin } from "@/lib/origin";
 import { removeProjectFiles } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/viewer";
+import { renderWeeklySummaryEmail, signSummaryPhotos, type WeeklySummary } from "@/lib/weekly-summary";
 
 const GENERIC_ERROR = "Something went wrong saving this project. Please try again.";
 
@@ -167,4 +171,44 @@ export async function setProjectStatus(
   revalidatePath("/dashboard", "layout");
   queueEmailDelivery();
   return {};
+}
+
+// The contractor can pause the weekly summary for one project.
+export async function setWeeklySummary(projectId: string, enabled: boolean): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ weekly_summary: enabled })
+    .eq("id", projectId)
+    .select("id");
+  if (error) return { error: GENERIC_ERROR };
+  if (!data?.length) return { error: "Only the company owner can change this." };
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  return {};
+}
+
+// Sends the owner a copy of this week's summary, exactly as the client would get it.
+export async function sendSummaryPreview(projectId: string): Promise<{ error?: string; message?: string }> {
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Please sign in again." };
+  if (!viewer.email) return { error: "Your account has no email address." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("preview_weekly_summary", { p_project: projectId });
+  if (error || !data) return { error: error ? friendly(error) : GENERIC_ERROR };
+  const summary = data as WeeklySummary;
+
+  const origin = await getOrigin();
+  const result = await sendEmail(
+    renderWeeklySummaryEmail({
+      to: viewer.email,
+      summary,
+      photoUrls: await signSummaryPhotos(supabase, summary.photos),
+      projectUrl: `${origin}/dashboard/projects/${projectId}`,
+      settingsUrl: `${origin}/dashboard/settings`,
+      preview: true,
+    }),
+  );
+  if (!result.ok) return { error: `We couldn't send the preview: ${result.error}` };
+  return { message: `Sent to ${viewer.email}. Check your inbox.` };
 }

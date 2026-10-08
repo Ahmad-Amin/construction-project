@@ -11,7 +11,8 @@ export type NotificationKind =
   | "update_posted"
   | "milestone_completed"
   | "client_joined"
-  | "project_completed";
+  | "project_completed"
+  | "weekly_summary";
 
 export type NotificationItem = {
   id: string;

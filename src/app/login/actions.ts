@@ -48,6 +48,10 @@ export async function sendMagicLink(
     },
   });
   if (error) {
+    // Too many emails in a short time is a different problem from a wrong address.
+    if (error.status === 429 || /rate limit/i.test(error.message)) {
+      return { error: "Too many sign-in emails were requested. Please wait a few minutes and try again, or sign in with your password." };
+    }
     return {
       error:
         "We couldn't send a sign-in link to that email. Check the address, or ask your contractor to invite you.",

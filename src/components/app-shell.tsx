@@ -26,13 +26,14 @@ import { Avatar } from "@/components/avatar";
 import { CompanyBadge } from "@/components/company-badge";
 import { NotificationBell } from "@/components/notification-bell";
 import { Logo } from "@/components/logo";
+import { RoleTag, type Role } from "@/components/role-tag";
 import { button } from "@/lib/ui";
 import type { ProjectStatus } from "@/lib/types";
 
 export type ShellProject = { id: string; name: string; status: ProjectStatus; awaiting: number; archived: boolean };
 
 export type ShellProps = {
-  user: { name: string; email: string; roleLabel: string };
+  user: { name: string; email: string; role: Role };
   company: { name: string; logoUrl: string | null } | null;
   projects: ShellProject[];
   isOwner: boolean;
@@ -195,6 +196,7 @@ function SidebarContent({
     <div className="flex h-full flex-col">
       <div className="px-4 pb-3 pt-4">
         <Logo href="/dashboard" />
+        <RoleTag role={user.role} className="mt-3" />
       </div>
 
       {company && (
@@ -202,7 +204,7 @@ function SidebarContent({
           <CompanyBadge name={company.name} logoUrl={company.logoUrl} size="md" />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">{company.name}</p>
-            <p className="text-xs text-muted">{user.roleLabel}</p>
+            <p className="text-xs text-muted">Your company</p>
           </div>
         </div>
       )}
@@ -401,6 +403,7 @@ export function AppShell(props: ShellProps) {
             </button>
             <Logo href="/dashboard" />
             <div className="ml-auto flex items-center gap-1">
+              <RoleTag role={props.user.role} className="hidden min-[400px]:inline-flex" />
               <NotificationBell unread={props.unread} pathname={pathname} />
             </div>
           </header>

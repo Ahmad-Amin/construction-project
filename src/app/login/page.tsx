@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { AuthForm } from "@/components/auth-form";
 import { AuthShell } from "@/components/auth-shell";
 import { DemoButtons } from "@/components/demo-buttons";
-import { login, sendMagicLink } from "./actions";
+import { LoginMethods } from "@/components/login-methods";
 
 export const metadata = { title: "Sign in" };
 
@@ -15,6 +14,7 @@ export default async function LoginPage({
 
   return (
     <AuthShell
+      aside
       title="Welcome back"
       subtitle="Sign in to follow your project's progress, payments and updates."
       footer={
@@ -37,36 +37,10 @@ export default async function LoginPage({
         </p>
       )}
 
-      <AuthForm
-        action={login}
-        submitLabel="Sign in"
-        fields={[
-          { name: "email", label: "Email", type: "email", autoComplete: "email" },
-          { name: "password", label: "Password", type: "password", autoComplete: "current-password" },
-        ]}
-      />
-
-      <p className="mt-3 text-right text-sm">
-        <Link href="/forgot-password" className="font-medium text-muted underline underline-offset-4 hover:text-foreground">
-          Forgot your password?
-        </Link>
-      </p>
-
-      <div className="my-6 flex items-center gap-3 text-xs text-muted">
-        <span className="h-px flex-1 bg-line" />
-        or get a sign-in link by email
-        <span className="h-px flex-1 bg-line" />
-      </div>
-
-      <AuthForm
-        action={sendMagicLink}
-        submitLabel="Email me a link"
-        variant="secondary"
-        fields={[{ name: "email", label: "Email", type: "email", autoComplete: "email" }]}
-      />
+      <LoginMethods />
 
       <div className="mt-6 border-t border-line pt-5">
-        <DemoButtons />
+        <DemoButtons compact />
       </div>
     </AuthShell>
   );

@@ -16,6 +16,7 @@ import { CompleteProjectButton } from "@/components/complete-project-button";
 import { InvitePanel } from "@/components/invite-panel";
 import { PhotoStrip } from "@/components/photo-strip";
 import { StatementButtons } from "@/components/statement-buttons";
+import { WeeklySummaryCard } from "@/components/weekly-summary-card";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { SiteIllustration } from "@/components/site-illustration";
 import { StageStrip } from "@/components/stage-strip";
@@ -76,7 +77,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
   const { data: details } = await supabase
     .from("projects")
     .select(
-      "client:clients(id, name, email, phone, user_id), budget:project_budgets(amount, visible_to_client), milestones(id, name, position, status, progress_percent)",
+      "weekly_summary, last_summary_at, client:clients(id, name, email, phone, user_id), budget:project_budgets(amount, visible_to_client), milestones(id, name, position, status, progress_percent)",
     )
     .eq("id", id)
     .order("position", { referencedTable: "milestones" })
@@ -323,6 +324,17 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
           </ul>
         )}
       </Card>
+
+      {isOwner && client && (
+        <WeeklySummaryCard
+          projectId={id}
+          clientName={client.name}
+          clientJoined={!!client.user_id}
+          enabled={details?.weekly_summary ?? true}
+          active={project.status === "active" && !project.archived_at}
+          lastSentAt={details?.last_summary_at ?? null}
+        />
+      )}
 
       {isOwner && (
         <ClientVisibilityCard

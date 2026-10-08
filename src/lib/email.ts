@@ -110,7 +110,7 @@ export async function sendEmail(email: Email): Promise<SendResult> {
 // ---------------------------------------------------------------------------
 // The email people receive for a notification.
 // ---------------------------------------------------------------------------
-const escapeHtml = (value: string) =>
+export const escapeHtml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 export function renderNotificationEmail(input: {

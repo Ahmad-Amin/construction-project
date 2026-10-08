@@ -68,6 +68,15 @@ People are told when something needs them: a payment waiting for their confirmat
   - `EMAIL_PROVIDER=resend` with `RESEND_API_KEY` (production). This path is written but has not been tried against a real Resend account yet.
 - To add a channel later (WhatsApp, push), read the same pending notifications and send them there.
 
+## Weekly summary
+
+Every Sunday evening each homeowner gets one email per active project (and a bell notification) with the week's progress, finished stages, site updates and photos, and payments, sent in the contractor's company name. Weeks with nothing new and nothing waiting on the homeowner are skipped.
+
+- **Privacy:** the content is built by `build_weekly_summary` in the database (`…_weekly_summary.sql`) and contains only what the homeowner can already see: no expenses, and the budget only if the contractor shared it. The email's photo links last seven days (everywhere else they last an hour); the Private by design page says so.
+- **Controls:** homeowners switch it off in **Settings → Notifications**. Contractors pause it per project on the Overview's **Weekly summary** card, which also has **Email me a preview** (sent to your own address, with this week's real data).
+- **Scheduling:** the job is `GET /api/cron/weekly-summary` with the header `Authorization: Bearer $CRON_SECRET`. Call it every Sunday at 13:00 UTC (18:00 in Pakistan) with any scheduler: Vercel Cron (`"0 13 * * 0"`, and it sends the secret for you when `CRON_SECRET` is set in the project), GitHub Actions, or cron-job.org. It needs `SUPABASE_SECRET_KEY` on the server, and the database remembers who was already sent this week, so calling it twice is harmless. Locally: `curl -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron/weekly-summary`.
+- **Failures:** an email that fails is marked failed on its notification and not retried; the next summary goes out the following week.
+
 ## Sharing with clients
 
 - **WhatsApp:** one-tap, pre-written messages that open the client's chat (click-to-chat links; nothing is sent automatically). Available on each site update, on the project Overview ("Share progress"), right after posting an update, and as a reminder on payments that are waiting for the other side to confirm. Messages are built in `src/lib/whatsapp.ts` and contain only progress, update text and payments, never expenses.

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { roleOf } from "@/components/role-tag";
 import { countUnread } from "@/lib/notifications";
 import { viewerSide } from "@/lib/payments";
 import { createClient } from "@/lib/supabase/server";
@@ -49,7 +50,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       user={{
         name: viewer.name,
         email: viewer.email,
-        roleLabel: isOwner ? "Owner" : viewer.company ? "Site team" : "Homeowner",
+        role: roleOf(isOwner, !!viewer.company),
       }}
       company={viewer.company ? { name: viewer.company.name, logoUrl: viewer.company.logoUrl } : null}
       projects={projects}

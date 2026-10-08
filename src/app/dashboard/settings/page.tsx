@@ -9,8 +9,10 @@ import { DataExport } from "@/components/data-export";
 import { EmailToggle } from "@/components/email-toggle";
 import { LogoUploader } from "@/components/logo-uploader";
 import { PasswordForm } from "@/components/password-form";
+import { ROLE_LABEL, roleOf } from "@/components/role-tag";
 import { SettingsSection } from "@/components/settings-section";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { WeeklySummaryToggle } from "@/components/weekly-summary-toggle";
 import { isDemoEmail } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
@@ -33,14 +35,14 @@ export default async function SettingsPage({
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, created_at, email_notifications")
+    .select("name, created_at, email_notifications, weekly_summary")
     .eq("id", viewer.userId)
     .maybeSingle();
 
   const name = profile?.name ?? "";
   const isOwner = viewer.company?.role === "owner";
   const isDemo = isDemoEmail(viewer.email);
-  const roleLabel = isOwner ? "Owner" : viewer.company ? "Site team" : "Homeowner";
+  const roleLabel = ROLE_LABEL[roleOf(isOwner, !!viewer.company)];
   const memberSince = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
     : null;
@@ -100,7 +102,10 @@ export default async function SettingsPage({
           title="Notifications"
           description="Choose whether you also get an email when something needs your attention."
         >
-          <EmailToggle initial={profile?.email_notifications ?? true} />
+          <div className="space-y-5">
+            <EmailToggle initial={profile?.email_notifications ?? true} />
+            {!viewer.company && <WeeklySummaryToggle initial={profile?.weekly_summary ?? true} />}
+          </div>
         </SettingsSection>
 
         <SettingsSection
