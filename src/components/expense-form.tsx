@@ -8,6 +8,7 @@ import {
   createExpense,
   updateExpense,
 } from "@/app/dashboard/projects/[id]/expenses/actions";
+import { AmountInput } from "@/components/amount-input";
 import { EXPENSE_CATEGORIES, expenseCategoryLabel, type ExpenseCategory } from "@/lib/expenses";
 import { parseAmount } from "@/lib/forms";
 import { newId } from "@/lib/ids";
@@ -152,13 +153,12 @@ export function ExpenseForm({
       <section className="space-y-4 rounded-2xl border border-line bg-surface p-5 sm:p-6">
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium">Amount (PKR)</span>
-          <input
+          <AmountInput
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            inputMode="numeric"
+            onValueChange={setAmount}
             required
             placeholder="250,000"
-            className={`${inputClass} text-lg font-semibold`}
+            className="text-lg font-semibold"
           />
         </label>
 

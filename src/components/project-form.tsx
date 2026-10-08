@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useActionState, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import type { FormState } from "@/app/login/actions";
+import { AmountInput } from "@/components/amount-input";
+import { PhoneField } from "@/components/phone-input";
 import { DEFAULT_TEMPLATE_ID, MILESTONE_TEMPLATES } from "@/lib/templates";
 import { button, inputClass } from "@/lib/ui";
 
@@ -124,13 +126,7 @@ export function ProjectForm({
           </Field>
         )}
         <Field label="Budget (PKR)" hint="Optional. Whole rupees, like 35000000.">
-          <input
-            name="budget"
-            inputMode="numeric"
-            defaultValue={v("budget")}
-            placeholder="35,000,000"
-            className={inputClass}
-          />
+          <AmountInput name="budget" defaultValue={v("budget")} placeholder="35,000,000" />
         </Field>
         {mode === "edit" && (
           <label className="flex items-start gap-3 text-sm">
@@ -167,13 +163,7 @@ export function ProjectForm({
           />
         </Field>
         <Field label="Client phone" hint="Optional. Used to share the invite on WhatsApp.">
-          <input
-            type="tel"
-            name="client_phone"
-            defaultValue={v("client_phone")}
-            placeholder="0300 1234567"
-            className={inputClass}
-          />
+          <PhoneField name="client_phone" defaultValue={v("client_phone")} placeholder="300 1234567" />
         </Field>
       </Section>
 

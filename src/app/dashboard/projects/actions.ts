@@ -6,6 +6,7 @@ import type { FormState } from "@/app/login/actions";
 import { dateOrNull, parseAmount, snapshot, text } from "@/lib/forms";
 import { sendEmail } from "@/lib/email";
 import { queueEmailDelivery } from "@/lib/notifications";
+import { parsePhone } from "@/lib/phone";
 import { getOrigin } from "@/lib/origin";
 import { removeProjectFiles } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/server";
@@ -26,6 +27,8 @@ const fail = (formData: FormData, error: string): FormState => ({
 export async function createProject(_: FormState, formData: FormData): Promise<FormState> {
   const budget = parseAmount(text(formData, "budget"));
   if (budget.error) return fail(formData, budget.error);
+  const phone = parsePhone(text(formData, "client_phone"));
+  if (phone.error) return fail(formData, phone.error);
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_project", {
@@ -36,7 +39,7 @@ export async function createProject(_: FormState, formData: FormData): Promise<F
     p_budget: budget.value,
     p_client_name: text(formData, "client_name"),
     p_client_email: text(formData, "client_email"),
-    p_client_phone: text(formData, "client_phone"),
+    p_client_phone: phone.value ?? "",
     p_milestones: formData.getAll("milestone").map((m) => String(m).trim()).filter(Boolean),
   });
 
@@ -60,6 +63,8 @@ export async function updateProject(
 
   const budget = parseAmount(text(formData, "budget"));
   if (budget.error) return fail(formData, budget.error);
+  const phone = parsePhone(text(formData, "client_phone"));
+  if (phone.error) return fail(formData, phone.error);
 
   const status = text(formData, "status");
   if (!STATUSES.includes(status)) return fail(formData, "Please choose a valid status.");
@@ -84,7 +89,7 @@ export async function updateProject(
 
   const clientUpdate: { name: string; phone: string | null; email?: string } = {
     name: clientName,
-    phone: text(formData, "client_phone") || null,
+    phone: phone.value,
   };
   // The email field is disabled (and not submitted) once the client has signed in.
   const email = text(formData, "client_email");

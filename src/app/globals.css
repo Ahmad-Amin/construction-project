@@ -181,3 +181,46 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-rise, .animate-grow, .animate-ring, .animate-float, .animate-slide-in, .animate-fade { animation: none; }
 }
+
+/* The phone number field (react-international-phone), dressed in our colours so it follows
+   the light and dark themes like every other input. */
+.phone-field {
+  --react-international-phone-background-color: var(--surface);
+  --react-international-phone-text-color: var(--foreground);
+  --react-international-phone-border-color: var(--line);
+  --react-international-phone-border-radius: 0.5rem;
+  --react-international-phone-height: 3rem;
+  --react-international-phone-font-size: 1rem;
+  --react-international-phone-country-selector-background-color: var(--surface);
+  --react-international-phone-country-selector-background-color-hover: var(--surface-2);
+  --react-international-phone-country-selector-border-color: var(--line);
+  --react-international-phone-country-selector-arrow-color: var(--muted);
+  --react-international-phone-dropdown-item-background-color: var(--surface);
+  --react-international-phone-dropdown-item-text-color: var(--foreground);
+  --react-international-phone-dropdown-item-dial-code-color: var(--muted);
+  --react-international-phone-selected-dropdown-item-background-color: var(--surface-2);
+  --react-international-phone-selected-dropdown-item-text-color: var(--foreground);
+  --react-international-phone-selected-dropdown-item-dial-code-color: var(--muted);
+  --react-international-phone-dropdown-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+  --react-international-phone-dial-code-preview-background-color: var(--surface-2);
+  --react-international-phone-dial-code-preview-text-color: var(--muted);
+  --react-international-phone-dial-code-preview-border-color: var(--line);
+}
+.phone-field .react-international-phone-input-container {
+  width: 100%;
+}
+.phone-field .react-international-phone-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+.phone-field .react-international-phone-input:focus,
+.phone-field .react-international-phone-country-selector-button:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.phone-field .react-international-phone-country-selector-dropdown {
+  z-index: 40;
+  max-width: calc(100vw - 2rem);
+}

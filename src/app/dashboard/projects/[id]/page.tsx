@@ -26,6 +26,7 @@ import { fetchExpenseTotals } from "@/lib/expenses";
 import { daysFromToday, formatDate, formatPKR, formatRelativeDate, karachiDay } from "@/lib/format";
 import { awaitingMyResponse, fetchPaymentTotals, viewerSide } from "@/lib/payments";
 import { getOrigin } from "@/lib/origin";
+import { formatPhone } from "@/lib/phone";
 import { overallProgress } from "@/lib/project";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
@@ -390,7 +391,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
           <p className="text-sm text-muted">{client.email}</p>
           {client.phone && (
             <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
-              <Phone className="size-3.5" aria-hidden /> {client.phone}
+              <Phone className="size-3.5" aria-hidden /> {formatPhone(client.phone)}
             </p>
           )}
 

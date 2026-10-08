@@ -1,3 +1,5 @@
+import { toE164 } from "@/lib/phone";
+
 const pkr = new Intl.NumberFormat("en-PK");
 
 export function formatPKR(amount: number) {
@@ -97,9 +99,13 @@ export function formatRelativeDate(value: string | null | undefined) {
   return formatDate(value);
 }
 
-// Turns a Pakistani number like 0300-1234567 into the digits wa.me expects.
+// The digits wa.me expects (country code first, no plus). Handles international numbers and
+// older Pakistani-style entries like 0300-1234567.
 export function whatsappNumber(phone: string | null | undefined) {
   if (!phone) return null;
+  const e164 = toE164(phone);
+  if (e164) return e164.slice(1);
+  // Not a number we can verify: fall back to the digits, the way it always worked.
   const digits = phone.replace(/\D/g, "");
   if (!digits) return null;
   if (digits.startsWith("92")) return digits;

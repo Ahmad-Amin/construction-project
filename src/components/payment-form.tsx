@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import type { FormState } from "@/app/login/actions";
+import { AmountInput } from "@/components/amount-input";
 import { sideLabel, type PaymentSide } from "@/lib/payments";
 import { button, inputClass } from "@/lib/ui";
 
@@ -47,13 +48,12 @@ export function PaymentForm({
           <span className="mb-1.5 block text-sm font-medium">
             {received ? "Amount received (PKR)" : "Amount you paid (PKR)"}
           </span>
-          <input
+          <AmountInput
             name="amount"
-            inputMode="numeric"
             required
             defaultValue={v("amount")}
             placeholder="5,000,000"
-            className={`${inputClass} text-lg font-semibold`}
+            className="text-lg font-semibold"
           />
         </label>
 
