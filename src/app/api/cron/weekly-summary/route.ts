@@ -6,8 +6,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { renderWeeklySummaryEmail, signSummaryPhotos, type WeeklySummary } from "@/lib/weekly-summary";
 
 export const dynamic = "force-dynamic";
-// Plenty of room to send a few hundred emails one after another.
-export const maxDuration = 300;
+// Vercel's limit on the free plan. Emails go out ten at a time, so this covers a few thousand.
+export const maxDuration = 60;
 
 function authorised(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   let sent = 0;
   let failed = 0;
 
-  for (const row of rows) {
+  async function deliver(row: (typeof rows)[number]) {
     let ok = false;
     let reason = "";
     try {
@@ -66,6 +66,10 @@ export async function GET(request: Request) {
       failed++;
       console.error(`[weekly-summary] ${row.out_project_id}: ${reason}`);
     }
+  }
+
+  for (let i = 0; i < rows.length; i += 10) {
+    await Promise.all(rows.slice(i, i + 10).map(deliver));
   }
 
   return NextResponse.json({ due: rows.length, sent, failed });
