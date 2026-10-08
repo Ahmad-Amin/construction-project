@@ -26,7 +26,11 @@ function provider(): Provider {
   return process.env.NODE_ENV === "production" ? "none" : "ethereal";
 }
 
-const from = () => process.env.EMAIL_FROM || `${PRODUCT_NAME} <no-reply@example.com>`;
+// Hosting dashboards (unlike .env files) keep quote marks you paste around a value, and a quoted
+// "Name <address>" is read as one odd name, so the mail server rejects the sender. Strip them.
+const from = () =>
+  (process.env.EMAIL_FROM ?? "").trim().replace(/^(["'])(.*)\1$/, "$2").trim() ||
+  `${PRODUCT_NAME} <no-reply@example.com>`;
 
 // One transporter per server process.
 let transporter: Promise<Transporter> | null = null;
