@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
+import { Info } from "lucide-react";
 import type { FormState } from "@/app/login/actions";
 import { AmountInput } from "@/components/amount-input";
 import { DateField } from "@/components/date-field";
@@ -29,6 +30,7 @@ export function PaymentForm({
   mode,
   side,
   scheduleOptions = [],
+  sheet = false,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   projectId: string;
@@ -45,6 +47,8 @@ export function PaymentForm({
   side: PaymentSide;
   // Instalments from the payment schedule that this payment could settle.
   scheduleOptions?: { id: string; label: string }[];
+  // Shown in the slide-over panel: the buttons stay in view along the bottom while the form scrolls.
+  sheet?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const [uploading, setUploading] = useState(false);
@@ -54,10 +58,10 @@ export function PaymentForm({
   const otherParty = sideLabel[received ? "client" : "contractor"].toLowerCase();
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className={sheet ? "flex flex-1 flex-col gap-4" : "space-y-4"}>
       {draftId && <input type="hidden" name="id" value={draftId} />}
 
-      <section className="space-y-4 rounded-2xl border border-line bg-surface p-5 sm:p-6">
+      <section className="space-y-4 rounded-2xl border border-line bg-surface p-4 sm:p-5">
         {scheduleOptions.length > 0 && (
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">What is this payment for?</span>
@@ -73,25 +77,25 @@ export function PaymentForm({
           </label>
         )}
 
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">
-            {received ? "Amount received (PKR)" : "Amount you paid (PKR)"}
-          </span>
-          <AmountInput
-            name="amount"
-            required
-            defaultValue={v("amount")}
-            placeholder="5,000,000"
-            className="text-lg font-semibold"
-          />
-        </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium">
+              {received ? "Amount received (PKR)" : "Amount you paid (PKR)"}
+            </span>
+            <AmountInput
+              name="amount"
+              required
+              defaultValue={v("amount")}
+              placeholder="5,000,000"
+              className="font-semibold"
+            />
+          </label>
 
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">
-            {received ? "Date received" : "Date paid"}
-          </span>
-          <DateField name="payment_date" required max={today} today={today} defaultValue={v("payment_date")} />
-        </label>
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium">{received ? "Date received" : "Date paid"}</span>
+            <DateField name="payment_date" required max={today} today={today} defaultValue={v("payment_date")} />
+          </label>
+        </div>
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium">Reference</span>
@@ -116,9 +120,18 @@ export function PaymentForm({
           />
           <span className="mt-1 block text-xs text-muted">Optional. The {otherParty} can see this.</span>
         </label>
+
+        <PaymentReceiptField
+          projectId={projectId}
+          paymentId={(draftId ?? paymentId)!}
+          initialPath={receipt?.path ?? null}
+          initialUrl={receipt?.url ?? null}
+          onBusyChange={setUploading}
+        />
       </section>
 
-      <p className="rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">
+      <p className="flex items-start gap-2 px-1 text-sm text-muted">
+        <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
         The {otherParty} will be asked to confirm this payment. It counts toward the total once they do.
       </p>
 
@@ -128,15 +141,13 @@ export function PaymentForm({
         </p>
       )}
 
-      <PaymentReceiptField
-        projectId={projectId}
-        paymentId={(draftId ?? paymentId)!}
-        initialPath={receipt?.path ?? null}
-        initialUrl={receipt?.url ?? null}
-        onBusyChange={setUploading}
-      />
-
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <div
+        className={`flex justify-end gap-2 ${
+          sheet
+            ? "sticky bottom-0 z-10 -mx-5 mt-auto border-t border-line bg-background/95 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:-mx-8 sm:px-8"
+            : "pt-1"
+        }`}
+      >
         <Link href={`/dashboard/projects/${projectId}/payments`} className={button("secondary")}>
           Cancel
         </Link>

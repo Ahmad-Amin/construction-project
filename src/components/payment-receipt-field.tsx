@@ -80,16 +80,16 @@ export function PaymentReceiptField({
   }
 
   return (
-    <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
-      <h2 className="font-semibold">Receipt</h2>
-      <p className="mt-0.5 text-sm text-muted">
+    <div className="border-t border-line pt-4">
+      <p className="text-sm font-medium">Receipt</p>
+      <p className="mt-0.5 text-xs text-muted">
         Optional. A photo of the bank transfer, cheque or receipt helps the other side confirm quickly.
       </p>
 
       <input type="hidden" name="receipt_path" value={path} />
 
       {preview && (
-        <div className="relative mt-4 w-40 overflow-hidden rounded-lg bg-surface-2">
+        <div className="relative mt-3 w-32 overflow-hidden rounded-lg bg-surface-2">
           {/* eslint-disable-next-line @next/next/no-img-element -- signed or local preview URL */}
           <img src={preview} alt="Receipt preview" className="aspect-[3/4] w-full object-cover" />
           {!busy && (
@@ -105,12 +105,12 @@ export function PaymentReceiptField({
         </div>
       )}
 
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <button type="button" disabled={busy} onClick={() => cameraInput.current?.click()} className={button("secondary")}>
-          <Camera className="size-5" aria-hidden /> {preview ? "Retake" : "Take photo"}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" disabled={busy} onClick={() => cameraInput.current?.click()} className={button("secondary", "sm")}>
+          <Camera className="size-4" aria-hidden /> {preview ? "Retake" : "Take photo"}
         </button>
-        <button type="button" disabled={busy} onClick={() => galleryInput.current?.click()} className={button("secondary")}>
-          <Images className="size-5" aria-hidden /> Choose from gallery
+        <button type="button" disabled={busy} onClick={() => galleryInput.current?.click()} className={button("secondary", "sm")}>
+          <Images className="size-4" aria-hidden /> Choose from gallery
         </button>
       </div>
       <input
@@ -145,6 +145,6 @@ export function PaymentReceiptField({
           {error}
         </p>
       )}
-    </section>
+    </div>
   );
 }

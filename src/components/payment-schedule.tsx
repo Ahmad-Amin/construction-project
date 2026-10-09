@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CalendarClock, CheckCircle2, Clock, Pencil, Plus } from "lucide-react";
+import { LinkPending } from "@/components/link-pending";
 import { ScheduleCollapse } from "@/components/schedule-collapse";
 import { DeleteScheduleButton, ScheduleReminderButton } from "@/components/schedule-controls";
 import { formatPKR } from "@/lib/format";
@@ -56,6 +57,7 @@ export function PaymentSchedule({
         </div>
         <Link href={`${base}/schedule/new`} className={`${button("primary", "sm")} shrink-0`}>
           <Plus className="size-4" aria-hidden /> Add an instalment
+          <LinkPending className="size-4" />
         </Link>
       </section>
     );
@@ -78,6 +80,7 @@ export function PaymentSchedule({
         isOwner ? (
           <Link href={`${base}/schedule/new`} className={button("secondary", "sm")}>
             <Plus className="size-4" aria-hidden /> Add
+            <LinkPending className="size-4" />
           </Link>
         ) : null
       }
@@ -123,9 +126,10 @@ export function PaymentSchedule({
                       href={`${base}/schedule/${item.id}/edit`}
                       aria-label={`Edit ${item.title}`}
                       title="Edit"
-                      className="flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+                      className="relative flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
                     >
                       <Pencil className="size-4" aria-hidden />
+                      <LinkPending className="absolute size-4 rounded-full bg-surface" />
                     </Link>
                     <DeleteScheduleButton projectId={projectId} itemId={item.id} title={item.title} />
                   </span>
@@ -140,6 +144,7 @@ export function PaymentSchedule({
                   {canPay && (
                     <Link href={`${base}/new?for=${item.id}`} className={button(isOwner ? "secondary" : "primary", "sm")}>
                       {isOwner ? "Record payment" : "I made this payment"}
+                      <LinkPending className="size-4" />
                     </Link>
                   )}
                 </div>

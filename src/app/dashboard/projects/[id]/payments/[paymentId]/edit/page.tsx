@@ -1,73 +1,8 @@
-import { notFound, redirect } from "next/navigation";
-import { PaymentForm } from "@/components/payment-form";
-import { formatPKR, todayInKarachi } from "@/lib/format";
-import { fetchSchedule } from "@/lib/payment-schedule";
-import { PAYMENT_COLUMNS, toPaymentItem, viewerSide, withReceiptUrls } from "@/lib/payments";
-import { getProjectBasic } from "@/lib/projects";
-import { createClient } from "@/lib/supabase/server";
-import { getViewer } from "@/lib/viewer";
-import { updatePayment } from "../../actions";
+import { EditPaymentView } from "@/components/payment-views";
 
 export const metadata = { title: "Edit payment" };
 
-export default async function EditPaymentPage({
-  params,
-}: {
-  params: Promise<{ id: string; paymentId: string }>;
-}) {
+export default async function EditPaymentPage({ params }: { params: Promise<{ id: string; paymentId: string }> }) {
   const { id, paymentId } = await params;
-  const project = await getProjectBasic(id);
-  if (!project) notFound();
-
-  const viewer = await getViewer();
-  const isTeam = !!viewer?.company && viewer.company.id === project.company_id;
-  const isOwner = isTeam && viewer?.company?.role === "owner";
-  const side = viewerSide(isTeam, isOwner);
-  if (!viewer || !side) redirect(`/dashboard/projects/${id}/payments`);
-
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("payments")
-    .select(PAYMENT_COLUMNS)
-    .eq("id", paymentId)
-    .eq("project_id", id)
-    .maybeSingle();
-  if (!data) notFound();
-  const [payment] = await withReceiptUrls(supabase, [toPaymentItem(data)]);
-
-  // Only whoever recorded it can change it, and not once the other side has confirmed.
-  if (payment.createdBy !== viewer.userId || payment.status === "confirmed") {
-    redirect(`/dashboard/projects/${id}/payments`);
-  }
-
-  // The instalments this payment could settle: ones with money still to come, and the one it is on now.
-  const options = (await fetchSchedule(supabase, id)).filter((i) => i.left > 0 || i.id === payment.scheduleItemId);
-
-  return (
-    <div>
-      <h2 className="mb-5 text-xl font-bold tracking-tight">Edit payment</h2>
-      {payment.status === "disputed" && (
-        <p className="mb-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
-          This payment was disputed. Saving your changes sends it back for confirmation.
-        </p>
-      )}
-      <PaymentForm
-        mode="edit"
-        side={side}
-        projectId={id}
-        today={todayInKarachi()}
-        paymentId={paymentId}
-        receipt={payment.receiptPath ? { path: payment.receiptPath, url: payment.receiptUrl } : null}
-        action={updatePayment.bind(null, id, paymentId)}
-        initial={{
-          amount: String(payment.amount),
-          payment_date: payment.date,
-          reference: payment.reference,
-          note: payment.note,
-          schedule_item_id: payment.scheduleItemId ?? "",
-        }}
-        scheduleOptions={options.map((i) => ({ id: i.id, label: `${i.title} · ${formatPKR(i.amount)}` }))}
-      />
-    </div>
-  );
+  return <EditPaymentView projectId={id} paymentId={paymentId} />;
 }

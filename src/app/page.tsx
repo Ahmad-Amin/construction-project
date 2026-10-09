@@ -116,7 +116,7 @@ export default function Home() {
               You post from your phone. They look whenever they like.
             </p>
             <div className="animate-rise mt-9 flex flex-col gap-3 sm:flex-row sm:items-center" style={{ animationDelay: "180ms" }}>
-              <Link href="/signup" className={button("primary")}>
+              <Link href="/signup" className={button("primary", "lg")}>
                 Create your account
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
@@ -324,7 +324,7 @@ export default function Home() {
               <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">Try it on your next project.</h2>
               <p className="mt-4 max-w-md text-lg text-muted">Set up your company and your first project in a few minutes.</p>
             </div>
-            <Link href="/signup" className={`${button("primary")} shrink-0`}>
+            <Link href="/signup" className={`${button("primary", "lg")} shrink-0`}>
               Create your account
               <ArrowRight className="size-4" aria-hidden />
             </Link>

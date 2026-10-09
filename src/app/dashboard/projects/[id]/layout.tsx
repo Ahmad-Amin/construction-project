@@ -14,9 +14,12 @@ import { getViewer } from "@/lib/viewer";
 // Shared header and tabs for every screen of one project.
 export default async function ProjectLayout({
   children,
+  sheet,
   params,
 }: {
   children: React.ReactNode;
+  // The slide-over panel for payment forms (see the @sheet folder).
+  sheet: React.ReactNode;
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
@@ -72,6 +75,7 @@ export default async function ProjectLayout({
 
       <ProjectTabs projectId={id} />
       <ProjectContent projectId={id}>{children}</ProjectContent>
+      {sheet}
     </main>
   );
 }

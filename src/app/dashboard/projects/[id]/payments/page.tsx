@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, Banknote, CalendarClock, Clock, Plus } from "lucide-react";
+import { LinkPending } from "@/components/link-pending";
 import { PaymentCard } from "@/components/payment-card";
 import { PaymentSchedule } from "@/components/payment-schedule";
 import { formatDate, formatPKR } from "@/lib/format";
@@ -145,6 +146,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
         {side && (
           <Link href={`/dashboard/projects/${id}/payments/new`} className={button("primary", "sm")}>
             <Plus className="size-4" aria-hidden /> {side === "client" ? "I made a payment" : "Record payment"}
+            <LinkPending className="size-4" />
           </Link>
         )}
       </div>

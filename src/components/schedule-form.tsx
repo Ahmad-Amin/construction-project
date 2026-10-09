@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { Info } from "lucide-react";
 import type { FormState } from "@/app/login/actions";
 import { AmountInput } from "@/components/amount-input";
 import type { Stage } from "@/lib/payment-schedule";
@@ -15,19 +16,22 @@ export function ScheduleForm({
   stages,
   initial,
   mode,
+  sheet = false,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   projectId: string;
   stages: Stage[];
   initial: ScheduleFormValues;
   mode: "create" | "edit";
+  // Shown in the slide-over panel: the buttons stay in view along the bottom.
+  sheet?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const v = (key: keyof ScheduleFormValues) => state.values?.[key] ?? initial[key];
 
   return (
-    <form action={formAction} className="space-y-5">
-      <section className="space-y-4 rounded-2xl border border-line bg-surface p-5 sm:p-6">
+    <form action={formAction} className={sheet ? "flex flex-1 flex-col gap-4" : "space-y-4"}>
+      <section className="space-y-4 rounded-2xl border border-line bg-surface p-4 sm:p-5">
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium">Name</span>
           <input
@@ -42,7 +46,7 @@ export function ScheduleForm({
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium">Amount (PKR)</span>
-          <AmountInput name="amount" required defaultValue={v("amount")} placeholder="500,000" className="text-lg font-semibold" />
+          <AmountInput name="amount" required defaultValue={v("amount")} placeholder="500,000" className="font-semibold" />
         </label>
 
         <label className="block">
@@ -61,7 +65,8 @@ export function ScheduleForm({
         </label>
       </section>
 
-      <p className="rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">
+      <p className="flex items-start gap-2 px-1 text-sm text-muted">
+        <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
         This is only a plan. No payment is created until one is recorded and confirmed on the Payments page.
       </p>
 
@@ -71,7 +76,13 @@ export function ScheduleForm({
         </p>
       )}
 
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <div
+        className={`flex justify-end gap-2 ${
+          sheet
+            ? "sticky bottom-0 z-10 -mx-5 mt-auto border-t border-line bg-background/95 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:-mx-8 sm:px-8"
+            : "pt-1"
+        }`}
+      >
         <Link href={`/dashboard/projects/${projectId}/payments`} className={button("secondary")}>
           Cancel
         </Link>
