@@ -14,7 +14,8 @@ export default async function LoginPage({
 
   return (
     <AuthShell
-      aside
+      variant="signin"
+      topLink={{ href: "/signup", label: "New here? Create an account" }}
       title="Welcome back"
       subtitle="Sign in to follow your project's progress, payments and updates."
       footer={
@@ -39,7 +40,7 @@ export default async function LoginPage({
 
       <LoginMethods />
 
-      <div className="mt-6 border-t border-line pt-5">
+      <div className="mt-8 border-t border-line pt-6">
         <DemoButtons compact />
       </div>
     </AuthShell>

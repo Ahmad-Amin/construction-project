@@ -75,6 +75,8 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
 
   return (
     <AuthShell
+      variant="invite"
+      topLink={{ href: "/login", label: "Sign in" }}
       title={title}
       subtitle={subtitle}
       footer={

@@ -8,6 +8,8 @@ export const metadata = { title: "Reset your password" };
 export default function ForgotPasswordPage() {
   return (
     <AuthShell
+      variant="reset"
+      topLink={{ href: "/login", label: "Back to sign in" }}
       title="Reset your password"
       subtitle="Enter your email and we'll send you a link to choose a new one."
       footer={
