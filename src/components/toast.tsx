@@ -97,8 +97,8 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
 
   const text = (
     <span className="min-w-0 flex-1">
-      <span className="block text-sm font-semibold">{toast.title}</span>
-      {toast.body && <span className="mt-0.5 line-clamp-3 text-sm text-muted">{toast.body}</span>}
+      <span className="block break-words text-sm font-semibold">{toast.title}</span>
+      {toast.body && <span className="mt-0.5 line-clamp-3 break-words text-sm text-muted">{toast.body}</span>}
     </span>
   );
 
