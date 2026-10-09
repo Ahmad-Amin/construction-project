@@ -2,11 +2,12 @@ import Link from "next/link";
 import { ArrowRight, Banknote, Camera, CheckCircle2, Clock, Eye, EyeOff, HardHat, TrendingUp } from "lucide-react";
 import { BackToTop } from "@/components/back-to-top";
 import { DemoButtons } from "@/components/demo-buttons";
+import { Faq } from "@/components/faq";
 import { LandingVisual } from "@/components/landing-visual";
 import { PublicFooter, PublicHeader } from "@/components/public-chrome";
 import { SectionNav } from "@/components/section-nav";
 import { SiteIllustration } from "@/components/site-illustration";
-import { PRODUCT_NAME } from "@/lib/site";
+import { CONTACT_EMAIL, PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
 
 export const metadata = {
@@ -33,20 +34,48 @@ const day = [
 
 const questions = [
   {
+    q: "What do I need to get started?",
+    a: "An email address and a few minutes. You add your company, then your first project and your client, and you get a private link to send them.",
+  },
+  {
     q: "Does my client need to install anything?",
     a: "No. They open a link on their phone, choose a password, and that's it.",
+  },
+  {
+    q: "How does my client get in?",
+    a: "You send them their own invite link, on WhatsApp or however you like. They set a password and see only their own project, nobody else's.",
   },
   {
     q: "Can my client see what I spend?",
     a: "Only what you choose to share. New expenses start hidden, and the totals your client sees never include them.",
   },
   {
+    q: "What if my client disagrees with a payment?",
+    a: "They can dispute it and say why. You both see the result, and nothing counts towards the total until it's sorted.",
+  },
+  {
+    q: "Does it remind my client about things?",
+    a: "Yes. When a payment needs their confirmation, a new site update is posted or a stage is finished, they get a notification in the app and an email. You can also send a reminder yourself with one tap.",
+  },
+  {
+    q: "Does it work on a weak connection?",
+    a: "Yes. Photos are shrunk on your phone before they upload and are retried if the signal drops, so an update from a site with poor reception still goes through.",
+  },
+  {
     q: "Is it only for big projects?",
     a: "No. A house, an extra floor, a renovation, a shop fit-out. If you have a client who keeps asking for updates, it fits.",
   },
   {
-    q: "What if my client disagrees with a payment?",
-    a: "They can dispute it and say why. You both see the result, and nothing counts towards the total until it's sorted.",
+    q: "Can my site supervisor use it too?",
+    a: "Not yet. For now the account belongs to the company owner, who posts the updates. Logins for your site team are on our list.",
+  },
+  {
+    q: "Can I take my records with me?",
+    a: "Yes. Download your projects, stages, updates, expenses and payments as spreadsheets whenever you like.",
+  },
+  {
+    q: "Is it available in Urdu?",
+    a: "Not yet. For now it's in English, though you can write your site updates and notes in any language.",
   },
 ];
 
@@ -268,16 +297,23 @@ export default function Home() {
 
         {/* Questions */}
         <section id="questions" className="scroll-mt-20 border-t border-line">
-          <div className={`${wrap} py-20 lg:py-28`}>
-            <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">Questions you might have</h2>
-            <dl className="mt-12 grid gap-x-16 gap-y-10 md:grid-cols-2">
-              {questions.map(({ q, a }) => (
-                <div key={q}>
-                  <dt className="text-lg font-semibold tracking-tight">{q}</dt>
-                  <dd className="mt-2 max-w-lg leading-relaxed text-muted">{a}</dd>
-                </div>
-              ))}
-            </dl>
+          <div className={`${wrap} grid gap-10 py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-16 lg:py-28`}>
+            <div className="lg:sticky lg:top-28 lg:self-start">
+              <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">Questions you might have</h2>
+              <p className="mt-4 max-w-sm text-lg leading-relaxed text-muted">
+                Straight answers to the things most people want to know before they try it.
+              </p>
+              {CONTACT_EMAIL && (
+                <p className="mt-3 max-w-sm leading-relaxed text-muted">
+                  Don&apos;t see yours?{" "}
+                  <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-foreground underline underline-offset-4">
+                    Write to us
+                  </a>
+                  .
+                </p>
+              )}
+            </div>
+            <Faq items={questions} />
           </div>
         </section>
 
