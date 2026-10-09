@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import {
   listNotifications,
@@ -25,13 +25,24 @@ export function NotificationBell({ unread, pathname }: { unread: number; pathnam
   // Only counts while the server still reports the same number, so a new notification brings the badge back.
   const cleared = clearedFor !== null && unread === clearedFor;
 
+  const wrapper = useRef<HTMLDivElement>(null);
+
+  // Closes on Escape, or on a press anywhere outside the bell and its list. (A full-screen
+  // backdrop can't do this job: the top bar's blur effect would trap it inside the bar.)
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpenOn(null);
     };
+    const onPress = (e: PointerEvent) => {
+      if (wrapper.current && !wrapper.current.contains(e.target as Node)) setOpenOn(null);
+    };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPress);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPress);
+    };
   }, [open]);
 
   function toggle() {
@@ -57,7 +68,7 @@ export function NotificationBell({ unread, pathname }: { unread: number; pathnam
   const hasUnread = !cleared && (unread > 0 || (items?.some((n) => !n.read) ?? false));
 
   return (
-    <div className="relative">
+    <div ref={wrapper} className="relative">
       <button
         type="button"
         onClick={toggle}
@@ -75,12 +86,6 @@ export function NotificationBell({ unread, pathname }: { unread: number; pathnam
 
       {open && (
         <>
-          <button
-            type="button"
-            aria-label="Close notifications"
-            onClick={() => setOpenOn(null)}
-            className="fixed inset-0 z-40 cursor-default"
-          />
           <div
             role="dialog"
             aria-label="Notifications"
