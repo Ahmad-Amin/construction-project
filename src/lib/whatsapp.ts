@@ -70,3 +70,19 @@ export function paymentReminder(p: {
       : `I've recorded a payment of ${formatPKR(p.amount)} (${p.date}) for ${p.projectName}.`;
   return `${hello}\n\n${what} Please confirm it here so we both have the same record: ${p.link}\n\n– ${p.from}`;
 }
+
+// Asks the homeowner for an instalment that has fallen due. Sent from the contractor's own WhatsApp.
+export function scheduledPaymentRequest(p: {
+  to: string | null;
+  from: string;
+  projectName: string;
+  title: string;
+  amount: number;
+  link: string;
+}) {
+  const hello = p.to ? `${GREETING} ${p.to},` : `${GREETING},`;
+  return (
+    `${hello}\n\nThe next payment on ${p.projectName} is due: ${p.title}, ${formatPKR(p.amount)}.\n\n` +
+    `When you have paid, please record it here so we both have the same record: ${p.link}\n\n– ${p.from}`
+  );
+}

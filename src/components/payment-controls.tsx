@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Check, Trash2 } from "lucide-react";
 import { Spinner } from "@/components/spinner";
+import { useToast } from "@/components/toast";
 import {
   deletePayment,
   respondToPayment,
@@ -20,6 +21,7 @@ export function DeletePaymentButton({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   return (
     <span>
@@ -33,6 +35,7 @@ export function DeletePaymentButton({
           startTransition(async () => {
             const result = await deletePayment(projectId, paymentId);
             setError(result.error ?? null);
+            if (!result.error) toast.success("Payment deleted");
           });
         }}
         className="flex size-9 items-center justify-center rounded-lg text-danger transition-colors hover:bg-surface-2 disabled:opacity-40"
@@ -60,11 +63,13 @@ export function PaymentResponse({
   const [disputing, setDisputing] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   function respond(action: "confirm" | "dispute") {
     startTransition(async () => {
       const result = await respondToPayment(projectId, paymentId, action, reason);
       setError(result.error ?? null);
+      if (!result.error) toast.success(action === "confirm" ? "Payment confirmed" : "Payment disputed", action === "confirm" ? undefined : "The other side has been told why.");
     });
   }
 

@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { AlertTriangle, Banknote, Camera, CalendarDays, CheckCircle2, Flag, PartyPopper, UserPlus, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Banknote, Camera, CalendarClock, CalendarDays, CheckCircle2, Flag, PartyPopper, UserPlus, type LucideIcon } from "lucide-react";
 import { timeAgo } from "@/lib/format";
 import type { NotificationItem, NotificationKind } from "@/lib/notifications";
 
 const icons: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   payment_recorded: { icon: Banknote, tone: "bg-primary-soft text-data-accent" },
+  payment_due: { icon: CalendarClock, tone: "bg-primary-soft text-data-accent" },
   payment_confirmed: { icon: CheckCircle2, tone: "bg-success-soft text-success" },
   payment_disputed: { icon: AlertTriangle, tone: "bg-danger-soft text-danger" },
   update_posted: { icon: Camera, tone: "bg-primary-soft text-data-accent" },
@@ -13,6 +14,16 @@ const icons: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   project_completed: { icon: PartyPopper, tone: "bg-success-soft text-success" },
   weekly_summary: { icon: CalendarDays, tone: "bg-primary-soft text-data-accent" },
 };
+
+// The round icon for a kind of notification (also used by toasts).
+export function NotificationIcon({ kind, className = "mt-0.5 size-9 rounded-lg" }: { kind: NotificationKind; className?: string }) {
+  const { icon: Icon, tone } = icons[kind];
+  return (
+    <span className={`flex shrink-0 items-center justify-center ${tone} ${className}`}>
+      <Icon className="size-[18px]" aria-hidden />
+    </span>
+  );
+}
 
 // One notification, used in the bell's dropdown and on the Notifications page.
 export function NotificationRow({ item, onOpen }: { item: NotificationItem; onOpen?: () => void }) {

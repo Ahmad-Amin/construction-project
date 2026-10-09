@@ -1,5 +1,6 @@
 "use client";
 
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -17,6 +18,7 @@ import { prepareReceipt } from "@/lib/images";
 import { createClient } from "@/lib/supabase/client";
 import { button, inputClass } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
+import { useToast } from "@/components/toast";
 
 export type ExpenseFormValues = {
   amount: string;
@@ -43,6 +45,7 @@ export function ExpenseForm({
   isOwner: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const editing = !!expenseId;
   // One id per draft. Retrying a failed save re-uses it, so it can never save twice.
   const draftId = useRef(expenseId ?? newId());
@@ -141,6 +144,7 @@ export function ExpenseForm({
         : await createExpense(projectId, draftId.current, input);
       if (result.error) return setError(result.error);
 
+      toast.success(editing ? "Expense updated" : "Expense added");
       router.push(`/dashboard/projects/${projectId}/expenses`);
     } catch {
       setError("Something went wrong. Please check your connection and try again.");

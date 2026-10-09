@@ -1,7 +1,9 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, Banknote, Clock, Plus } from "lucide-react";
+import { AlertTriangle, Banknote, CalendarClock, Clock, Plus } from "lucide-react";
 import { PaymentCard } from "@/components/payment-card";
+import { PaymentSchedule } from "@/components/payment-schedule";
 import { formatDate, formatPKR } from "@/lib/format";
 import {
   awaitingMyResponse,
@@ -10,12 +12,14 @@ import {
   viewerSide,
 } from "@/lib/payments";
 import { getOrigin } from "@/lib/origin";
+import { fetchSchedule, type ScheduleItem } from "@/lib/payment-schedule";
 import { getProjectBasic } from "@/lib/projects";
+import { SCHEDULE_COOKIE } from "@/lib/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/types";
 import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
-import { paymentReminder, whatsappHref } from "@/lib/whatsapp";
+import { paymentReminder, scheduledPaymentRequest, whatsappHref } from "@/lib/whatsapp";
 import { whatsappEnabled } from "@/lib/whatsapp-api";
 
 export const metadata = { title: "Payments" };
@@ -33,10 +37,13 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
   const side = viewerSide(isTeam, isOwner);
 
   const supabase = await createClient();
-  const [payments, totals] = await Promise.all([
+  const [payments, totals, schedule] = await Promise.all([
     fetchPayments(supabase, id, PAGE_SIZE),
     fetchPaymentTotals(supabase, id),
+    fetchSchedule(supabase, id),
   ]);
+  const scheduleHidden = (await cookies()).get(SCHEDULE_COOKIE)?.value === "hidden";
+  const dueNow = schedule.filter((i) => i.status === "due");
   const waitingOnMe = awaitingMyResponse(totals, side);
 
   // Until there are notifications, the person waiting can nudge the other side on WhatsApp.
@@ -63,6 +70,19 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
       }),
     );
   };
+  const requestFor = (item: ScheduleItem) =>
+    whatsappHref(
+      client?.phone,
+      scheduledPaymentRequest({
+        to: client?.name?.trim().split(/\s+/)[0] ?? null,
+        from: viewer?.company?.name ?? "",
+        projectName: project.name,
+        title: item.title,
+        amount: item.left,
+        link,
+      }),
+    );
+  const scheduleTitles = new Map(schedule.map((i) => [i.id, i.title]));
   const total = totals.confirmedCount + totals.pendingCount + totals.disputedCount;
 
   return (
@@ -76,6 +96,18 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
           {waitingOnMe === 1
             ? "1 payment is waiting for your confirmation."
             : `${waitingOnMe} payments are waiting for your confirmation.`}
+        </p>
+      )}
+
+      {dueNow.length > 0 && side && (
+        <p
+          role="status"
+          className="mb-4 flex items-start gap-2 rounded-xl bg-primary-soft px-4 py-3 text-sm font-medium text-primary-hover"
+        >
+          <CalendarClock className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {dueNow.length === 1
+            ? `${dueNow[0].title} (${formatPKR(dueNow[0].left)}) is due now.`
+            : `${dueNow.length} instalments are due now, ${formatPKR(dueNow.reduce((s, i) => s + i.left, 0))} in total.`}
         </p>
       )}
 
@@ -104,7 +136,11 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
         )}
       </section>
 
-      <div className="mt-6 mb-4 flex items-center justify-between gap-3">
+      <div className="mt-6">
+        <PaymentSchedule items={schedule} projectId={id} side={side} manualHref={requestFor} initialHidden={scheduleHidden} />
+      </div>
+
+      <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="font-semibold">Payments</h2>
         {side && (
           <Link href={`/dashboard/projects/${id}/payments/new`} className={button("primary", "sm")}>
@@ -130,7 +166,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
       ) : (
         <div className="space-y-3">
           {payments.map((p) => (
-            <PaymentCard key={p.id} payment={p} projectId={id} viewerId={viewer?.userId} side={side} nudgeHref={nudgeFor(p)} sendReminders={whatsappEnabled()} />
+            <PaymentCard key={p.id} payment={p} projectId={id} viewerId={viewer?.userId} side={side} nudgeHref={nudgeFor(p)} sendReminders={whatsappEnabled()} forLabel={p.scheduleItemId ? (scheduleTitles.get(p.scheduleItemId) ?? null) : null} />
           ))}
           {total > PAGE_SIZE && (
             <p className="text-center text-sm text-muted">Showing the latest {PAGE_SIZE} payments.</p>

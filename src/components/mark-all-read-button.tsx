@@ -4,12 +4,14 @@ import { useEffect, useState, useTransition } from "react";
 import { Check, CheckCheck } from "lucide-react";
 import { markAllNotificationsRead } from "@/app/dashboard/notifications/actions";
 import { Spinner } from "@/components/spinner";
+import { useToast } from "@/components/toast";
 import { button } from "@/lib/ui";
 
 // "Mark all as read" with visible feedback: a spinner while it works, then a tick once done.
 export function MarkAllReadButton({ unread }: { unread: number }) {
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
+  const toast = useToast();
 
   // The page re-renders with nothing unread as soon as the action finishes; keep the button
   // around for a moment so the "All read" tick can be seen.
@@ -23,6 +25,7 @@ export function MarkAllReadButton({ unread }: { unread: number }) {
     startTransition(async () => {
       await markAllNotificationsRead();
       setDone(true);
+      toast.success("All notifications marked as read");
     });
   }
 

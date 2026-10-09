@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { flash } from "@/lib/flash";
 import { createClient } from "@/lib/supabase/server";
 import type { FormState } from "@/app/login/actions";
 
@@ -17,6 +18,7 @@ export async function createCompany(
   if (error) {
     return { error: "We couldn't set up your company. Please try again." };
   }
+  await flash("Your company is set up");
   redirect("/dashboard");
 }
 

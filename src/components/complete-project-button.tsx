@@ -1,9 +1,11 @@
 "use client";
 
+
 import { useState, useTransition } from "react";
 import { CheckCircle2, RotateCcw, TriangleAlert } from "lucide-react";
 import { setProjectStatus } from "@/app/dashboard/projects/actions";
 import { button } from "@/lib/ui";
+import { useToast } from "@/components/toast";
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -28,13 +30,17 @@ export function CompleteProjectButton({
   const [pending, startTransition] = useTransition();
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   function change(status: "active" | "completed") {
     setError(null);
     startTransition(async () => {
       const result = await setProjectStatus(projectId, status);
       if (result.error) setError(result.error);
-      else setConfirming(false);
+      else {
+        setConfirming(false);
+        toast.success(status === "completed" ? "Project marked complete" : "Project reopened");
+      }
     });
   }
 

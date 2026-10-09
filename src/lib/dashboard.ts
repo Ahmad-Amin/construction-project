@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { todayInKarachi } from "@/lib/format";
+import { formatPKR, todayInKarachi } from "@/lib/format";
 import type { PaymentSide, PaymentStatus } from "@/lib/payments";
 import { overallProgress } from "@/lib/project";
 import { one, type ProjectStatus } from "@/lib/types";
@@ -74,7 +74,7 @@ type ProjectRow = {
   status: ProjectStatus;
   client: { name: string } | { name: string }[] | null;
   company: { name: string } | { name: string }[] | null;
-  milestones: { progress_percent: number }[];
+  milestones: { id: string; progress_percent: number }[];
   project_updates: { update_date: string; text: string }[];
   archived_at: string | null;
   budget: { amount: number } | { amount: number }[] | null;
@@ -89,7 +89,9 @@ type PaymentRow = {
   reference: string;
   created_at: string;
   created_by_name: string;
+  schedule_item_id: string | null;
 };
+type ScheduleRow = { id: string; project_id: string; milestone_id: string | null; title: string; amount: number };
 type ExpenseRow = {
   id: string;
   project_id: string;
@@ -135,11 +137,11 @@ export async function fetchDashboard(
   supabase: SupabaseClient,
   side: PaymentSide | null,
 ): Promise<Dashboard> {
-  const [projectsRes, paymentsRes, expensesRes, updatesRes, photosRes] = await Promise.all([
+  const [projectsRes, paymentsRes, expensesRes, updatesRes, photosRes, scheduleRes] = await Promise.all([
     supabase
       .from("projects")
       .select(
-        "id, name, location, status, archived_at, client:clients(name), company:companies(name), milestones(progress_percent), project_updates(update_date, text), budget:project_budgets(amount)",
+        "id, name, location, status, archived_at, client:clients(name), company:companies(name), milestones(id, progress_percent), project_updates(update_date, text), budget:project_budgets(amount)",
       )
       .order("created_at", { ascending: false })
       .order("update_date", { referencedTable: "project_updates", ascending: false })
@@ -147,7 +149,7 @@ export async function fetchDashboard(
       .limit(1, { referencedTable: "project_updates" }),
     supabase
       .from("payments")
-      .select("id, project_id, amount, status, side, payment_date, reference, created_at, created_by_name")
+      .select("id, project_id, amount, status, side, payment_date, reference, created_at, created_by_name, schedule_item_id")
       .order("created_at", { ascending: false })
       .limit(2000),
     supabase
@@ -165,6 +167,7 @@ export async function fetchDashboard(
       .select("id, project_id, storage_path, thumb_path")
       .order("created_at", { ascending: false })
       .limit(40),
+    supabase.from("scheduled_payments").select("id, project_id, milestone_id, title, amount").limit(500),
   ]);
 
   const projectRows = (projectsRes.data ?? []) as ProjectRow[];
@@ -172,6 +175,7 @@ export async function fetchDashboard(
   const expenses = (expensesRes.data ?? []) as ExpenseRow[];
   const updates = (updatesRes.data ?? []) as UpdateRow[];
   const photoRows = (photosRes.data ?? []) as PhotoRow[];
+  const scheduled = (scheduleRes.data ?? []) as ScheduleRow[];
 
   // Photos are private; sign the small versions for covers and the "fresh" strip.
   const signed = new Map<string, string>();
@@ -248,6 +252,36 @@ export async function fetchDashboard(
           p.awaitingMe === 1
             ? "1 payment is waiting for your confirmation"
             : `${p.awaitingMe} payments are waiting for your confirmation`,
+        href: `/dashboard/projects/${p.id}/payments`,
+      });
+    }
+  }
+  // Scheduled instalments whose stage is complete and that nobody has paid for yet.
+  for (const p of side ? live : []) {
+    const row = projectRows.find((r) => r.id === p.id);
+    const finished = new Set((row?.milestones ?? []).filter((m) => m.progress_percent >= 100).map((m) => m.id));
+    let count = 0;
+    let total = 0;
+    let first = "";
+    for (const item of scheduled) {
+      if (item.project_id !== p.id) continue;
+      if (item.milestone_id !== null && !finished.has(item.milestone_id)) continue;
+      const covered = payments
+        .filter((x) => x.schedule_item_id === item.id && (x.status === "confirmed" || x.status === "pending"))
+        .reduce((sum, x) => sum + Number(x.amount), 0);
+      const left = Number(item.amount) - covered;
+      if (left <= 0) continue;
+      count += 1;
+      total += left;
+      first ||= item.title;
+    }
+    if (count > 0) {
+      attention.push({
+        id: `due-${p.id}`,
+        tone: "warn",
+        projectId: p.id,
+        projectName: p.name,
+        text: count === 1 ? `${first} is due (${formatPKR(total)})` : `${count} instalments are due (${formatPKR(total)})`,
         href: `/dashboard/projects/${p.id}/payments`,
       });
     }

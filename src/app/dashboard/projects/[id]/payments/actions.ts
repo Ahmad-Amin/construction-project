@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { FormState } from "@/app/login/actions";
 import { dateOrNull, parseAmount, snapshot, text } from "@/lib/forms";
+import { flash } from "@/lib/flash";
 import { queueNotificationDelivery } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,6 +32,7 @@ type PaymentFields = {
   reference: string;
   note: string;
   receipt_path: string | null;
+  schedule_item_id: string | null;
 };
 
 function readPayment(
@@ -48,9 +50,12 @@ function readPayment(
   if (receipt && !receipt.startsWith(folder)) {
     return { ok: false, error: "The receipt didn't upload properly. Please attach it again." };
   }
+  const forItem = text(formData, "schedule_item_id");
+  if (forItem && !UUID.test(forItem)) return { ok: false, error: GENERIC };
   return {
     ok: true,
     value: {
+      schedule_item_id: forItem || null,
       amount: amount.value,
       payment_date: date,
       reference: text(formData, "reference"),
@@ -87,6 +92,7 @@ export async function createPayment(
 
   refresh(projectId);
   queueNotificationDelivery();
+  await flash("Payment recorded. The other side has been asked to confirm it.");
   redirect(`/dashboard/projects/${projectId}/payments`);
 }
 
@@ -124,6 +130,7 @@ export async function updatePayment(
   }
 
   refresh(projectId);
+  await flash("Payment updated");
   redirect(`/dashboard/projects/${projectId}/payments`);
 }
 
@@ -228,5 +235,121 @@ export async function sendPaymentReminder(projectId: string, paymentId: string):
     ok: true,
     offerManual: true,
     message: `Reminder sent to ${name} in the app${r.email ? " and by email" : ""}, but not on WhatsApp because ${why}.`,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// The payment schedule: the owner's plan of instalments. It never creates a payment.
+// ---------------------------------------------------------------------------
+type ScheduleFields = { title: string; amount: number; milestone_id: string | null };
+
+function readSchedule(formData: FormData): { ok: false; error: string } | { ok: true; value: ScheduleFields } {
+  const title = text(formData, "title");
+  if (!title) return { ok: false, error: "Please give this instalment a name, like \"Foundation instalment\"." };
+  if (title.length > 80) return { ok: false, error: "Please keep the name to 80 characters or fewer." };
+  const amount = parseAmount(text(formData, "amount"), "the amount");
+  if (amount.error) return { ok: false, error: amount.error };
+  if (!amount.value) return { ok: false, error: "Please enter the amount." };
+  const stage = text(formData, "milestone_id");
+  if (stage && !UUID.test(stage)) return { ok: false, error: GENERIC };
+  return { ok: true, value: { title, amount: amount.value, milestone_id: stage || null } };
+}
+
+// An instalment that confirmed payments already cover is a settled record, so it is left alone.
+async function isSettled(supabase: Awaited<ReturnType<typeof createClient>>, itemId: string) {
+  const [{ data: item }, { data: paid }] = await Promise.all([
+    supabase.from("scheduled_payments").select("amount").eq("id", itemId).maybeSingle(),
+    supabase.from("payments").select("amount").eq("schedule_item_id", itemId).eq("status", "confirmed"),
+  ]);
+  if (!item) return false;
+  return (paid ?? []).reduce((sum, p) => sum + Number(p.amount), 0) >= Number(item.amount);
+}
+
+const SETTLED = "This instalment is fully paid, so it can't be changed.";
+
+export async function createScheduleItem(projectId: string, _: FormState, formData: FormData): Promise<FormState> {
+  const parsed = readSchedule(formData);
+  if (!parsed.ok) return fail(formData, parsed.error);
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("scheduled_payments").insert({ project_id: projectId, ...parsed.value });
+  if (error) {
+    return fail(formData, error.code === "42501" ? "Only the company owner can change the payment schedule." : friendly(error));
+  }
+
+  refresh(projectId);
+  await flash("Added to the payment schedule");
+  redirect(`/dashboard/projects/${projectId}/payments`);
+}
+
+export async function updateScheduleItem(
+  projectId: string,
+  itemId: string,
+  _: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const parsed = readSchedule(formData);
+  if (!parsed.ok) return fail(formData, parsed.error);
+
+  const supabase = await createClient();
+  if (await isSettled(supabase, itemId)) return fail(formData, SETTLED);
+  const { data, error } = await supabase
+    .from("scheduled_payments")
+    .update(parsed.value)
+    .eq("id", itemId)
+    .eq("project_id", projectId)
+    .select("id");
+  if (error) return fail(formData, friendly(error));
+  if (!data?.length) return fail(formData, "Only the company owner can change the payment schedule.");
+
+  refresh(projectId);
+  await flash("Instalment updated");
+  redirect(`/dashboard/projects/${projectId}/payments`);
+}
+
+export async function deleteScheduleItem(projectId: string, itemId: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  if (await isSettled(supabase, itemId)) return { error: SETTLED };
+  const { data, error } = await supabase
+    .from("scheduled_payments")
+    .delete()
+    .eq("id", itemId)
+    .eq("project_id", projectId)
+    .select("id");
+  if (error) return { error: "We couldn't remove that instalment. Please try again." };
+  if (!data?.length) return { error: "Only the company owner can change the payment schedule." };
+
+  refresh(projectId);
+  return {};
+}
+
+// "Request payment": the owner reminds the homeowner about an instalment that has fallen due.
+// It goes to the bell and email. (WhatsApp isn't used for this yet, so the button offers the
+// message ready to send from the owner's own WhatsApp.)
+export async function sendScheduleReminder(projectId: string, itemId: string): Promise<ReminderResult> {
+  if (!UUID.test(projectId) || !UUID.test(itemId)) return { ok: false, message: GENERIC };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("send_schedule_reminder", { p_item: itemId });
+  if (error) return { ok: false, message: friendly(error) };
+
+  const r = data as { result: "sent" | "too_soon" | "not_joined"; client?: string; minutes?: number; email?: boolean };
+  const name = r.client?.trim().split(/\s+/)[0] || "Your client";
+
+  if (r.result === "not_joined") {
+    return { ok: false, message: `${name} hasn't joined yet. Send them their invite link first.` };
+  }
+  if (r.result === "too_soon") {
+    const hours = Math.floor((r.minutes ?? 0) / 60);
+    const wait = hours >= 1 ? `${hours} h` : `${r.minutes} min`;
+    return { ok: false, message: `${name} was reminded recently. You can remind them again in about ${wait}.` };
+  }
+
+  refresh(projectId);
+  queueNotificationDelivery();
+  return {
+    ok: true,
+    offerManual: true,
+    message: `${name} was told in the app${r.email ? " and by email" : ""}.`,
   };
 }

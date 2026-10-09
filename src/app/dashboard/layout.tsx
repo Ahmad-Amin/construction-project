@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { ToastProvider } from "@/components/toast";
 import { roleOf } from "@/components/role-tag";
 import { countUnread } from "@/lib/notifications";
 import { viewerSide } from "@/lib/payments";
@@ -14,6 +15,9 @@ import { getViewer } from "@/lib/viewer";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
+
+  // A brand-new contractor has no company yet. The page shows its own full-screen setup, with no sidebar.
+  if (!viewer.company && !viewer.isClient) return <>{children}</>;
 
   const collapsed = (await cookies()).get(SIDEBAR_COOKIE)?.value === "collapsed";
   const isOwner = viewer.company?.role === "owner";
@@ -49,19 +53,21 @@ export default async function DashboardLayout({ children }: { children: React.Re
   );
 
   return (
-    <AppShell
-      user={{
-        name: viewer.name,
-        email: viewer.email,
-        role: roleOf(isOwner, !!viewer.company),
-      }}
-      company={viewer.company ? { name: viewer.company.name, logoUrl: viewer.company.logoUrl } : null}
-      projects={projects}
-      isOwner={isOwner}
-      unread={unread}
-      initialCollapsed={collapsed}
-    >
-      {children}
-    </AppShell>
+    <ToastProvider>
+      <AppShell
+        user={{
+          name: viewer.name,
+          email: viewer.email,
+          role: roleOf(isOwner, !!viewer.company),
+        }}
+        company={viewer.company ? { name: viewer.company.name, logoUrl: viewer.company.logoUrl } : null}
+        projects={projects}
+        isOwner={isOwner}
+        unread={unread}
+        initialCollapsed={collapsed}
+      >
+        {children}
+      </AppShell>
+    </ToastProvider>
   );
 }

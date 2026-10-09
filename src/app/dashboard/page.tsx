@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Archive, BellRing, Banknote, ChevronDown, Hammer, Plus, Receipt, Trash2 } from "lucide-react";
+import { signOut } from "@/app/login/actions";
 import { AuthForm } from "@/components/auth-form";
+import { AuthShell } from "@/components/auth-shell";
 import {
   ActivityFeed,
   AttentionPanel,
@@ -43,19 +45,27 @@ export default async function DashboardPage({
   // Brand-new account: no company and not an invited homeowner.
   if (!viewer.company && !viewer.isClient) {
     return (
-      <main className="mx-auto w-full max-w-sm px-4 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">Set up your company</h1>
-        <p className="mt-1 mb-6 text-sm text-muted">
-          This is the name your clients will see on their project page.
-        </p>
-        <div className="rounded-2xl border border-line bg-surface p-6">
-          <AuthForm
-            action={createCompany}
-            submitLabel="Continue"
-            fields={[{ name: "name", label: "Company name", autoComplete: "organization" }]}
-          />
-        </div>
-      </main>
+      <AuthShell
+        variant="company"
+        title="Set up your company"
+        subtitle="This is the name your clients will see on their project page."
+        topSlot={
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground"
+            >
+              Sign out
+            </button>
+          </form>
+        }
+      >
+        <AuthForm
+          action={createCompany}
+          submitLabel="Continue"
+          fields={[{ name: "name", label: "Company name", autoComplete: "organization" }]}
+        />
+      </AuthShell>
     );
   }
 

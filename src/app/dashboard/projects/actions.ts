@@ -9,6 +9,7 @@ import { queueNotificationDelivery } from "@/lib/notifications";
 import { parsePhone } from "@/lib/phone";
 import { getOrigin } from "@/lib/origin";
 import { removeProjectFiles } from "@/lib/storage";
+import { flash } from "@/lib/flash";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
 import { renderWeeklySummaryEmail, signSummaryPhotos, type WeeklySummary } from "@/lib/weekly-summary";
@@ -46,6 +47,7 @@ export async function createProject(_: FormState, formData: FormData): Promise<F
   if (error || !data) return fail(formData, error ? friendly(error) : GENERIC_ERROR);
   // The side navigation lists projects, so it has to reload to include this one.
   revalidatePath("/dashboard", "layout");
+  await flash("Project created");
   redirect(`/dashboard/projects/${data}`);
 }
 
@@ -114,6 +116,7 @@ export async function updateProject(
 
   // The name and status also show in the side navigation.
   revalidatePath("/dashboard", "layout");
+  await flash("Project saved");
   redirect(`/dashboard/projects/${id}`);
 }
 

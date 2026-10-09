@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { PaymentForm } from "@/components/payment-form";
-import { todayInKarachi } from "@/lib/format";
+import { formatPKR, todayInKarachi } from "@/lib/format";
+import { fetchSchedule } from "@/lib/payment-schedule";
 import { PAYMENT_COLUMNS, toPaymentItem, viewerSide, withReceiptUrls } from "@/lib/payments";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
@@ -39,6 +40,9 @@ export default async function EditPaymentPage({
     redirect(`/dashboard/projects/${id}/payments`);
   }
 
+  // The instalments this payment could settle: ones with money still to come, and the one it is on now.
+  const options = (await fetchSchedule(supabase, id)).filter((i) => i.left > 0 || i.id === payment.scheduleItemId);
+
   return (
     <div>
       <h2 className="mb-5 text-xl font-bold tracking-tight">Edit payment</h2>
@@ -60,7 +64,9 @@ export default async function EditPaymentPage({
           payment_date: payment.date,
           reference: payment.reference,
           note: payment.note,
+          schedule_item_id: payment.scheduleItemId ?? "",
         }}
+        scheduleOptions={options.map((i) => ({ id: i.id, label: `${i.title} · ${formatPKR(i.amount)}` }))}
       />
     </div>
   );

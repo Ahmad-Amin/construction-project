@@ -14,6 +14,8 @@ export type PaymentFormValues = {
   payment_date: string;
   reference: string;
   note: string;
+  // The scheduled instalment this payment settles; empty when it isn't tied to one.
+  schedule_item_id: string;
 };
 
 export function PaymentForm({
@@ -26,6 +28,7 @@ export function PaymentForm({
   today,
   mode,
   side,
+  scheduleOptions = [],
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   projectId: string;
@@ -40,6 +43,8 @@ export function PaymentForm({
   mode: "create" | "edit";
   // Who is recording: the wording changes ("received" vs "paid").
   side: PaymentSide;
+  // Instalments from the payment schedule that this payment could settle.
+  scheduleOptions?: { id: string; label: string }[];
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const [uploading, setUploading] = useState(false);
@@ -53,6 +58,21 @@ export function PaymentForm({
       {draftId && <input type="hidden" name="id" value={draftId} />}
 
       <section className="space-y-4 rounded-2xl border border-line bg-surface p-5 sm:p-6">
+        {scheduleOptions.length > 0 && (
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium">What is this payment for?</span>
+            <select name="schedule_item_id" defaultValue={v("schedule_item_id")} className={inputClass}>
+              <option value="">Not part of the payment schedule</option>
+              {scheduleOptions.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-xs text-muted">Optional. Once confirmed, it counts toward that instalment.</span>
+          </label>
+        )}
+
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium">
             {received ? "Amount received (PKR)" : "Amount you paid (PKR)"}

@@ -13,6 +13,7 @@ export function AuthShell({
   footer,
   variant,
   topLink,
+  topSlot,
 }: {
   title: string;
   subtitle?: string;
@@ -20,6 +21,7 @@ export function AuthShell({
   footer?: React.ReactNode;
   variant?: AuthVariant;
   topLink?: { href: string; label: string };
+  topSlot?: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-dvh flex-col">
@@ -35,6 +37,7 @@ export function AuthShell({
               {topLink.label}
             </Link>
           )}
+          {topSlot}
         </div>
       </header>
 

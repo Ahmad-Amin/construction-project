@@ -1,9 +1,11 @@
 "use client";
 
+
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { Spinner } from "@/components/spinner";
 import { deleteUpdate } from "@/app/dashboard/projects/[id]/updates/actions";
+import { useToast } from "@/components/toast";
 
 export function DeleteUpdateButton({
   projectId,
@@ -14,6 +16,7 @@ export function DeleteUpdateButton({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   return (
     <div className="text-right">
@@ -27,6 +30,7 @@ export function DeleteUpdateButton({
           startTransition(async () => {
             const result = await deleteUpdate(projectId, updateId);
             setError(result.error ?? null);
+            if (!result.error) toast.success("Update deleted");
           });
         }}
         className="flex size-10 items-center justify-center rounded-lg text-danger transition-colors hover:bg-surface-2 disabled:opacity-40"

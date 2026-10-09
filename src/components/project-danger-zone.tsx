@@ -1,10 +1,12 @@
 "use client";
 
+
 import { useState, useTransition } from "react";
 import { Archive, ArchiveRestore, Trash2, TriangleAlert } from "lucide-react";
 import { archiveProject, deleteProject } from "@/app/dashboard/projects/actions";
 import { Spinner } from "@/components/spinner";
 import { button, inputClass } from "@/lib/ui";
+import { useToast } from "@/components/toast";
 
 export type DeleteCounts = {
   milestones: number;
@@ -35,12 +37,14 @@ export function ProjectDangerZone({
   const [confirming, setConfirming] = useState(false);
   const [typed, setTyped] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   function toggleArchive() {
     setError(null);
     startTransition(async () => {
       const result = await archiveProject(projectId, !archived);
       if (result.error) setError(result.error);
+      else toast.success(archived ? "Project restored" : "Project archived");
     });
   }
 

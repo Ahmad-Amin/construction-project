@@ -25,6 +25,8 @@ export type PaymentItem = {
   // Optional proof of payment (a photo). The link is signed and short-lived; null when there is none.
   receiptPath: string | null;
   receiptUrl: string | null;
+  // The scheduled instalment this payment settles, when it says so.
+  scheduleItemId: string | null;
 };
 
 type Row = {
@@ -42,10 +44,11 @@ type Row = {
   responded_at: string | null;
   dispute_reason: string | null;
   receipt_path: string | null;
+  schedule_item_id: string | null;
 };
 
 export const PAYMENT_COLUMNS =
-  "id, amount, payment_date, reference, note, side, status, created_by, created_by_name, edited, responded_by_name, responded_at, dispute_reason, receipt_path";
+  "id, amount, payment_date, reference, note, side, status, created_by, created_by_name, edited, responded_by_name, responded_at, dispute_reason, receipt_path, schedule_item_id";
 
 export function toPaymentItem(r: Row): PaymentItem {
   return {
@@ -64,6 +67,7 @@ export function toPaymentItem(r: Row): PaymentItem {
     disputeReason: r.dispute_reason,
     receiptPath: r.receipt_path,
     receiptUrl: null,
+    scheduleItemId: r.schedule_item_id,
   };
 }
 

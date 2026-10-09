@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, Clock, Paperclip, Pencil, User } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, Clock, Paperclip, Pencil, User } from "lucide-react";
 import { DeletePaymentButton, PaymentResponse } from "@/components/payment-controls";
 import { PaymentReminderButton } from "@/components/payment-reminder-button";
 import { WhatsAppButton } from "@/components/whatsapp-button";
@@ -19,6 +19,7 @@ export function PaymentCard({
   side,
   nudgeHref,
   sendReminders = false,
+  forLabel = null,
 }: {
   payment: PaymentItem;
   projectId: string;
@@ -29,6 +30,8 @@ export function PaymentCard({
   nudgeHref?: string | null;
   // The contractor can send the reminder from the app (instead of opening WhatsApp by hand).
   sendReminders?: boolean;
+  // The scheduled instalment this payment settles, when it says so.
+  forLabel?: string | null;
 }) {
   const isRecorder = p.createdBy === viewerId;
   const otherSide: PaymentSide = p.side === "contractor" ? "client" : "contractor";
@@ -53,6 +56,12 @@ export function PaymentCard({
           {formatPKR(p.amount)}
         </p>
       </div>
+
+      {forLabel && (
+        <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium">
+          <CalendarClock className="size-3.5 text-muted" aria-hidden /> For: {forLabel}
+        </p>
+      )}
 
       {p.note && <p className="mt-3 text-sm leading-relaxed">{p.note}</p>}
 

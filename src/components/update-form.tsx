@@ -1,5 +1,6 @@
 "use client";
 
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +12,7 @@ import { prepareImage } from "@/lib/images";
 import { createClient } from "@/lib/supabase/client";
 import { button, inputClass } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
+import { useToast } from "@/components/toast";
 
 const MAX_PHOTOS = 10;
 
@@ -27,6 +29,7 @@ export function UpdateForm({
   today: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   // One id per draft. Retrying a failed post re-uses it, so it can never post twice.
   const updateId = useRef(newId());
   const uploaded = useRef(new Map<string, Uploaded>());
@@ -133,6 +136,7 @@ export function UpdateForm({
         setError(result.error);
         return;
       }
+      toast.success("Update posted");
       router.push(`/dashboard/projects/${projectId}/updates?posted=${updateId.current}`);
     } catch {
       setError("Something went wrong. Please check your connection and try again.");

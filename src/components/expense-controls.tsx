@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Eye, EyeOff, Trash2 } from "lucide-react";
 import { Spinner } from "@/components/spinner";
+import { useToast } from "@/components/toast";
 import {
   deleteExpense,
   setExpenseVisibility,
@@ -12,10 +13,12 @@ import {
 function useAction() {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const run = (task: () => Promise<ActionResult>) =>
+  const toast = useToast();
+  const run = (task: () => Promise<ActionResult>, done?: string) =>
     startTransition(async () => {
       const result = await task();
       setError(result.error ?? null);
+      if (!result.error && done) toast.success(done);
     });
   return { pending, error, run };
 }
@@ -50,7 +53,7 @@ export function VisibilityToggle({
       <button
         type="button"
         disabled={pending}
-        onClick={() => run(() => setExpenseVisibility(projectId, expenseId, !visible))}
+        onClick={() => run(() => setExpenseVisibility(projectId, expenseId, !visible), visible ? "Hidden from the homeowner" : "Now shown to the homeowner")}
         title={visible ? "Tap to hide from the client" : "Tap to show to the client"}
         className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-opacity disabled:opacity-50 ${style}`}
       >
@@ -85,7 +88,7 @@ export function DeleteExpenseButton({
         title="Delete expense"
         onClick={() => {
           if (window.confirm(`Delete "${label}"? Its receipt is deleted too, and this can't be undone.`)) {
-            run(() => deleteExpense(projectId, expenseId));
+            run(() => deleteExpense(projectId, expenseId), "Expense deleted");
           }
         }}
         className="flex size-9 items-center justify-center rounded-lg text-danger transition-colors hover:bg-surface-2 disabled:opacity-40"

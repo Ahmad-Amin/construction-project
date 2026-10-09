@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { MessageCircle } from "lucide-react";
 import { sendPaymentReminder, type ReminderResult } from "@/app/dashboard/projects/[id]/payments/actions";
 import { button } from "@/lib/ui";
+import { useToast } from "@/components/toast";
 
 // "Remind the homeowner": sends the reminder from the app (WhatsApp, email and the bell). When
 // WhatsApp can't be used for this homeowner it says why and offers the old way: open WhatsApp
@@ -19,10 +20,15 @@ export function PaymentReminderButton({
 }) {
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<ReminderResult | null>(null);
+  const toast = useToast();
 
   function send() {
     setResult(null);
-    startTransition(async () => setResult(await sendPaymentReminder(projectId, paymentId)));
+    startTransition(async () => {
+      const r = await sendPaymentReminder(projectId, paymentId);
+      setResult(r);
+      if (r.ok) toast.success("Reminder sent", r.message);
+    });
   }
 
   return (
