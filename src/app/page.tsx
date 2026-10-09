@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, Banknote, Camera, CheckCircle2, Clock, Eye, EyeOff, TrendingUp } from "lucide-react";
+import { ArrowRight, Banknote, Camera, CheckCircle2, Clock, Eye, EyeOff, HardHat, TrendingUp } from "lucide-react";
+import { BackToTop } from "@/components/back-to-top";
 import { DemoButtons } from "@/components/demo-buttons";
 import { LandingVisual } from "@/components/landing-visual";
 import { PublicFooter, PublicHeader } from "@/components/public-chrome";
+import { SectionNav } from "@/components/section-nav";
 import { SiteIllustration } from "@/components/site-illustration";
 import { PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
@@ -11,7 +13,7 @@ export const metadata = {
   title: { absolute: `${PRODUCT_NAME}: show your clients how the work is going` },
 };
 
-const wrap = "mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12";
+const wrap = "mx-auto w-full max-w-[96rem] px-5 sm:px-8 lg:px-12 2xl:px-16";
 
 // A day with the portal, told plainly.
 const day = [
@@ -60,23 +62,23 @@ export default function Home() {
   return (
     <div className="flex min-h-full flex-col">
       <PublicHeader wide>
-        <nav aria-label="Page sections" className="hidden items-center gap-1 lg:flex">
-          {anchors.map((a) => (
-            <a key={a.href} href={a.href} className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-foreground">
-              {a.label}
-            </a>
-          ))}
-        </nav>
+        <SectionNav items={anchors} />
       </PublicHeader>
 
       <main className="flex-1">
         {/* Hero */}
         <section className={`${wrap} grid items-center gap-14 pb-20 pt-10 sm:pt-14 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:pb-28 lg:pt-20`}>
           <div>
-            <p className="animate-rise inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm text-muted">
-              <span className="size-2 rounded-full bg-primary" aria-hidden /> Made for home builders and renovators
+            <p className="animate-rise flex items-center gap-3 text-[0.95rem]">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-primary-soft text-data-accent ring-1 ring-primary/25">
+                <HardHat className="size-[18px]" aria-hidden />
+              </span>
+              <span>
+                <span className="text-muted">Made for </span>
+                <span className="font-semibold">home builders and renovators</span>
+              </span>
             </p>
-            <h1 className="animate-rise mt-6 text-balance text-5xl font-semibold leading-[1.04] tracking-tight sm:text-6xl lg:text-7xl" style={{ animationDelay: "60ms" }}>
+            <h1 className="animate-rise mt-6 text-balance text-5xl font-semibold leading-[1.04] tracking-tight sm:text-6xl lg:text-7xl 2xl:text-[5.25rem]" style={{ animationDelay: "60ms" }}>
               Your client keeps asking how it&apos;s going.{" "}
               <span className="text-muted">Now they can just look.</span>
             </h1>
@@ -204,7 +206,7 @@ export default function Home() {
                 </p>
                 <div className="mt-6 grid grid-cols-3 gap-3" aria-hidden>
                   {[0, 1, 2].map((i) => (
-                    <div key={i} className="bg-hero aspect-[4/3] overflow-hidden rounded-2xl">
+                    <div key={i} className="bg-hero aspect-[4/3] overflow-hidden rounded-2xl border border-line shadow-sm shadow-black/5">
                       <SiteIllustration className={`size-full object-cover ${i === 1 ? "scale-150 origin-bottom-left" : i === 2 ? "scale-125 origin-bottom-right" : ""}`} />
                     </div>
                   ))}
@@ -237,7 +239,7 @@ export default function Home() {
 
         {/* Privacy */}
         <section id="privacy" className={`${wrap} scroll-mt-20 py-20 lg:py-28`}>
-          <div className="rounded-[2rem] bg-foreground px-7 py-12 text-background sm:px-12 sm:py-16 lg:px-16">
+          <div className="privacy-band rounded-[2rem] px-7 py-12 sm:px-12 sm:py-16 lg:px-16">
             <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
               <div>
                 <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">Your numbers stay yours</h2>
@@ -248,10 +250,17 @@ export default function Home() {
                   How we look after your data <ArrowRight className="size-4" aria-hidden />
                 </Link>
               </div>
-              <ul className="space-y-6 text-lg leading-relaxed opacity-80">
-                <li>Your client sees progress, photos and payments. They don&apos;t see your costs until you decide to share them, receipt and all.</li>
-                <li>Every company&apos;s projects are kept apart by the database itself, not just hidden on screen.</li>
-                <li>Download everything as a spreadsheet whenever you like. We don&apos;t sell your data.</li>
+              <ul className="space-y-6 text-lg leading-relaxed">
+                {[
+                  "Your client sees progress, photos and payments. They don't see your costs until you decide to share them, receipt and all.",
+                  "Every company's projects are kept apart by the database itself, not just hidden on screen.",
+                  "Download everything as a spreadsheet whenever you like. We don't sell your data.",
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-3.5">
+                    <CheckCircle2 className="mt-1 size-5 shrink-0 text-data-accent" aria-hidden />
+                    <span className="opacity-80">{t}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -288,6 +297,7 @@ export default function Home() {
       </main>
 
       <PublicFooter wide />
+      <BackToTop />
     </div>
   );
 }

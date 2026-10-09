@@ -287,3 +287,18 @@ body {
 .pending-hint {
   animation: pending-hint 150ms ease-out 180ms both;
 }
+
+/* Clicking an in-page link glides to the section, unless the device asks for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* The privacy band on the landing page: the same warm panel as the hero, in both themes, with a
+   hairline border and the normal text colour. (A solid dark or inverted block looked out of
+   place on a light page, and a bright one on a dark page.) */
+.privacy-band {
+  background-image: linear-gradient(135deg, var(--hero-from), var(--hero-to));
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--foreground);
+}
