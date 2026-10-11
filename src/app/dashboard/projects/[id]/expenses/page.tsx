@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Plus, Receipt } from "lucide-react";
+import { LinkPending } from "@/components/link-pending";
 import { ExpenseBreakdown } from "@/components/expense-breakdown";
 import { ExpenseCard } from "@/components/expense-card";
 import { ExpenseFilterBar } from "@/components/expense-filter-bar";
@@ -77,6 +78,7 @@ export default async function ExpensesPage({
         {isTeam && (
           <Link href={`${base}/new`} className={button("primary", "sm")}>
             <Plus className="size-4" aria-hidden /> Add expense
+            <LinkPending className="size-4" />
           </Link>
         )}
       </div>

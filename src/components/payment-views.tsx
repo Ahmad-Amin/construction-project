@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { FormFrame, FormHeading } from "@/components/form-frame";
 import { PaymentForm } from "@/components/payment-form";
 import { ScheduleForm } from "@/components/schedule-form";
 import { formatPKR, todayInKarachi } from "@/lib/format";
@@ -20,15 +21,6 @@ import {
 // its own width.
 type ViewProps = { projectId: string; sheet?: boolean };
 
-const Frame = ({ sheet, children }: { sheet?: boolean; children: React.ReactNode }) => (
-  <div className={sheet ? "flex flex-1 flex-col" : "max-w-3xl"}>{children}</div>
-);
-const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h2 id="sheet-title" className="mb-5 text-xl font-bold tracking-tight">
-    {children}
-  </h2>
-);
-
 export async function NewPaymentView({ projectId: id, forItem, sheet }: ViewProps & { forItem?: string }) {
   const project = await getProjectBasic(id);
   if (!project) notFound();
@@ -48,8 +40,8 @@ export async function NewPaymentView({ projectId: id, forItem, sheet }: ViewProp
   const chosen = open.find((i) => i.id === forItem);
 
   return (
-    <Frame sheet={sheet}>
-      <Heading>{side === "client" ? "Record a payment you made" : "Record payment received"}</Heading>
+    <FormFrame sheet={sheet}>
+      <FormHeading>{side === "client" ? "Record a payment you made" : "Record payment received"}</FormHeading>
       <PaymentForm
         sheet={sheet}
         mode="create"
@@ -67,7 +59,7 @@ export async function NewPaymentView({ projectId: id, forItem, sheet }: ViewProp
           schedule_item_id: chosen?.id ?? "",
         }}
       />
-    </Frame>
+    </FormFrame>
   );
 }
 
@@ -100,8 +92,8 @@ export async function EditPaymentView({ projectId: id, paymentId, sheet }: ViewP
   const options = (await fetchSchedule(supabase, id)).filter((i) => i.left > 0 || i.id === payment.scheduleItemId);
 
   return (
-    <Frame sheet={sheet}>
-      <Heading>Edit payment</Heading>
+    <FormFrame sheet={sheet}>
+      <FormHeading>Edit payment</FormHeading>
       {payment.status === "disputed" && (
         <p className="mb-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
           This payment was disputed. Saving your changes sends it back for confirmation.
@@ -125,7 +117,7 @@ export async function EditPaymentView({ projectId: id, paymentId, sheet }: ViewP
         }}
         scheduleOptions={options.map((i) => ({ id: i.id, label: `${i.title} · ${formatPKR(i.amount)}` }))}
       />
-    </Frame>
+    </FormFrame>
   );
 }
 
@@ -141,8 +133,8 @@ export async function NewScheduleView({ projectId: id, sheet }: ViewProps) {
   const stages = await fetchStages(await createClient(), id);
 
   return (
-    <Frame sheet={sheet}>
-      <Heading>Add an instalment</Heading>
+    <FormFrame sheet={sheet}>
+      <FormHeading>Add an instalment</FormHeading>
       <ScheduleForm
         sheet={sheet}
         mode="create"
@@ -151,7 +143,7 @@ export async function NewScheduleView({ projectId: id, sheet }: ViewProps) {
         action={createScheduleItem.bind(null, id)}
         initial={{ title: "", amount: "", milestone_id: "" }}
       />
-    </Frame>
+    </FormFrame>
   );
 }
 
@@ -179,8 +171,8 @@ export async function EditScheduleView({ projectId: id, itemId, sheet }: ViewPro
   if (schedule.find((i) => i.id === itemId)?.status === "paid") redirect(`/dashboard/projects/${id}/payments`);
 
   return (
-    <Frame sheet={sheet}>
-      <Heading>Edit instalment</Heading>
+    <FormFrame sheet={sheet}>
+      <FormHeading>Edit instalment</FormHeading>
       <ScheduleForm
         sheet={sheet}
         mode="edit"
@@ -189,6 +181,6 @@ export async function EditScheduleView({ projectId: id, itemId, sheet }: ViewPro
         action={updateScheduleItem.bind(null, id, itemId)}
         initial={{ title: item.title, amount: String(item.amount), milestone_id: item.milestone_id ?? "" }}
       />
-    </Frame>
+    </FormFrame>
   );
 }

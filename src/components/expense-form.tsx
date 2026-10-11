@@ -1,6 +1,5 @@
 "use client";
 
-
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -36,6 +35,7 @@ export function ExpenseForm({
   initial,
   today,
   isOwner,
+  sheet = false,
 }: {
   projectId: string;
   // Present when editing an existing expense.
@@ -43,6 +43,8 @@ export function ExpenseForm({
   initial: ExpenseFormValues;
   today: string;
   isOwner: boolean;
+  // Shown in the slide-over panel: the buttons stay in view along the bottom while the form scrolls.
+  sheet?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -154,39 +156,39 @@ export function ExpenseForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      <section className="space-y-4 rounded-2xl border border-line bg-surface p-5 sm:p-6">
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">Amount (PKR)</span>
-          <AmountInput
-            value={amount}
-            onValueChange={setAmount}
-            required
-            placeholder="250,000"
-            className="text-lg font-semibold"
-          />
-        </label>
-
+    <form onSubmit={onSubmit} className={sheet ? "flex flex-1 flex-col gap-4" : "space-y-4"}>
+      <section className="space-y-4 rounded-2xl border border-line bg-surface p-4 sm:p-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Category</span>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-              className={inputClass}
-            >
-              {EXPENSE_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {expenseCategoryLabel[c]}
-                </option>
-              ))}
-            </select>
+            <span className="mb-1.5 block text-sm font-medium">Amount (PKR)</span>
+            <AmountInput
+              value={amount}
+              onValueChange={setAmount}
+              required
+              placeholder="250,000"
+              className="font-semibold"
+            />
           </label>
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">Date</span>
             <DateField value={date} onValueChange={setDate} max={today} today={today} required />
           </label>
         </div>
+
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium">Category</span>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
+            className={inputClass}
+          >
+            {EXPENSE_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {expenseCategoryLabel[c]}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium">Vendor or note</span>
@@ -198,95 +200,95 @@ export function ExpenseForm({
             className={inputClass}
           />
         </label>
-      </section>
 
-      <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
-        <h2 className="font-semibold">Receipt</h2>
-        <p className="mt-0.5 text-sm text-muted">Optional, but a photo of the receipt builds trust.</p>
+        <div className="border-t border-line pt-4">
+          <p className="text-sm font-medium">Receipt</p>
+          <p className="mt-0.5 text-xs text-muted">Optional, but a photo of the receipt builds trust.</p>
 
-        {shownReceipt && (
-          <div className="relative mt-4 w-40 overflow-hidden rounded-lg bg-surface-2">
-            {/* eslint-disable-next-line @next/next/no-img-element -- signed or local preview URL */}
-            <img src={shownReceipt} alt="Receipt preview" className="aspect-[3/4] w-full object-cover" />
-            {!busy && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (file) clearFile();
-                  else setRemoveReceipt(true);
-                }}
-                aria-label="Remove receipt"
-                className="absolute right-1 top-1 flex size-8 items-center justify-center rounded-full bg-black/65 text-white"
-              >
-                <X className="size-4" aria-hidden />
-              </button>
-            )}
+          {shownReceipt && (
+            <div className="relative mt-3 w-32 overflow-hidden rounded-lg bg-surface-2">
+              {/* eslint-disable-next-line @next/next/no-img-element -- signed or local preview URL */}
+              <img src={shownReceipt} alt="Receipt preview" className="aspect-[3/4] w-full object-cover" />
+              {!busy && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (file) clearFile();
+                    else setRemoveReceipt(true);
+                  }}
+                  aria-label="Remove receipt"
+                  className="absolute right-1 top-1 flex size-8 items-center justify-center rounded-full bg-black/65 text-white"
+                >
+                  <X className="size-4" aria-hidden />
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => cameraInput.current?.click()}
+              className={button("secondary", "sm")}
+            >
+              <Camera className="size-4" aria-hidden /> {shownReceipt ? "Retake" : "Take photo"}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => galleryInput.current?.click()}
+              className={button("secondary", "sm")}
+            >
+              <Images className="size-4" aria-hidden /> Choose from gallery
+            </button>
           </div>
-        )}
-
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => cameraInput.current?.click()}
-            className={button("secondary")}
-          >
-            <Camera className="size-5" aria-hidden /> {shownReceipt ? "Retake" : "Take photo"}
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => galleryInput.current?.click()}
-            className={button("secondary")}
-          >
-            <Images className="size-5" aria-hidden /> Choose from gallery
-          </button>
+          <input
+            ref={cameraInput}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={(e) => {
+              pick(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <input
+            ref={galleryInput}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              pick(e.target.files);
+              e.target.value = "";
+            }}
+          />
         </div>
-        <input
-          ref={cameraInput}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          hidden
-          onChange={(e) => {
-            pick(e.target.files);
-            e.target.value = "";
-          }}
-        />
-        <input
-          ref={galleryInput}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(e) => {
-            pick(e.target.files);
-            e.target.value = "";
-          }}
-        />
-      </section>
 
-      <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
-        {isOwner ? (
-          <label className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              checked={clientVisible}
-              onChange={(e) => setClientVisible(e.target.checked)}
-              className="mt-0.5 size-5 accent-primary"
-            />
-            <span className="text-sm">
-              <span className="font-medium">Show this expense to the client</span>
-              <span className="block text-muted">
-                Off by default. The client sees it, and its receipt, only when this is on.
+        <div className="border-t border-line pt-4">
+          {isOwner ? (
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={clientVisible}
+                onChange={(e) => setClientVisible(e.target.checked)}
+                className="mt-0.5 size-4 accent-primary"
+              />
+              <span className="text-sm">
+                <span className="font-medium">Show this expense to the client</span>
+                <span className="block text-xs text-muted">
+                  Off by default. The client sees it, and its receipt, only when this is on.
+                </span>
               </span>
-            </span>
-          </label>
-        ) : (
-          <p className="flex items-start gap-2 text-sm text-muted">
-            <Receipt className="mt-0.5 size-4 shrink-0" aria-hidden />
-            The owner decides which expenses the client can see.
-          </p>
-        )}
+            </label>
+          ) : (
+            <p className="flex items-start gap-2 text-sm text-muted">
+              <Receipt className="mt-0.5 size-4 shrink-0" aria-hidden />
+              The owner decides which expenses the client can see.
+            </p>
+          )}
+        </div>
       </section>
 
       {error && (
@@ -300,7 +302,13 @@ export function ExpenseForm({
         </p>
       )}
 
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <div
+        className={`flex justify-end gap-2 ${
+          sheet
+            ? "sticky bottom-0 z-10 -mx-5 mt-auto border-t border-line bg-background/95 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:-mx-8 sm:px-8"
+            : "pt-1"
+        }`}
+      >
         <Link href={`/dashboard/projects/${projectId}/expenses`} className={button("secondary")}>
           Cancel
         </Link>

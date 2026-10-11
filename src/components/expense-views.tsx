@@ -1,0 +1,92 @@
+import { notFound, redirect } from "next/navigation";
+import { ExpenseForm } from "@/components/expense-form";
+import { FormFrame, FormHeading } from "@/components/form-frame";
+import { EXPENSE_COLUMNS, toExpenseItems } from "@/lib/expenses";
+import { todayInKarachi } from "@/lib/format";
+import { getProjectBasic } from "@/lib/projects";
+import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/viewer";
+
+// The two expense forms, used both as full pages and inside the slide-over panel (`sheet`).
+type ViewProps = { projectId: string; sheet?: boolean };
+
+export async function NewExpenseView({ projectId: id, sheet }: ViewProps) {
+  const project = await getProjectBasic(id);
+  if (!project) notFound();
+
+  // Homeowners are read-only; only the company's team can record expenses.
+  const viewer = await getViewer();
+  if (!viewer?.company || viewer.company.id !== project.company_id) {
+    redirect(`/dashboard/projects/${id}/expenses`);
+  }
+  const today = todayInKarachi();
+
+  return (
+    <FormFrame sheet={sheet}>
+      <FormHeading>Add expense</FormHeading>
+      <ExpenseForm
+        sheet={sheet}
+        projectId={id}
+        today={today}
+        isOwner={viewer.company.role === "owner"}
+        initial={{
+          amount: "",
+          date: today,
+          category: "material",
+          note: "",
+          clientVisible: false,
+          receiptPath: null,
+          receiptUrl: null,
+        }}
+      />
+    </FormFrame>
+  );
+}
+
+export async function EditExpenseView({ projectId: id, expenseId, sheet }: ViewProps & { expenseId: string }) {
+  const project = await getProjectBasic(id);
+  if (!project) notFound();
+
+  const viewer = await getViewer();
+  if (!viewer?.company || viewer.company.id !== project.company_id) {
+    redirect(`/dashboard/projects/${id}/expenses`);
+  }
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("expenses")
+    .select(EXPENSE_COLUMNS)
+    .eq("id", expenseId)
+    .eq("project_id", id)
+    .maybeSingle();
+  if (!data) notFound();
+
+  const [expense] = await toExpenseItems(supabase, [data]);
+  const isOwner = viewer.company.role === "owner";
+  // Staff can only edit what they entered themselves.
+  if (!isOwner && expense.createdBy !== viewer.userId) {
+    redirect(`/dashboard/projects/${id}/expenses`);
+  }
+
+  return (
+    <FormFrame sheet={sheet}>
+      <FormHeading>Edit expense</FormHeading>
+      <ExpenseForm
+        sheet={sheet}
+        projectId={id}
+        expenseId={expenseId}
+        today={todayInKarachi()}
+        isOwner={isOwner}
+        initial={{
+          amount: String(expense.amount),
+          date: expense.date,
+          category: expense.category,
+          note: expense.note,
+          clientVisible: expense.clientVisible,
+          receiptPath: expense.receiptPath,
+          receiptUrl: expense.receiptUrl,
+        }}
+      />
+    </FormFrame>
+  );
+}
