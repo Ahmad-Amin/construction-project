@@ -142,7 +142,7 @@ export default async function SettingsPage({
         <SettingsSection
           icon={Palette}
           title="Appearance"
-          description="Choose how the portal looks on this device. System follows your phone or laptop."
+          description="Choose how the app looks on this device. System follows your phone or laptop."
         >
           <ThemeToggle />
         </SettingsSection>

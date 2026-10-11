@@ -25,7 +25,7 @@ const promises = [
   {
     icon: ShieldCheck,
     title: "Your records are yours",
-    body: "We don't sell them, we don't show ads, and we use them for one thing: running your portal.",
+    body: `We don't sell them, we don't show ads, and we use them for one thing: running ${PRODUCT_NAME} for you.`,
   },
   {
     icon: EyeOff,

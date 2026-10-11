@@ -21,7 +21,7 @@ export function GettingStartedCard({ data }: { data: GettingStarted }) {
           </h2>
           <p className="mt-1 text-sm text-muted">
             {data.complete
-              ? "You've used every part of the portal. Your clients can now follow their projects."
+              ? "You've used every part of the app. Your clients can now follow their projects."
               : "Do these once and your client has a real project to follow."}
           </p>
         </div>

@@ -1,6 +1,7 @@
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { formatDate, formatPKR, formatTimestamp } from "@/lib/format";
 import { projectStatusLabel } from "@/lib/project";
+import { PRODUCT_NAME } from "@/lib/site";
 import { sideLabel } from "@/lib/payments";
 import type { StatementData } from "@/lib/statement";
 
@@ -330,7 +331,7 @@ export function StatementDocument({ data }: { data: StatementData }) {
 
         <View style={s.footer} fixed>
           <Text style={s.footerText}>
-            Prepared by {data.company.name} using Client Portal. This statement shows the records shared with the client.
+            Prepared by {data.company.name} using {PRODUCT_NAME}. This statement shows the records shared with the client.
             Payments marked Confirmed were acknowledged by both parties.
           </Text>
           <Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />

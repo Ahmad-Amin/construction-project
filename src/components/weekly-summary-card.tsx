@@ -39,7 +39,7 @@ export function WeeklySummaryCard({
   const status = !companyEnabled
     ? "Weekly summaries are off for your company, so nothing is sent."
     : !clientJoined
-    ? `Starts once ${firstName} has joined the portal.`
+    ? `Starts once ${firstName} has joined.`
     : !active
       ? "Only sent while the project is active."
       : !enabled

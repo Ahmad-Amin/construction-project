@@ -1,4 +1,4 @@
-# Client Portal
+# BuildPeek
 
 A lightweight contractor ↔ homeowner project portal. A contractor opens one project and shows the homeowner what has been completed, what has been spent, what has been paid, the receipts, and what happened recently, without searching WhatsApp or Excel.
 

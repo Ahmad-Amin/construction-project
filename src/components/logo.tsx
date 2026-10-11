@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HardHat } from "lucide-react";
+import { PRODUCT_NAME } from "@/lib/site";
 
 export function Logo({ href = "/", compact = false }: { href?: string; compact?: boolean }) {
   return (
@@ -7,7 +8,7 @@ export function Logo({ href = "/", compact = false }: { href?: string; compact?:
       <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
         <HardHat className="size-5" aria-hidden />
       </span>
-      <span className={compact ? "sr-only" : "text-lg font-bold tracking-tight"}>Client Portal</span>
+      <span className={compact ? "sr-only" : "text-lg font-bold tracking-tight"}>{PRODUCT_NAME}</span>
     </Link>
   );
 }

@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { PRODUCT_NAME } from "@/lib/site";
 
-// Lets a phone "Add to Home Screen" and open the portal like an app.
+// Lets a phone "Add to Home Screen" and open the app like a native one.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Client Portal",
-    short_name: "Client Portal",
+    name: PRODUCT_NAME,
+    short_name: PRODUCT_NAME,
     description:
       "Progress, money, receipts and project updates, shared between contractor and homeowner.",
     start_url: "/dashboard",

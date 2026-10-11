@@ -1,6 +1,6 @@
 // Facts the legal and trust pages need. Set the email and operator name in .env.local
 // before sharing the product: the pages read them, so there is nothing to edit in code.
-export const PRODUCT_NAME = "Client Portal";
+export const PRODUCT_NAME = "BuildPeek";
 
 // Who runs the service. Defaults to the product name until a legal name is set.
 export const OPERATOR_NAME = process.env.NEXT_PUBLIC_OPERATOR_NAME || PRODUCT_NAME;
