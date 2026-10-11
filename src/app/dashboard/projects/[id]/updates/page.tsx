@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Camera, CheckCircle2, Plus } from "lucide-react";
+import { LinkPending } from "@/components/link-pending";
 import { UpdateCard } from "@/components/update-card";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { getOrigin } from "@/lib/origin";
@@ -88,6 +89,7 @@ export default async function UpdatesPage({
         {isTeam && (
           <Link href={`/dashboard/projects/${id}/updates/new`} className={button("primary", "sm")}>
             <Plus className="size-4" aria-hidden /> Add update
+            <LinkPending className="size-4" />
           </Link>
         )}
       </div>

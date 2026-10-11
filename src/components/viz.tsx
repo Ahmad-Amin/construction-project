@@ -13,12 +13,15 @@ export function ProgressRing({
   stroke = 7,
   children,
   label = "complete",
+  tone = "accent",
 }: {
   percent: number;
   size?: number;
   stroke?: number;
   children?: React.ReactNode;
   label?: string;
+  // "success" turns the ring green, for something that is finished.
+  tone?: "accent" | "success";
 }) {
   const value = clamp(percent);
   const r = (size - stroke) / 2;
@@ -33,13 +36,20 @@ export function ProgressRing({
       aria-label={`${value}% ${label}`}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--primary-soft)" strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="var(--data-accent)"
+          stroke={tone === "success" ? "var(--success-soft)" : "var(--primary-soft)"}
+          strokeWidth={stroke}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={tone === "success" ? "var(--success)" : "var(--data-accent)"}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circ}

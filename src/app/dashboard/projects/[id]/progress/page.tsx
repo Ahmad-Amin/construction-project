@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { MilestoneEditor, type EditorMode } from "@/components/milestone-editor";
-import { ProgressBar } from "@/components/project-bits";
+import { ProgressSummary } from "@/components/progress-summary";
 import { overallProgress } from "@/lib/project";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
@@ -30,16 +30,7 @@ export default async function ProgressPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-semibold">Overall progress</h2>
-          <span className="text-3xl font-bold">{percent}%</span>
-        </div>
-        <div className="mt-3">
-          <ProgressBar percent={percent} />
-        </div>
-        <p className="mt-2 text-xs text-muted">The average of all milestones below.</p>
-      </section>
+      <ProgressSummary milestones={milestones} percent={percent} />
 
       <h2 className="mt-8 mb-3 font-semibold">Milestones</h2>
       <MilestoneEditor projectId={id} milestones={milestones} mode={mode} />

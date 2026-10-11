@@ -1,10 +1,9 @@
 "use client";
 
-
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Images, X } from "lucide-react";
+import { Camera, Images, Info, X } from "lucide-react";
 import { createUpdate } from "@/app/dashboard/projects/[id]/updates/actions";
 import { DateField } from "@/components/date-field";
 import { newId } from "@/lib/ids";
@@ -23,10 +22,13 @@ export function UpdateForm({
   projectId,
   milestones,
   today,
+  sheet = false,
 }: {
   projectId: string;
   milestones: { id: string; name: string; progress_percent: number }[];
   today: string;
+  // Shown in the slide-over panel: the buttons stay in view along the bottom while the form scrolls.
+  sheet?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -146,8 +148,8 @@ export function UpdateForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      <section className="space-y-4 rounded-2xl border border-line bg-surface p-5 sm:p-6">
+    <form onSubmit={onSubmit} className={sheet ? "flex flex-1 flex-col gap-4" : "space-y-4"}>
+      <section className="space-y-4 rounded-2xl border border-line bg-surface p-4 sm:p-5">
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium">What happened on site?</span>
           <textarea
@@ -200,82 +202,83 @@ export function UpdateForm({
               value={progress}
               onChange={(e) => setProgress(Number(e.target.value))}
               aria-label={`${selected.name} progress`}
-              className="h-8 w-full accent-primary"
+              className="h-6 w-full accent-primary"
             />
           </div>
         )}
-      </section>
 
-      <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
-        <h2 className="font-semibold">Photos</h2>
-        <p className="mt-0.5 text-sm text-muted">Up to {MAX_PHOTOS}. They are resized automatically.</p>
+        <div className="border-t border-line pt-4">
+          <p className="text-sm font-medium">Photos</p>
+          <p className="mt-0.5 text-xs text-muted">Up to {MAX_PHOTOS}. They are resized automatically.</p>
 
-        {photos.length > 0 && (
-          <ul className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {photos.map((p, i) => (
-              <li key={p.id} className="relative aspect-square overflow-hidden rounded-lg bg-surface-2">
-                {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview */}
-                <img src={p.preview} alt={`Selected photo ${i + 1}`} className="size-full object-cover" />
-                {!busy && (
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(p.id)}
-                    aria-label={`Remove photo ${i + 1}`}
-                    className="absolute right-1 top-1 flex size-8 items-center justify-center rounded-full bg-black/65 text-white"
-                  >
-                    <X className="size-4" aria-hidden />
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+          {photos.length > 0 && (
+            <ul className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-5">
+              {photos.map((p, i) => (
+                <li key={p.id} className="relative aspect-square overflow-hidden rounded-lg bg-surface-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview */}
+                  <img src={p.preview} alt={`Selected photo ${i + 1}`} className="size-full object-cover" />
+                  {!busy && (
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(p.id)}
+                      aria-label={`Remove photo ${i + 1}`}
+                      className="absolute right-1 top-1 flex size-7 items-center justify-center rounded-full bg-black/65 text-white"
+                    >
+                      <X className="size-3.5" aria-hidden />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
 
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            disabled={busy || photos.length >= MAX_PHOTOS}
-            onClick={() => cameraInput.current?.click()}
-            className={button("secondary")}
-          >
-            <Camera className="size-5" aria-hidden /> Take photo
-          </button>
-          <button
-            type="button"
-            disabled={busy || photos.length >= MAX_PHOTOS}
-            onClick={() => galleryInput.current?.click()}
-            className={button("secondary")}
-          >
-            <Images className="size-5" aria-hidden /> Choose from gallery
-          </button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy || photos.length >= MAX_PHOTOS}
+              onClick={() => cameraInput.current?.click()}
+              className={button("secondary", "sm")}
+            >
+              <Camera className="size-4" aria-hidden /> Take photo
+            </button>
+            <button
+              type="button"
+              disabled={busy || photos.length >= MAX_PHOTOS}
+              onClick={() => galleryInput.current?.click()}
+              className={button("secondary", "sm")}
+            >
+              <Images className="size-4" aria-hidden /> Choose from gallery
+            </button>
+          </div>
+
+          {/* `capture` opens the camera directly on phones; the gallery input allows several at once. */}
+          <input
+            ref={cameraInput}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={(e) => {
+              addFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <input
+            ref={galleryInput}
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={(e) => {
+              addFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
         </div>
-
-        {/* `capture` opens the camera directly on phones; the gallery input allows several at once. */}
-        <input
-          ref={cameraInput}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          hidden
-          onChange={(e) => {
-            addFiles(e.target.files);
-            e.target.value = "";
-          }}
-        />
-        <input
-          ref={galleryInput}
-          type="file"
-          accept="image/*"
-          multiple
-          hidden
-          onChange={(e) => {
-            addFiles(e.target.files);
-            e.target.value = "";
-          }}
-        />
       </section>
 
-      <p className="rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">
+      <p className="flex items-start gap-2 px-1 text-sm text-muted">
+        <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
         Your client sees this update and its photos as soon as you post it.
       </p>
 
@@ -290,7 +293,13 @@ export function UpdateForm({
         </p>
       )}
 
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <div
+        className={`flex justify-end gap-2 ${
+          sheet
+            ? "sticky bottom-0 z-10 -mx-5 mt-auto border-t border-line bg-background/95 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:-mx-8 sm:px-8"
+            : "pt-1"
+        }`}
+      >
         <Link href={`/dashboard/projects/${projectId}/updates`} className={button("secondary")}>
           Cancel
         </Link>
