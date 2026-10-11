@@ -113,6 +113,7 @@ export default async function UpdatesPage({
               key={u.id}
               update={u}
               projectId={id}
+              timeZone={project.timeZone}
               canDelete={isOwner || (isTeam && u.authorId === viewer?.userId)}
               shareHref={shareFor(u)}
             />

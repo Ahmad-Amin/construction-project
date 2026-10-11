@@ -67,12 +67,17 @@ export function ProjectForm({
   action,
   mode,
   defaults,
+  currency,
+  phoneCountry,
   emailLocked = false,
   cancelHref,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   mode: "create" | "edit";
   defaults: ProjectFormValues;
+  currency: string;
+  // Which country the client phone picker starts on, such as "AE".
+  phoneCountry: string;
   emailLocked?: boolean;
   cancelHref: string;
 }) {
@@ -99,10 +104,10 @@ export function ProjectForm({
     <form action={formAction} className="space-y-5">
       <Section title="Project">
         <Field label="Project name">
-          <input name="name" required defaultValue={v("name")} placeholder="Ahmed Residence" className={inputClass} />
+          <input name="name" required defaultValue={v("name")} placeholder="Carter Residence" className={inputClass} />
         </Field>
         <Field label="Location">
-          <input name="location" defaultValue={v("location")} placeholder="DHA Phase 6, Lahore" className={inputClass} />
+          <input name="location" defaultValue={v("location")} placeholder="12 Lakeview Road" className={inputClass} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Start date">
@@ -121,7 +126,7 @@ export function ProjectForm({
             </select>
           </Field>
         )}
-        <Field label="Budget (PKR)" hint="Optional. Whole rupees, like 35000000.">
+        <Field label={`Budget (${currency})`} hint="Optional. Whole numbers, like 35000000.">
           <AmountInput name="budget" defaultValue={v("budget")} placeholder="35,000,000" />
         </Field>
         {mode === "edit" && (
@@ -142,7 +147,7 @@ export function ProjectForm({
 
       <Section title="Client">
         <Field label="Client name">
-          <input name="client_name" required defaultValue={v("client_name")} placeholder="Ahmed Khan" className={inputClass} />
+          <input name="client_name" required defaultValue={v("client_name")} placeholder="Sam Carter" className={inputClass} />
         </Field>
         <Field
           label="Client email"
@@ -154,12 +159,12 @@ export function ProjectForm({
             required={!emailLocked}
             disabled={emailLocked}
             defaultValue={v("client_email")}
-            placeholder="ahmed@example.com"
+            placeholder="sam@example.com"
             className={`${inputClass} disabled:opacity-60`}
           />
         </Field>
         <Field label="Client phone" hint="Optional. Used to share the invite on WhatsApp.">
-          <PhoneField name="client_phone" defaultValue={v("client_phone")} placeholder="300 1234567" />
+          <PhoneField name="client_phone" defaultValue={v("client_phone")} defaultCountry={phoneCountry.toLowerCase()} />
         </Field>
       </Section>
 

@@ -25,6 +25,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const data = await buildStatement(supabase, id, {
     name: project.company?.name ?? "",
     logoUrl: project.company?.logo_url ?? null,
+    currency: project.currency,
+    timeZone: project.timeZone,
   });
   if (!data) return NextResponse.json({ error: "Project not found." }, { status: 404 });
 

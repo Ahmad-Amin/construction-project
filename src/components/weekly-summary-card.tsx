@@ -18,6 +18,7 @@ export function WeeklySummaryCard({
   companyEnabled,
   active,
   lastSentAt,
+  timeZone,
 }: {
   projectId: string;
   clientName: string;
@@ -26,6 +27,7 @@ export function WeeklySummaryCard({
   companyEnabled: boolean;
   active: boolean;
   lastSentAt: string | null;
+  timeZone: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<{ error?: string; message?: string } | null>(null);
@@ -45,7 +47,7 @@ export function WeeklySummaryCard({
       : !enabled
         ? "Paused. Nothing is sent to your client."
         : lastSentAt
-          ? `Last sent ${formatTimestamp(lastSentAt)}.`
+          ? `Last sent ${formatTimestamp(lastSentAt, timeZone)}.`
           : "Goes out this Sunday evening if something happened this week.";
 
   return (

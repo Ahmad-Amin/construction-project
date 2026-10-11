@@ -17,15 +17,19 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { WhatsAppToggle } from "@/components/whatsapp-toggle";
 import { isDemoEmail } from "@/lib/demo";
 import { formatPhone } from "@/lib/phone";
+import { CURRENCIES } from "@/lib/currency";
+import { timeZoneOptions } from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
 import { whatsappEnabled } from "@/lib/whatsapp-api";
-import { changePassword, updateCompanyName, updateProfile } from "./actions";
+import { changePassword, updateCompany, updateProfile } from "./actions";
 
 export const metadata = { title: "Settings" };
 
 const chip = "rounded-full bg-surface/80 px-3 py-1 text-xs font-medium backdrop-blur";
+
+const currencyOptions = CURRENCIES.map((c) => ({ value: c.code, label: `${c.code} · ${c.name}` }));
 
 const isOwnerViewer = (v: { company: { role: string } | null }) => v.company?.role === "owner";
 
@@ -178,7 +182,7 @@ export default async function SettingsPage({
           >
             <div className="space-y-6">
               <AuthForm
-                action={updateCompanyName}
+                action={updateCompany}
                 submitLabel="Save"
                 fields={[
                   {
@@ -186,6 +190,20 @@ export default async function SettingsPage({
                     label: "Company name",
                     defaultValue: viewer.company.name,
                     autoComplete: "organization",
+                  },
+                  {
+                    name: "currency",
+                    label: "Currency",
+                    defaultValue: viewer.company.currency,
+                    options: currencyOptions,
+                    hint: "Shown on every amount you and your clients see. Changing it only changes the label: existing amounts are not converted.",
+                  },
+                  {
+                    name: "timezone",
+                    label: "Time zone",
+                    defaultValue: viewer.company.timeZone,
+                    options: timeZoneOptions(viewer.company.timeZone),
+                    hint: "Decides what \"today\" is and the time shown on updates and payments, for you and your clients.",
                   },
                 ]}
               />

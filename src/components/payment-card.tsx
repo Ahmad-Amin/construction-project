@@ -4,7 +4,7 @@ import { LinkPending } from "@/components/link-pending";
 import { DeletePaymentButton, PaymentResponse } from "@/components/payment-controls";
 import { PaymentReminderButton } from "@/components/payment-reminder-button";
 import { WhatsAppButton } from "@/components/whatsapp-button";
-import { formatDate, formatPKR, formatTimestamp } from "@/lib/format";
+import { formatDate, formatMoney, formatTimestamp } from "@/lib/format";
 import { sideLabel, type PaymentItem, type PaymentSide } from "@/lib/payments";
 
 const amountTone = {
@@ -24,6 +24,8 @@ const look = {
 export function PaymentCard({
   payment: p,
   projectId,
+  currency,
+  timeZone,
   viewerId,
   side,
   nudgeHref,
@@ -32,6 +34,8 @@ export function PaymentCard({
 }: {
   payment: PaymentItem;
   projectId: string;
+  currency: string;
+  timeZone: string;
   viewerId: string | undefined;
   // Which side the viewer is on; null for site staff, who can only look.
   side: PaymentSide | null;
@@ -63,7 +67,7 @@ export function PaymentCard({
         <Pencil className="size-4" aria-hidden />
         <LinkPending className="absolute size-4 rounded-full bg-surface" />
       </Link>
-      <DeletePaymentButton projectId={projectId} paymentId={p.id} label={`${formatPKR(p.amount)} on ${formatDate(p.date)}`} />
+      <DeletePaymentButton projectId={projectId} paymentId={p.id} label={`${formatMoney(p.amount, currency)} on ${formatDate(p.date)}`} />
     </div>
   );
 
@@ -93,7 +97,7 @@ export function PaymentCard({
 
           {p.status === "confirmed" && (
             <p className="mt-1 text-sm text-success">
-              Confirmed by {responder} on {formatTimestamp(p.respondedAt)}
+              Confirmed by {responder} on {formatTimestamp(p.respondedAt, timeZone)}
             </p>
           )}
 
@@ -114,7 +118,7 @@ export function PaymentCard({
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <p className={`text-lg font-bold tabular-nums sm:text-xl ${amountTone[p.status]}`}>{formatPKR(p.amount)}</p>
+          <p className={`text-lg font-bold tabular-nums sm:text-xl ${amountTone[p.status]}`}>{formatMoney(p.amount, currency)}</p>
           <span className={`hidden rounded-full px-2.5 py-0.5 text-xs font-semibold sm:inline ${pill}`}>{label}</span>
         </div>
       </div>
@@ -149,7 +153,7 @@ export function PaymentCard({
         <div className="flex flex-col gap-3 border-t border-line bg-danger-soft/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div className="space-y-0.5 text-sm">
             <p className="font-medium text-danger">
-              Disputed by {responder} on {formatTimestamp(p.respondedAt)}
+              Disputed by {responder} on {formatTimestamp(p.respondedAt, timeZone)}
             </p>
             {p.disputeReason && <p className="italic text-muted">&ldquo;{p.disputeReason}&rdquo;</p>}
             {canEdit && <p className="text-muted">Edit the payment to send it back for confirmation, or delete it.</p>}

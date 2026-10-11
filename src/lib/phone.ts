@@ -1,4 +1,4 @@
-import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
+import { getCountryCallingCode, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
 
 // Phone numbers are stored in the international format (+923001234567), which is what WhatsApp
 // needs and works for any country. Numbers typed the old way (0300 1234567) are read as
@@ -29,4 +29,30 @@ export function formatPhone(raw: string | null | undefined): string {
   if (!value) return "";
   const parsed = parsePhoneNumberFromString(value, DEFAULT_COUNTRY);
   return parsed?.isValid() ? parsed.formatInternational() : value;
+}
+
+// The country a company's zone points to, for the zones offered in Settings.
+const COUNTRY_BY_ZONE: Record<string, CountryCode> = {
+  "Asia/Karachi": "PK", "Asia/Dubai": "AE", "Asia/Riyadh": "SA", "Asia/Qatar": "QA", "Asia/Kuwait": "KW",
+  "Asia/Muscat": "OM", "Asia/Bahrain": "BH", "Asia/Kolkata": "IN", "Asia/Dhaka": "BD", "Asia/Colombo": "LK",
+  "Asia/Kathmandu": "NP", "Asia/Kuala_Lumpur": "MY", "Asia/Singapore": "SG", "Africa/Cairo": "EG",
+  "Europe/Istanbul": "TR", "Africa/Lagos": "NG", "Africa/Nairobi": "KE", "Africa/Johannesburg": "ZA",
+  "Europe/London": "GB", "Europe/Dublin": "IE", "Europe/Paris": "FR", "Europe/Athens": "GR",
+  "America/New_York": "US", "America/Chicago": "US", "America/Denver": "US", "America/Los_Angeles": "US",
+  "Australia/Sydney": "AU", "Australia/Perth": "AU",
+};
+
+// Which country the phone picker starts on: where the person is (Vercel's country header), else
+// where their company's time zone is, else Pakistan. They can still pick any other country.
+export function phoneCountryFor(headerCountry: string | null | undefined, timeZone: string): CountryCode {
+  const fromHeader = (headerCountry ?? "").toUpperCase();
+  if (/^[A-Z]{2}$/.test(fromHeader)) {
+    try {
+      getCountryCallingCode(fromHeader as CountryCode);
+      return fromHeader as CountryCode;
+    } catch {
+      // not a country we know: fall through
+    }
+  }
+  return COUNTRY_BY_ZONE[timeZone] ?? DEFAULT_COUNTRY;
 }

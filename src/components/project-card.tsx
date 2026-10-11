@@ -3,7 +3,7 @@ import { Building2, ChevronRight, Clock, MapPin, User } from "lucide-react";
 import { StatusBadge } from "@/components/project-bits";
 import { ProgressRing } from "@/components/viz";
 import { SiteIllustration } from "@/components/site-illustration";
-import { formatPKRCompact, formatRelativeDate } from "@/lib/format";
+import { formatMoneyCompact, formatRelativeDate } from "@/lib/format";
 import type { DashboardProject } from "@/lib/dashboard";
 
 // A project as a card: the latest site photo as its cover, progress as a ring,
@@ -77,10 +77,10 @@ export function ProjectCard({
         <div className="mt-4">
           <div className="mb-1.5 flex items-baseline justify-between text-xs">
             <span className="font-semibold">
-              {formatPKRCompact(p.received)} <span className="font-normal text-muted">{moneyLabel}</span>
+              {formatMoneyCompact(p.received, p.currency)} <span className="font-normal text-muted">{moneyLabel}</span>
             </span>
             {p.budget ? (
-              <span className="text-muted">of {formatPKRCompact(p.budget)}</span>
+              <span className="text-muted">of {formatMoneyCompact(p.budget, p.currency)}</span>
             ) : null}
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-surface-2">
@@ -94,7 +94,7 @@ export function ProjectCard({
         <p className="mt-4 line-clamp-2 min-h-10 text-sm text-muted">
           {p.lastUpdate ? (
             <>
-              <span className="font-medium text-foreground">{formatRelativeDate(p.lastUpdate.date)}:</span>{" "}
+              <span className="font-medium text-foreground">{formatRelativeDate(p.lastUpdate.date, p.timeZone)}:</span>{" "}
               {p.lastUpdate.text}
             </>
           ) : (

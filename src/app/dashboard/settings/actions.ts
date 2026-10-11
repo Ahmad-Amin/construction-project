@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import type { FormState } from "@/app/login/actions";
+import { isCurrency } from "@/lib/currency";
 import { isDemoEmail } from "@/lib/demo";
 import { text } from "@/lib/forms";
+import { isTimeZone } from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
 
@@ -60,10 +62,15 @@ export async function changePassword(_: FormState, formData: FormData): Promise<
   return { message: "Your password has been changed.", values: { at: String(Date.now()) } };
 }
 
-export async function updateCompanyName(_: FormState, formData: FormData): Promise<FormState> {
+export async function updateCompany(_: FormState, formData: FormData): Promise<FormState> {
   const name = text(formData, "name");
   if (!name) return { error: "Please enter your company name." };
   if (name.length > 100) return { error: "Please keep the company name under 100 characters." };
+
+  const currency = String(formData.get("currency") ?? "");
+  if (!isCurrency(currency)) return { error: "Please choose the currency you work in." };
+  const timeZone = String(formData.get("timezone") ?? "");
+  if (!isTimeZone(timeZone)) return { error: "Please choose your time zone." };
 
   const viewer = await getViewer();
   if (viewer?.company?.role !== "owner") {
@@ -73,7 +80,7 @@ export async function updateCompanyName(_: FormState, formData: FormData): Promi
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("companies")
-    .update({ name })
+    .update({ name, currency, timezone: timeZone })
     .eq("id", viewer.company.id)
     .select("id");
   if (error || !data?.length) return { error: GENERIC };

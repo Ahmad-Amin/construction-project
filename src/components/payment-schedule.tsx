@@ -3,7 +3,7 @@ import { CalendarClock, CheckCircle2, Clock, Pencil, Plus } from "lucide-react";
 import { LinkPending } from "@/components/link-pending";
 import { ScheduleCollapse } from "@/components/schedule-collapse";
 import { DeleteScheduleButton, ScheduleReminderButton } from "@/components/schedule-controls";
-import { formatPKR } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import type { ScheduleItem, ScheduleStatus } from "@/lib/payment-schedule";
 import { scheduleTotals } from "@/lib/payment-schedule";
 import type { PaymentSide } from "@/lib/payments";
@@ -21,12 +21,14 @@ const badge: Record<ScheduleStatus, { label: string; tone: string }> = {
 export function PaymentSchedule({
   items,
   projectId,
+  currency,
   side,
   manualHref,
   initialHidden = false,
 }: {
   items: ScheduleItem[];
   projectId: string;
+  currency: string;
   // Who is looking; null for site staff, who can only look.
   side: PaymentSide | null;
   // Builds the "send it from my own WhatsApp" link for an instalment.
@@ -49,7 +51,7 @@ export function PaymentSchedule({
           <div>
             <h2 className="font-semibold">Plan your payments</h2>
             <p className="mt-1 max-w-lg text-sm text-muted">
-              List the instalments you expect, like &ldquo;PKR 500,000 when the foundation is complete&rdquo;. Your client sees
+              List the instalments you expect, like &ldquo;{currency} 500,000 when the foundation is complete&rdquo;. Your client sees
               the plan, and you can ask for each payment the moment its stage is done. It&apos;s only a plan: no payment is
               created until one is recorded and confirmed.
             </p>
@@ -72,8 +74,8 @@ export function PaymentSchedule({
       openCount={items.filter((i) => i.status !== "paid").length}
       summary={
         <>
-          {formatPKR(totals.scheduled)} planned · {formatPKR(totals.paid)} paid
-          {totals.due > 0 && <span className="font-medium text-primary-hover"> · {formatPKR(totals.due)} due now</span>}
+          {formatMoney(totals.scheduled, currency)} planned · {formatMoney(totals.paid, currency)} paid
+          {totals.due > 0 && <span className="font-medium text-primary-hover"> · {formatMoney(totals.due, currency)} due now</span>}
         </>
       }
       actions={
@@ -102,7 +104,7 @@ export function PaymentSchedule({
                         : `Due when ${item.stageName} is complete`}
                   </p>
                 </div>
-                <p className="shrink-0 text-lg font-bold tabular-nums">{formatPKR(item.amount)}</p>
+                <p className="shrink-0 text-lg font-bold tabular-nums">{formatMoney(item.amount, currency)}</p>
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -115,10 +117,10 @@ export function PaymentSchedule({
                   {label}
                 </span>
                 {item.status !== "paid" && item.confirmed > 0 && (
-                  <span className="text-sm text-muted">{formatPKR(item.confirmed)} paid so far</span>
+                  <span className="text-sm text-muted">{formatMoney(item.confirmed, currency)} paid so far</span>
                 )}
                 {item.status === "due" && item.pending > 0 && (
-                  <span className="text-sm text-muted">{formatPKR(item.pending)} waiting for confirmation</span>
+                  <span className="text-sm text-muted">{formatMoney(item.pending, currency)} waiting for confirmation</span>
                 )}
                 {isOwner && item.status !== "paid" && (
                   <span className="ml-auto flex items-center">

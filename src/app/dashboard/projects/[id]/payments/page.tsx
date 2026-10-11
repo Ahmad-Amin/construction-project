@@ -5,7 +5,7 @@ import { AlertTriangle, Banknote, CalendarClock, Clock, Plus } from "lucide-reac
 import { LinkPending } from "@/components/link-pending";
 import { PaymentCard } from "@/components/payment-card";
 import { PaymentSchedule } from "@/components/payment-schedule";
-import { formatDate, formatPKR } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
 import {
   awaitingMyResponse,
   fetchPayments,
@@ -46,6 +46,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
   const scheduleHidden = (await cookies()).get(SCHEDULE_COOKIE)?.value === "hidden";
   const dueNow = schedule.filter((i) => i.status === "due");
   const waitingOnMe = awaitingMyResponse(totals, side);
+  const currency = project.currency;
 
   // Until there are notifications, the person waiting can nudge the other side on WhatsApp.
   const { data: info } = await supabase
@@ -66,6 +67,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
         recordedBy: side,
         projectName: project.name,
         amount: p.amount,
+        currency,
         date: formatDate(p.date),
         link,
       }),
@@ -80,6 +82,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
         projectName: project.name,
         title: item.title,
         amount: item.left,
+        currency,
         link,
       }),
     );
@@ -107,14 +110,14 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
         >
           <CalendarClock className="mt-0.5 size-4 shrink-0" aria-hidden />
           {dueNow.length === 1
-            ? `${dueNow[0].title} (${formatPKR(dueNow[0].left)}) is due now.`
-            : `${dueNow.length} instalments are due now, ${formatPKR(dueNow.reduce((s, i) => s + i.left, 0))} in total.`}
+            ? `${dueNow[0].title} (${formatMoney(dueNow[0].left, currency)}) is due now.`
+            : `${dueNow.length} instalments are due now, ${formatMoney(dueNow.reduce((s, i) => s + i.left, 0), currency)} in total.`}
         </p>
       )}
 
       <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
         <p className="text-sm text-muted">{side === "client" ? "Total paid (confirmed)" : "Total received (confirmed)"}</p>
-        <p className="mt-1 text-3xl font-bold tabular-nums text-success">{formatPKR(totals.confirmedTotal)}</p>
+        <p className="mt-1 text-3xl font-bold tabular-nums text-success">{formatMoney(totals.confirmedTotal, currency)}</p>
         <p className="mt-1 text-sm text-muted">
           {totals.confirmedCount} confirmed {totals.confirmedCount === 1 ? "payment" : "payments"}
         </p>
@@ -124,7 +127,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
             {totals.pendingCount > 0 && (
               <li className="flex items-center gap-2 text-primary-hover">
                 <Clock className="size-4 shrink-0" aria-hidden />
-                {formatPKR(totals.pendingTotal)} awaiting confirmation ({totals.pendingCount})
+                {formatMoney(totals.pendingTotal, currency)} awaiting confirmation ({totals.pendingCount})
               </li>
             )}
             {totals.disputedCount > 0 && (
@@ -138,7 +141,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
       </section>
 
       <div className="mt-6">
-        <PaymentSchedule items={schedule} projectId={id} side={side} manualHref={requestFor} initialHidden={scheduleHidden} />
+        <PaymentSchedule items={schedule} projectId={id} currency={currency} side={side} manualHref={requestFor} initialHidden={scheduleHidden} />
       </div>
 
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -168,7 +171,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
       ) : (
         <div className="space-y-3">
           {payments.map((p) => (
-            <PaymentCard key={p.id} payment={p} projectId={id} viewerId={viewer?.userId} side={side} nudgeHref={nudgeFor(p)} sendReminders={whatsappEnabled()} forLabel={p.scheduleItemId ? (scheduleTitles.get(p.scheduleItemId) ?? null) : null} />
+            <PaymentCard key={p.id} payment={p} projectId={id} currency={currency} timeZone={project.timeZone} viewerId={viewer?.userId} side={side} nudgeHref={nudgeFor(p)} sendReminders={whatsappEnabled()} forLabel={p.scheduleItemId ? (scheduleTitles.get(p.scheduleItemId) ?? null) : null} />
           ))}
           {total > PAGE_SIZE && (
             <p className="text-center text-sm text-muted">Showing the latest {PAGE_SIZE} payments.</p>

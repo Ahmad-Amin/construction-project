@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AlertCircle, Banknote, Camera, CheckCircle2, ChevronRight, EyeOff, Receipt } from "lucide-react";
 import { SiteIllustration } from "@/components/site-illustration";
 import type { ActivityItem, AttentionItem, FreshPhoto } from "@/lib/dashboard";
-import { formatPKR, timeAgo } from "@/lib/format";
+import { formatMoney, timeAgo } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Greeting: the warm opening of the page, with a little life in it.
@@ -172,7 +172,7 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
                   </span>
                 </span>
                 {item.amount !== undefined && (
-                  <span className="shrink-0 text-sm font-semibold tabular-nums">{formatPKR(item.amount)}</span>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums">{formatMoney(item.amount, item.currency ?? "")}</span>
                 )}
               </Link>
             </li>

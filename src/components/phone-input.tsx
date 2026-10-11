@@ -1,26 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { getCountryCallingCode, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
+import { getCountryCallingCode, getExampleNumber, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
+import examples from "libphonenumber-js/mobile/examples";
 import { PhoneInput as CountryPhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
 import { toE164 } from "@/lib/phone";
 
 // A phone field with a country picker (flag, search, dial code) that formats the number as you
-// type. Pakistan is selected by default. It submits the international number (+923001234567)
+// type. The picker starts on `defaultCountry`, and the hint shows an example number for whichever
+// country is selected. It submits the international number (+923001234567)
 // under `name`, or nothing when left empty. The dial code lives in the picker, so people type
 // just their own number, with or without the leading 0.
 export function PhoneField({
   name,
   defaultValue = "",
   defaultCountry = "pk",
-  placeholder,
 }: {
   name: string;
   // A saved number, in any format we have ever stored.
   defaultValue?: string;
   defaultCountry?: string;
-  placeholder?: string;
 }) {
   const [phone, setPhone] = useState(() => toE164(defaultValue) ?? "");
   const [dialCode, setDialCode] = useState(() => {
@@ -28,6 +28,9 @@ export function PhoneField({
     return saved?.countryCallingCode ?? getCountryCallingCode(defaultCountry.toUpperCase() as CountryCode);
   });
   const [leftField, setLeftField] = useState(false);
+  const [selected, setSelected] = useState(() => parsePhoneNumberFromString(toE164(defaultValue) ?? "")?.country ?? (defaultCountry.toUpperCase() as CountryCode));
+  // A sample number in the selected country's own format, as the hint inside the field.
+  const example = getExampleNumber(selected, examples)?.formatNational();
 
   // While nothing is typed the picker reports just the dial code ("+92").
   const hasNumber = phone.replace(/\D/g, "").length > String(dialCode).length;
@@ -44,9 +47,10 @@ export function PhoneField({
           const parsed = parsePhoneNumberFromString(value);
           setPhone(parsed?.isValid() ? parsed.number : value);
           setDialCode(country.dialCode);
+          setSelected(country.iso2.toUpperCase() as CountryCode);
           setLeftField(false);
         }}
-        placeholder={placeholder}
+        placeholder={example}
         disableDialCodeAndPrefix
         allowMaskOverflow
         showDisabledDialCodeAndPrefix

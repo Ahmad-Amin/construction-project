@@ -51,6 +51,8 @@ const matrix: { what: string; you: Cell; client: Cell; others: Cell }[] = [
   { what: "Payments (each one confirmed by both sides)", you: "yes", client: "yes", others: "no" },
   { what: "Expenses you share, with receipts", you: "yes", client: "yes", others: "no" },
   { what: "Expenses you keep hidden, with receipts", you: "yes", client: "no", others: "no" },
+  { what: "Documents you share, like the contract and drawings", you: "yes", client: "yes", others: "no" },
+  { what: "Documents you keep to yourself", you: "yes", client: "no", others: "no" },
   { what: "Project budget", you: "yes", client: "choice", others: "no" },
 ];
 
@@ -154,11 +156,17 @@ export default function TrustPage() {
           </p>
         </Section>
 
-        <Section title="Photos and receipts">
+        <Section title="Photos, receipts and documents">
           <p>
             They are kept in private storage. There are no public links: each picture is shown through a link that
             expires after about an hour, and only to people allowed to see that project. Photos are resized on the
             phone before upload, and the location information phones put inside photos is removed.
+          </p>
+          <p className="mt-3">
+            Documents such as the contract and drawings work the same way. A new document is yours alone until you
+            choose to share it with your client; a document you keep to yourself can&apos;t be opened by them, and the
+            file itself is protected, not only the entry in the list. Only PDF, Word, Excel and image files are
+            accepted.
           </p>
           <p className="mt-3">
             The one exception is the weekly summary email a homeowner receives: it shows a few of the week&apos;s
@@ -192,14 +200,14 @@ export default function TrustPage() {
           <p>
             In Settings, under <strong className="text-foreground">Your data</strong>, you can download your
             projects, milestones, site updates, expenses (including hidden ones) and payments as spreadsheets that
-            open in Excel or Google Sheets. Photos and receipts stay in the app; if you want a full copy of those,
+            open in Excel or Google Sheets. Photos, receipts and documents stay in the app (documents can be downloaded one by one); if you want a full copy of everything,
             ask us.
           </p>
         </Section>
 
         <Section title="Leaving">
           <p>
-            If you want to stop, tell us and we will delete your company&apos;s projects, photos, receipts and
+            If you want to stop, tell us and we will delete your company&apos;s projects, photos, receipts, documents and
             records within {DELETION_DAYS} days. Download your spreadsheets first if you want to keep a copy.
           </p>
         </Section>

@@ -13,6 +13,7 @@ export type ScheduleFormValues = { title: string; amount: string; milestone_id: 
 export function ScheduleForm({
   action,
   projectId,
+  currency,
   stages,
   initial,
   mode,
@@ -20,6 +21,7 @@ export function ScheduleForm({
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   projectId: string;
+  currency: string;
   stages: Stage[];
   initial: ScheduleFormValues;
   mode: "create" | "edit";
@@ -45,7 +47,7 @@ export function ScheduleForm({
         </label>
 
         <label className="block">
-          <span className="mb-1.5 block text-sm font-medium">Amount (PKR)</span>
+          <span className="mb-1.5 block text-sm font-medium">Amount ({currency})</span>
           <AmountInput name="amount" required defaultValue={v("amount")} placeholder="500,000" className="font-semibold" />
         </label>
 

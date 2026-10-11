@@ -31,6 +31,7 @@ export type ExpenseFormValues = {
 
 export function ExpenseForm({
   projectId,
+  currency,
   expenseId,
   initial,
   today,
@@ -38,6 +39,7 @@ export function ExpenseForm({
   sheet = false,
 }: {
   projectId: string;
+  currency: string;
   // Present when editing an existing expense.
   expenseId?: string;
   initial: ExpenseFormValues;
@@ -160,7 +162,7 @@ export function ExpenseForm({
       <section className="space-y-4 rounded-2xl border border-line bg-surface p-4 sm:p-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Amount (PKR)</span>
+            <span className="mb-1.5 block text-sm font-medium">Amount ({currency})</span>
             <AmountInput
               value={amount}
               onValueChange={setAmount}
@@ -196,7 +198,7 @@ export function ExpenseForm({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             maxLength={200}
-            placeholder="Steel, Ittefaq Steel Lahore"
+            placeholder="Steel, City Steel Supply"
             className={inputClass}
           />
         </label>

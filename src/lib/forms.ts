@@ -10,7 +10,7 @@ export function snapshot(formData: FormData) {
   return values;
 }
 
-// Money is whole rupees. Accepts "35,000,000" and "35000000"; blank means "not set".
+// Money is whole units of the company currency. Accepts "35,000,000" and "35000000"; blank means "not set".
 export function parseAmount(
   raw: string,
   noun = "the budget",

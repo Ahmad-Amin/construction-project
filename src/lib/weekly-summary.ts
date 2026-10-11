@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { escapeHtml, type Email } from "@/lib/email";
-import { formatDate, formatPKR } from "@/lib/format";
+import { currencyOrDefault } from "@/lib/currency";
+import { formatDate, formatMoney } from "@/lib/format";
 import { PRODUCT_NAME } from "@/lib/site";
 
 // What the database hands over for one project's week: only things the homeowner can already
@@ -10,6 +11,7 @@ export type WeeklySummary = {
   project_name: string;
   company_name: string;
   company_logo: string | null;
+  currency: string;
   client_name: string;
   progress: number;
   stages: { name: string; percent: number }[];
@@ -68,6 +70,7 @@ export function renderWeeklySummaryEmail(input: {
 }): Email {
   const { summary: s, photoUrls, projectUrl, settingsUrl, preview } = input;
   const e = escapeHtml;
+  const fmt = (amount: number) => formatMoney(amount, currencyOrDefault(s.currency));
   const firstName = s.client_name.trim().split(/\s+/)[0] || "there";
 
   // ----- plain text -----
@@ -86,10 +89,10 @@ export function renderWeeklySummaryEmail(input: {
   }
   if (s.paid_count || s.awaiting_count || s.paid_total) {
     text.push("", "Payments:");
-    for (const p of s.paid_this_week) text.push(`  - ${formatPKR(p.amount)} confirmed (${formatDate(p.date)})`);
-    if (s.paid_total) text.push(`  Confirmed so far: ${formatPKR(s.paid_total)}${s.budget ? ` of ${formatPKR(s.budget)} budget` : ""}`);
+    for (const p of s.paid_this_week) text.push(`  - ${fmt(p.amount)} confirmed (${formatDate(p.date)})`);
+    if (s.paid_total) text.push(`  Confirmed so far: ${fmt(s.paid_total)}${s.budget ? ` of ${fmt(s.budget)} budget` : ""}`);
     if (s.awaiting_count) {
-      text.push(`  Waiting for your confirmation: ${plural(s.awaiting_count, "payment", "payments")} (${formatPKR(s.awaiting_total)})`);
+      text.push(`  Waiting for your confirmation: ${plural(s.awaiting_count, "payment", "payments")} (${fmt(s.awaiting_total)})`);
     }
   }
   text.push(
@@ -154,14 +157,14 @@ export function renderWeeklySummaryEmail(input: {
         "Payments",
         s.paid_this_week
           .map(
-            (p) => `<p style="margin:0 0 6px 0;font-size:14px;color:#44403c;">${e(formatPKR(p.amount))} <span style="color:#166534;">confirmed</span> <span style="color:#78716c;">· ${e(formatDate(p.date))}</span></p>`,
+            (p) => `<p style="margin:0 0 6px 0;font-size:14px;color:#44403c;">${e(fmt(p.amount))} <span style="color:#166534;">confirmed</span> <span style="color:#78716c;">· ${e(formatDate(p.date))}</span></p>`,
           )
           .join("") +
           (s.paid_total
-            ? `<p style="margin:8px 0 0 0;font-size:14px;color:#78716c;">Confirmed so far: <strong style="color:#1c1917;">${e(formatPKR(s.paid_total))}</strong>${s.budget ? ` of ${e(formatPKR(s.budget))}` : ""}</p>`
+            ? `<p style="margin:8px 0 0 0;font-size:14px;color:#78716c;">Confirmed so far: <strong style="color:#1c1917;">${e(fmt(s.paid_total))}</strong>${s.budget ? ` of ${e(fmt(s.budget))}` : ""}</p>`
             : "") +
           (s.awaiting_count
-            ? `<p style="margin:12px 0 0 0;font-size:14px;color:#92400e;background:#fef3c7;border-radius:8px;padding:8px 12px;"><strong>${e(plural(s.awaiting_count, "payment", "payments"))}</strong> (${e(formatPKR(s.awaiting_total))}) waiting for your confirmation.</p>`
+            ? `<p style="margin:12px 0 0 0;font-size:14px;color:#92400e;background:#fef3c7;border-radius:8px;padding:8px 12px;"><strong>${e(plural(s.awaiting_count, "payment", "payments"))}</strong> (${e(fmt(s.awaiting_total))}) waiting for your confirmation.</p>`
             : ""),
       )
     : "";

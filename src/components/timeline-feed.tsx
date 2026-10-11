@@ -1,7 +1,7 @@
 import { AlertTriangle, Banknote, Camera, CheckCircle2, Flag, Receipt, type LucideIcon } from "lucide-react";
 import { PhotoGallery } from "@/components/photo-gallery";
 import { expenseCategoryLabel } from "@/lib/expenses";
-import { formatDate, formatPKR, formatRelativeDate, formatTime } from "@/lib/format";
+import { formatDate, formatMoney, formatRelativeDate, formatTime } from "@/lib/format";
 import { sideLabel, type PaymentStatus } from "@/lib/payments";
 import type { TimelineEvent } from "@/lib/timeline";
 
@@ -14,7 +14,7 @@ const statusBadge: Record<PaymentStatus, { label: string; style: string }> = {
 // One chronological feed, grouped by day. On a wide screen each day is a heading on the left with
 // its events stacked beside it; on a phone the heading sits above. Every event says what it is,
 // when, who did it, and the amount or details.
-export function TimelineFeed({ events }: { events: TimelineEvent[] }) {
+export function TimelineFeed({ events, currency, timeZone }: { events: TimelineEvent[]; currency: string; timeZone: string }) {
   const days: { date: string; items: TimelineEvent[] }[] = [];
   for (const e of events) {
     const last = days[days.length - 1];
@@ -27,8 +27,8 @@ export function TimelineFeed({ events }: { events: TimelineEvent[] }) {
       {days.map((day) => (
         <section key={day.date} className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-6">
           <h2 className="text-sm font-semibold lg:sticky lg:top-20 lg:self-start lg:pt-3">
-            {formatRelativeDate(day.date)}
-            {formatRelativeDate(day.date) !== formatDate(day.date) && (
+            {formatRelativeDate(day.date, timeZone)}
+            {formatRelativeDate(day.date, timeZone) !== formatDate(day.date) && (
               <span className="ml-2 font-normal text-muted lg:ml-0 lg:block">{formatDate(day.date)}</span>
             )}
             <span className="mt-0.5 hidden text-xs font-normal text-muted lg:block">
@@ -38,7 +38,7 @@ export function TimelineFeed({ events }: { events: TimelineEvent[] }) {
           <ul className="min-w-0 space-y-2.5">
             {day.items.map((e) => (
               <li key={e.id}>
-                <EventRow event={e} />
+                <EventRow event={e} currency={currency} timeZone={timeZone} />
               </li>
             ))}
           </ul>
@@ -51,6 +51,7 @@ export function TimelineFeed({ events }: { events: TimelineEvent[] }) {
 // The shape every event shares: a round icon, a small label with the time and who did it, the
 // content, and on the right the amount with its status.
 function Row({
+  currency,
   icon: Icon,
   tone,
   label,
@@ -61,6 +62,7 @@ function Row({
   pill,
   children,
 }: {
+  currency: string;
   icon: LucideIcon;
   tone: string;
   label: string;
@@ -94,7 +96,7 @@ function Row({
 
       {(amount !== undefined || pill) && (
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          {amount !== undefined && <p className={`text-lg font-bold tabular-nums sm:text-xl ${amountTone}`}>{formatPKR(amount)}</p>}
+          {amount !== undefined && <p className={`text-lg font-bold tabular-nums sm:text-xl ${amountTone}`}>{formatMoney(amount, currency)}</p>}
           {pill && (
             <span className={`hidden rounded-full px-2.5 py-0.5 text-xs font-semibold sm:inline ${pill.style}`}>{pill.label}</span>
           )}
@@ -104,12 +106,12 @@ function Row({
   );
 }
 
-function EventRow({ event: e }: { event: TimelineEvent }) {
-  const time = formatTime(e.occurredAt);
+function EventRow({ event: e, currency, timeZone }: { event: TimelineEvent; currency: string; timeZone: string }) {
+  const time = formatTime(e.occurredAt, timeZone);
 
   if (e.kind === "update") {
     return (
-      <Row icon={Camera} tone="bg-primary-soft text-primary" label="Site update" time={time} by={e.actorName}>
+      <Row currency={currency} icon={Camera} tone="bg-primary-soft text-primary" label="Site update" time={time} by={e.actorName}>
         <p className="max-w-3xl whitespace-pre-line leading-relaxed">{e.update.text}</p>
         {e.update.milestone && (
           <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium">
@@ -124,6 +126,7 @@ function EventRow({ event: e }: { event: TimelineEvent }) {
   if (e.kind === "expense") {
     return (
       <Row
+        currency={currency}
         icon={Receipt}
         tone="bg-surface-2 text-muted"
         label={`Expense · ${expenseCategoryLabel[e.category]}`}
@@ -140,6 +143,7 @@ function EventRow({ event: e }: { event: TimelineEvent }) {
     const badge = statusBadge[e.status];
     return (
       <Row
+        currency={currency}
         icon={Banknote}
         tone="bg-success-soft text-success"
         label="Payment recorded"
@@ -162,6 +166,7 @@ function EventRow({ event: e }: { event: TimelineEvent }) {
   const recorder = sideLabel[e.side].toLowerCase();
   return (
     <Row
+      currency={currency}
       icon={disputed ? AlertTriangle : CheckCircle2}
       tone={disputed ? "bg-danger-soft text-danger" : "bg-success-soft text-success"}
       label={disputed ? "Payment disputed" : "Payment confirmed"}

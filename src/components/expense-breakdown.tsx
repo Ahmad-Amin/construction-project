@@ -1,19 +1,21 @@
 import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 import { expenseCategoryLabel, type CategoryTotal, type ExpenseCategory } from "@/lib/expenses";
-import { formatPKR } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 
 // "Where the money went": one bar per category, largest first. Each row is a link that
 // filters the list below to that category (and a second tap clears it).
 export function ExpenseBreakdown({
   breakdown,
   total,
+  currency,
   selected,
   hrefFor,
   title = "Where the money went",
 }: {
   breakdown: CategoryTotal[];
   total: number;
+  currency: string;
   selected: ExpenseCategory | null;
   hrefFor: (category: ExpenseCategory | null) => string;
   title?: string;
@@ -49,7 +51,7 @@ export function ExpenseBreakdown({
                   <span className="flex items-baseline justify-between gap-3 text-sm">
                     <span className="font-medium">{expenseCategoryLabel[b.category]}</span>
                     <span className="tabular-nums">
-                      <span className="font-semibold">{formatPKR(b.total)}</span>
+                      <span className="font-semibold">{formatMoney(b.total, currency)}</span>
                       <span className="ml-2 inline-block w-9 text-right text-xs text-muted">{share}%</span>
                     </span>
                   </span>

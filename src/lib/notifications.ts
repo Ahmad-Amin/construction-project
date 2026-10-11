@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/server";
 export type NotificationKind =
   | "payment_recorded"
   | "payment_due"
+  | "document_shared"
   | "payment_confirmed"
   | "payment_disputed"
   | "update_posted"

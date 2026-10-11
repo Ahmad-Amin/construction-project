@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { ExpenseForm } from "@/components/expense-form";
 import { FormFrame, FormHeading } from "@/components/form-frame";
 import { EXPENSE_COLUMNS, toExpenseItems } from "@/lib/expenses";
-import { todayInKarachi } from "@/lib/format";
+import { todayIn } from "@/lib/format";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
@@ -19,7 +19,7 @@ export async function NewExpenseView({ projectId: id, sheet }: ViewProps) {
   if (!viewer?.company || viewer.company.id !== project.company_id) {
     redirect(`/dashboard/projects/${id}/expenses`);
   }
-  const today = todayInKarachi();
+  const today = todayIn(project.timeZone);
 
   return (
     <FormFrame sheet={sheet}>
@@ -27,6 +27,7 @@ export async function NewExpenseView({ projectId: id, sheet }: ViewProps) {
       <ExpenseForm
         sheet={sheet}
         projectId={id}
+        currency={project.currency}
         today={today}
         isOwner={viewer.company.role === "owner"}
         initial={{
@@ -74,8 +75,9 @@ export async function EditExpenseView({ projectId: id, expenseId, sheet }: ViewP
       <ExpenseForm
         sheet={sheet}
         projectId={id}
+        currency={project.currency}
         expenseId={expenseId}
-        today={todayInKarachi()}
+        today={todayIn(project.timeZone)}
         isOwner={isOwner}
         initial={{
           amount: String(expense.amount),

@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { FormFrame, FormHeading } from "@/components/form-frame";
 import { UpdateForm } from "@/components/update-form";
-import { todayInKarachi } from "@/lib/format";
+import { todayIn } from "@/lib/format";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
@@ -28,7 +28,7 @@ export async function NewUpdateView({ projectId: id, sheet }: { projectId: strin
   return (
     <FormFrame sheet={sheet}>
       <FormHeading>Add update</FormHeading>
-      <UpdateForm sheet={sheet} projectId={id} milestones={data ?? []} today={todayInKarachi()} />
+      <UpdateForm sheet={sheet} projectId={id} milestones={data ?? []} today={todayIn(project.timeZone)} />
     </FormFrame>
   );
 }

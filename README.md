@@ -33,9 +33,16 @@ No Docker is needed. Everything runs against the hosted project.
 |---|---|---|---|
 | Projects, clients, milestones | create, edit | read; set milestone progress | read |
 | Site updates and photos | post, delete | post, delete own | read |
+| Documents | add, edit, delete, choose what the client sees | add (not shared until the owner shares it), edit or delete own | read shared ones only |
 | Expenses and receipts | add, edit, delete, choose what the client sees | add (always hidden from the client), edit own | read shared ones only |
 | Payments | record, respond | read | record, respond |
 | Timeline | read | read | read |
+
+**Currency:** each company works in one currency, picked on the "Set up your company" screen (guessed from the visitor's country) and changeable by the owner in Settings → Company. It is stored on `companies.currency` and is only a label: amounts are whole units and are never converted, so changing it relabels existing amounts. Every amount is shown as `<code> <number>` through `formatMoney` / `formatMoneyCompact` in `src/lib/format.ts`; pages read it from `project.currency` (homeowners can already read their contractor's company row). Notification text written by the database uses `format_money(amount, project_id)`, and the weekly summary carries `currency`. 
+
+**Time zone:** each company also has an IANA time zone (`companies.timezone`, default `Asia/Karachi`), chosen on the setup screen (guessed from Vercel's `x-vercel-ip-timezone` header) and changeable in Settings → Company. It decides what "today" is (`todayIn`), which day an event belongs to (`dayInZone`), the clock time shown (`formatTime`, `formatTimestamp`) and relative dates, all in `src/lib/format.ts`. Pages read it from `project.timeZone` and the viewer's own company from `viewer.company.timeZone`; the database timeline uses `project_time_zone()`. The weekly summary still runs once a week (Sunday 13:00 UTC) for everyone.
+
+**Documents:** the Documents tab holds a project's contract, drawings, permits, quotations and invoices (PDF, Word, Excel or image, up to 20 MB). Files live in their own private bucket, `project-documents`, at `<project>/<document>/<file>`. Like expenses they start hidden for staff; the owner chooses what the homeowner sees (the form defaults to shared for the owner), and a shared document sends the homeowner a notification (bell and email, kind `document_shared`). Visibility is enforced by row-level security on `project_documents` and by `can_read_document_file` on the files themselves. Open and Download go through `documents/[documentId]/file`, which checks who is asking and redirects to a signed link that expires in a minute. A document's file can't be changed, only its name, type and sharing.
 
 Payments can carry an **optional receipt photo** (bank transfer, cheque or receipt), attached by whoever records the payment and visible to both sides. It is uploaded from the form (`components/payment-receipt-field.tsx`), stored privately at `<project>/payments/<payment>/…`, and locked with the payment once confirmed; adding, replacing or removing it sends the payment back for confirmation. Payments are two-sided: whoever records one, the other side confirms or disputes it. Only confirmed payments count toward the total, and confirmed payments are locked. The timeline shows only expenses that are shared with the client.
 
@@ -92,7 +99,7 @@ Homeowners who switch on **Settings → Notifications → Send me updates on Wha
 ## Phone numbers and amounts
 
 - **Phones** are picked with a country selector (`components/phone-input.tsx`, Pakistan by default) and saved in the international format, like `+923001234567` (`lib/phone.ts`, built on `libphonenumber-js`). That is what WhatsApp needs and it works for any country. Older entries such as `0300 1234567` are still understood as Pakistani numbers, and are converted the next time the project is saved. The country flags are loaded from the Twemoji set on cdnjs.cloudflare.com; self-host them if you want no third-party requests.
-- **Dates** use a proper calendar (`components/date-field.tsx`, built on DayPicker) instead of the browser's own date input. It submits `YYYY-MM-DD` like before, so nothing server-side changed. Pass `max` to stop future dates, and `today` so "Today" follows Pakistan time.
+- **Dates** use a proper calendar (`components/date-field.tsx`, built on DayPicker) instead of the browser's own date input. It submits `YYYY-MM-DD` like before, so nothing server-side changed. Pass `max` to stop future dates, and `today` so "Today" follows the company's time zone.
 - **Money fields** (`components/amount-input.tsx`) show commas as you type and submit plain digits.
 
 ## Security and link previews

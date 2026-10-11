@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCsv, type Cell } from "@/lib/csv";
 import { expenseCategoryLabel, type ExpenseCategory } from "@/lib/expenses";
+import { dayInZone, todayIn } from "@/lib/format";
 import { overallProgress } from "@/lib/project";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/types";
@@ -12,8 +13,6 @@ const KINDS = ["projects", "milestones", "updates", "expenses", "payments"] as c
 type Kind = (typeof KINDS)[number];
 
 const yesNo = (value: boolean) => (value ? "Yes" : "No");
-const karachiDay = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" }) : "";
 
 type Built = { headers: string[]; rows: Cell[][] };
 
@@ -22,7 +21,8 @@ async function projectNames(supabase: SupabaseClient) {
   return new Map((data ?? []).map((p: { id: string; name: string }) => [p.id, p.name]));
 }
 
-async function build(kind: Kind, supabase: SupabaseClient): Promise<Built> {
+async function build(kind: Kind, supabase: SupabaseClient, currency: string, timeZone: string): Promise<Built> {
+  const dayOf = (iso: string | null) => (iso ? dayInZone(iso, timeZone) : "");
   if (kind === "projects" || kind === "milestones") {
     const { data } = await supabase
       .from("projects")
@@ -45,7 +45,7 @@ async function build(kind: Kind, supabase: SupabaseClient): Promise<Built> {
 
     if (kind === "projects") {
       return {
-        headers: ["Project", "Location", "Status", "Start date", "Expected completion", "Overall progress %", "Client name", "Client email", "Client phone", "Budget (PKR)", "Budget shown to client"],
+        headers: ["Project", "Location", "Status", "Start date", "Expected completion", "Overall progress %", "Client name", "Client email", "Client phone", `Budget (${currency})`, "Budget shown to client"],
         rows: rows.map((p) => {
           const client = one(p.client);
           const budget = one(p.budget);
@@ -109,7 +109,7 @@ async function build(kind: Kind, supabase: SupabaseClient): Promise<Built> {
       created_by_name: string;
     };
     return {
-      headers: ["Project", "Date", "Category", "Vendor or note", "Amount (PKR)", "Shown to client", "Receipt attached", "Added by"],
+      headers: ["Project", "Date", "Category", "Vendor or note", `Amount (${currency})`, "Shown to client", "Receipt attached", "Added by"],
       rows: ((data ?? []) as Row[]).map((e) => [
         nameOf(e.project_id), e.expense_date, expenseCategoryLabel[e.category] ?? e.category, e.vendor_note,
         Number(e.amount), yesNo(e.client_visible), yesNo(!!e.receipt_path), e.created_by_name,
@@ -137,11 +137,11 @@ async function build(kind: Kind, supabase: SupabaseClient): Promise<Built> {
     receipt_path: string | null;
   };
   return {
-    headers: ["Project", "Date", "Amount (PKR)", "Recorded by", "Recorded as", "Status", "Reference", "Note", "Confirmed or disputed by", "Responded on", "Dispute reason", "Receipt attached"],
+    headers: ["Project", "Date", `Amount (${currency})`, "Recorded by", "Recorded as", "Status", "Reference", "Note", "Confirmed or disputed by", "Responded on", "Dispute reason", "Receipt attached"],
     rows: ((data ?? []) as Row[]).map((p) => [
       nameOf(p.project_id), p.payment_date, Number(p.amount), p.created_by_name,
       p.side === "contractor" ? "Contractor" : "Homeowner", p.status, p.reference, p.note,
-      p.responded_by_name, karachiDay(p.responded_at), p.dispute_reason, yesNo(!!p.receipt_path),
+      p.responded_by_name, dayOf(p.responded_at), p.dispute_reason, yesNo(!!p.receipt_path),
     ]),
   };
 }
@@ -160,10 +160,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
 
   // Row-level security keeps this to the owner's own company.
   const supabase = await createClient();
-  const { headers, rows } = await build(kind as Kind, supabase);
+  const { headers, rows } = await build(kind as Kind, supabase, viewer.company.currency, viewer.company.timeZone);
 
   const slug = viewer.company.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "company";
-  const date = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+  const date = todayIn(viewer.company.timeZone);
 
   return new NextResponse(toCsv(headers, rows), {
     headers: {

@@ -11,6 +11,9 @@ type Field = {
   autoComplete?: string;
   defaultValue?: string;
   readOnly?: boolean;
+  // Turns the field into a drop-down.
+  options?: { value: string; label: string }[];
+  hint?: string;
 };
 
 export function AuthForm({
@@ -31,15 +34,26 @@ export function AuthForm({
       {fields.map((f) => (
         <label key={f.name} className="block">
           <span className="mb-1.5 block text-sm font-medium">{f.label}</span>
-          <input
-            name={f.name}
-            type={f.type ?? "text"}
-            autoComplete={f.autoComplete}
-            defaultValue={f.defaultValue}
-            readOnly={f.readOnly}
-            required={!f.readOnly}
-            className={`${inputClass} ${f.readOnly ? "opacity-70" : ""}`}
-          />
+          {f.options ? (
+            <select name={f.name} defaultValue={f.defaultValue} required className={inputClass}>
+              {f.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              name={f.name}
+              type={f.type ?? "text"}
+              autoComplete={f.autoComplete}
+              defaultValue={f.defaultValue}
+              readOnly={f.readOnly}
+              required={!f.readOnly}
+              className={`${inputClass} ${f.readOnly ? "opacity-70" : ""}`}
+            />
+          )}
+          {f.hint && <span className="mt-1.5 block text-xs text-muted">{f.hint}</span>}
         </label>
       ))}
 

@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { Check, Eye, EyeOff, Lock } from "lucide-react";
-import { formatPKR } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 
 type Props = {
   projectId: string;
+  currency: string;
   updates: number;
   payments: number;
   expensesShared: number;
   expensesTotal: number;
   sharedAmount: number;
   hiddenAmount: number;
+  documentsShared: number;
+  documentsHidden: number;
   budgetShown: boolean | null; // null = no budget set
 };
 
@@ -57,8 +60,13 @@ export function ClientVisibilityCard(p: Props) {
             </Row>
             <Row icon={Check} tone="ok">
               {p.expensesShared} of {p.expensesTotal} {p.expensesTotal === 1 ? "expense" : "expenses"} (
-              {formatPKR(p.sharedAmount)}), with receipts
+              {formatMoney(p.sharedAmount, p.currency)}), with receipts
             </Row>
+            {p.documentsShared > 0 && (
+              <Row icon={Check} tone="ok">
+                {p.documentsShared} {p.documentsShared === 1 ? "document" : "documents"}
+              </Row>
+            )}
             {p.budgetShown && <Row icon={Check} tone="ok">The project budget</Row>}
           </ul>
         </div>
@@ -68,12 +76,17 @@ export function ClientVisibilityCard(p: Props) {
           <ul className="space-y-2">
             {hidden > 0 ? (
               <Row icon={EyeOff} tone="off">
-                {hidden} hidden {hidden === 1 ? "expense" : "expenses"} ({formatPKR(p.hiddenAmount)}) and{" "}
+                {hidden} hidden {hidden === 1 ? "expense" : "expenses"} ({formatMoney(p.hiddenAmount, p.currency)}) and{" "}
                 {hidden === 1 ? "its" : "their"} receipts. They never appear in your client&apos;s list, totals or
                 timeline.
               </Row>
             ) : (
               <Row icon={Lock} tone="off">No hidden expenses. New ones start hidden until you share them.</Row>
+            )}
+            {p.documentsHidden > 0 && (
+              <Row icon={EyeOff} tone="off">
+                {p.documentsHidden} {p.documentsHidden === 1 ? "document" : "documents"} you haven&apos;t shared
+              </Row>
             )}
             {p.budgetShown === false && <Row icon={EyeOff} tone="off">The project budget</Row>}
             <Row icon={Lock} tone="off">Other clients&apos; projects. Nobody else can see this one.</Row>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Archive, BellRing, Banknote, ChevronDown, Hammer, Plus, Receipt, Trash2 } from "lucide-react";
 import { signOut } from "@/app/login/actions";
@@ -16,9 +17,11 @@ import { SiteIllustration } from "@/components/site-illustration";
 import { StatTile } from "@/components/viz";
 import { GettingStartedCard } from "@/components/getting-started-card";
 import { fetchDashboard } from "@/lib/dashboard";
+import { CURRENCIES, currencyForCountry } from "@/lib/currency";
 import { isDemoEmail } from "@/lib/demo";
+import { DEFAULT_TIMEZONE, isTimeZone, timeZoneOptions } from "@/lib/timezone";
 import { fetchGettingStarted } from "@/lib/getting-started";
-import { formatPKRCompact } from "@/lib/format";
+import { formatMoneyCompact } from "@/lib/format";
 import { viewerSide } from "@/lib/payments";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
@@ -27,9 +30,9 @@ import { createCompany } from "./actions";
 
 export const metadata = { title: "Dashboard" };
 
-function greetingFor(hourInKarachi: number) {
-  if (hourInKarachi < 12) return "Good morning";
-  if (hourInKarachi < 17) return "Good afternoon";
+function greetingFor(hour: number) {
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
   return "Good evening";
 }
 
@@ -44,6 +47,10 @@ export default async function DashboardPage({
 
   // Brand-new account: no company and not an invited homeowner.
   if (!viewer.company && !viewer.isClient) {
+    const hdrs = await headers();
+    const guess = currencyForCountry(hdrs.get("x-vercel-ip-country"));
+    const zoneHeader = hdrs.get("x-vercel-ip-timezone");
+    const zoneGuess = isTimeZone(zoneHeader) ? zoneHeader : DEFAULT_TIMEZONE;
     return (
       <AuthShell
         variant="company"
@@ -63,7 +70,23 @@ export default async function DashboardPage({
         <AuthForm
           action={createCompany}
           submitLabel="Continue"
-          fields={[{ name: "name", label: "Company name", autoComplete: "organization" }]}
+          fields={[
+            { name: "name", label: "Company name", autoComplete: "organization" },
+            {
+              name: "currency",
+              label: "Currency",
+              defaultValue: guess,
+              options: CURRENCIES.map((c) => ({ value: c.code, label: `${c.code} · ${c.name}` })),
+              hint: "Used for every amount. You can change it later in Settings.",
+            },
+            {
+              name: "timezone",
+              label: "Time zone",
+              defaultValue: zoneGuess,
+              options: timeZoneOptions(zoneGuess),
+              hint: "Decides what \"today\" is for your projects. You can change it later in Settings.",
+            },
+          ]}
         />
       </AuthShell>
     );
@@ -71,6 +94,7 @@ export default async function DashboardPage({
 
   const isOwner = viewer.company?.role === "owner";
   const isCompany = !!viewer.company;
+  const currency = viewer.company?.currency ?? "";
   const side = viewerSide(isCompany, isOwner);
 
   // RLS decides what comes back: a company sees its projects, a homeowner only their own.
@@ -92,11 +116,10 @@ export default async function DashboardPage({
   }
 
   const firstName = (profile.data?.name ?? "").trim().split(/\s+/)[0];
-  const hour = Number(
-    new Date().toLocaleString("en-GB", { timeZone: "Asia/Karachi", hour: "numeric", hour12: false }),
-  );
+  const timeZone = viewer.company?.timeZone ?? dashboard.timeZone;
+  const hour = Number(new Date().toLocaleString("en-GB", { timeZone, hour: "numeric", hour12: false })) % 24;
   const dateText = new Date().toLocaleDateString("en-GB", {
-    timeZone: "Asia/Karachi",
+    timeZone,
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -149,10 +172,10 @@ export default async function DashboardPage({
           <StatTile
             icon={Banknote}
             label="Received from clients"
-            value={formatPKRCompact(kpis.received)}
+            value={formatMoneyCompact(kpis.received, currency)}
             sub={
               kpis.pendingReceived > 0
-                ? `${formatPKRCompact(kpis.pendingReceived)} awaiting confirmation`
+                ? `${formatMoneyCompact(kpis.pendingReceived, currency)} awaiting confirmation`
                 : kpis.budget > 0
                   ? `${Math.round((kpis.received / kpis.budget) * 100)}% of budgets`
                   : undefined
@@ -163,7 +186,7 @@ export default async function DashboardPage({
           <StatTile
             icon={Receipt}
             label="Spent on projects"
-            value={formatPKRCompact(kpis.spent)}
+            value={formatMoneyCompact(kpis.spent, currency)}
             sub={kpis.budget > 0 ? `${Math.round((kpis.spent / kpis.budget) * 100)}% of budgets` : undefined}
             spark={{ values: kpis.spentSeries, label: "Expenses recorded per month, last 8 months" }}
             delay={120}

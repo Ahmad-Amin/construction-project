@@ -1,5 +1,5 @@
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { formatDate, formatPKR, formatTimestamp } from "@/lib/format";
+import { formatDate, formatMoney, formatTimestamp } from "@/lib/format";
 import { projectStatusLabel } from "@/lib/project";
 import { PRODUCT_NAME } from "@/lib/site";
 import { sideLabel } from "@/lib/payments";
@@ -95,9 +95,9 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub?:
   );
 }
 
-function paymentStatus(p: StatementData["payments"][number]) {
+function paymentStatus(p: StatementData["payments"][number], timeZone: string) {
   if (p.status === "confirmed") {
-    return { text: `Confirmed by ${p.respondedBy || "the other party"}`, sub: formatTimestamp(p.respondedAt), color: green };
+    return { text: `Confirmed by ${p.respondedBy || "the other party"}`, sub: formatTimestamp(p.respondedAt, timeZone), color: green };
   }
   if (p.status === "disputed") {
     return { text: "Disputed", sub: p.respondedBy ? `by ${p.respondedBy}` : "", color: red };
@@ -105,8 +105,8 @@ function paymentStatus(p: StatementData["payments"][number]) {
   return { text: "Awaiting confirmation", sub: "", color: amber };
 }
 
-function PaymentRow({ payment: x }: { payment: StatementData["payments"][number] }) {
-  const st = paymentStatus(x);
+function PaymentRow({ payment: x, currency, timeZone }: { payment: StatementData["payments"][number]; currency: string; timeZone: string }) {
+  const st = paymentStatus(x, timeZone);
   return (
     <View style={s.tr} wrap={false}>
       <Text style={{ width: 62 }}>{formatDate(x.date)}</Text>
@@ -118,12 +118,12 @@ function PaymentRow({ payment: x }: { payment: StatementData["payments"][number]
         <Text style={{ color: st.color, fontFamily: "Helvetica-Bold" }}>{st.text}</Text>
         {st.sub ? <Text style={s.small}>{st.sub}</Text> : null}
       </View>
-      <Text style={[s.right, s.bold, { width: 86 }]}>{formatPKR(x.amount)}</Text>
+      <Text style={[s.right, s.bold, { width: 86 }]}>{formatMoney(x.amount, currency)}</Text>
     </View>
   );
 }
 
-function ExpenseRow({ expense: e }: { expense: StatementData["expenses"][number] }) {
+function ExpenseRow({ expense: e, currency }: { expense: StatementData["expenses"][number]; currency: string }) {
   return (
     <View style={s.tr} wrap={false}>
       <Text style={{ width: 62 }}>{formatDate(e.date)}</Text>
@@ -132,7 +132,7 @@ function ExpenseRow({ expense: e }: { expense: StatementData["expenses"][number]
         {e.note || e.category}
         {e.receipt ? "  (receipt on file)" : ""}
       </Text>
-      <Text style={[s.right, s.bold, { width: 86 }]}>{formatPKR(e.amount)}</Text>
+      <Text style={[s.right, s.bold, { width: 86 }]}>{formatMoney(e.amount, currency)}</Text>
     </View>
   );
 }
@@ -237,14 +237,14 @@ export function StatementDocument({ data }: { data: StatementData }) {
 
         <Section title="Money">
           <View style={s.stats}>
-            {data.budget !== null ? <Stat label="Budget" value={formatPKR(data.budget)} /> : null}
-            <Stat label="Payments confirmed" value={formatPKR(money.received)} tone={green} sub="Acknowledged by both sides" />
+            {data.budget !== null ? <Stat label="Budget" value={formatMoney(data.budget, data.currency)} /> : null}
+            <Stat label="Payments confirmed" value={formatMoney(money.received, data.currency)} tone={green} sub="Acknowledged by both sides" />
             <Stat
               label="Awaiting confirmation"
-              value={formatPKR(money.pending)}
+              value={formatMoney(money.pending, data.currency)}
               sub={money.disputedCount > 0 ? `${money.disputedCount} disputed, not counted` : undefined}
             />
-            <Stat label="Expenses shared" value={formatPKR(money.expensesTotal)} sub={`${money.expensesCount} ${money.expensesCount === 1 ? "item" : "items"}`} />
+            <Stat label="Expenses shared" value={formatMoney(money.expensesTotal, data.currency)} sub={`${money.expensesCount} ${money.expensesCount === 1 ? "item" : "items"}`} />
           </View>
         </Section>
 
@@ -261,7 +261,7 @@ export function StatementDocument({ data }: { data: StatementData }) {
                   <Text style={[s.thText, { width: 150 }]}>Status</Text>
                   <Text style={[s.thText, s.right, { width: 86 }]}>Amount</Text>
                 </View>
-                <PaymentRow payment={data.payments[0]} />
+                <PaymentRow payment={data.payments[0]} currency={data.currency} timeZone={data.timeZone} />
               </View>
             )
           }
@@ -269,11 +269,11 @@ export function StatementDocument({ data }: { data: StatementData }) {
           {data.payments.length > 0 ? (
             <View>
               {data.payments.slice(1).map((x, i) => (
-                <PaymentRow key={i} payment={x} />
+                <PaymentRow key={i} payment={x} currency={data.currency} timeZone={data.timeZone} />
               ))}
               <View style={s.total} wrap={false}>
                 <Text style={[s.bold, { flexGrow: 1 }]}>Total confirmed</Text>
-                <Text style={[s.right, s.bold, { width: 120, color: green }]}>{formatPKR(money.received)}</Text>
+                <Text style={[s.right, s.bold, { width: 120, color: green }]}>{formatMoney(money.received, data.currency)}</Text>
               </View>
             </View>
           ) : null}
@@ -292,7 +292,7 @@ export function StatementDocument({ data }: { data: StatementData }) {
                   <Text style={[s.thText, { flexGrow: 1 }]}>Vendor or note</Text>
                   <Text style={[s.thText, s.right, { width: 86 }]}>Amount</Text>
                 </View>
-                <ExpenseRow expense={data.expenses[0]} />
+                <ExpenseRow expense={data.expenses[0]} currency={data.currency} />
               </View>
             )
           }
@@ -300,15 +300,15 @@ export function StatementDocument({ data }: { data: StatementData }) {
           {data.expenses.length > 0 ? (
             <View>
               {data.expenses.slice(1).map((e, i) => (
-                <ExpenseRow key={i} expense={e} />
+                <ExpenseRow key={i} expense={e} currency={data.currency} />
               ))}
               <View style={s.total} wrap={false}>
                 <Text style={[s.bold, { flexGrow: 1 }]}>Total shared</Text>
-                <Text style={[s.right, s.bold, { width: 120 }]}>{formatPKR(money.expensesTotal)}</Text>
+                <Text style={[s.right, s.bold, { width: 120 }]}>{formatMoney(money.expensesTotal, data.currency)}</Text>
               </View>
               {data.expensesByCategory.length > 1 ? (
                 <Text style={[s.small, { marginTop: 8 }]}>
-                  By category: {data.expensesByCategory.map((c) => `${c.category} ${formatPKR(c.total)}`).join("  ·  ")}
+                  By category: {data.expensesByCategory.map((c) => `${c.category} ${formatMoney(c.total, data.currency)}`).join("  ·  ")}
                 </Text>
               ) : null}
             </View>

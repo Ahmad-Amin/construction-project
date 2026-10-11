@@ -32,7 +32,7 @@ export function LandingVisual() {
               </span>
               <div className="min-w-0">
                 <p className="text-sm font-semibold">Payment confirmed</p>
-                <p className="mt-0.5 text-xs text-muted">PKR 4,000,000, confirmed by Ahmed</p>
+                <p className="mt-0.5 text-xs text-muted">USD 40,000, confirmed by Sam</p>
               </div>
             </div>
           </div>

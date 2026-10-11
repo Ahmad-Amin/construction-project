@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatPKR, todayInKarachi } from "@/lib/format";
+import { formatMoney, todayIn } from "@/lib/format";
+import { currencyOrDefault } from "@/lib/currency";
 import type { PaymentSide, PaymentStatus } from "@/lib/payments";
+import { DEFAULT_TIMEZONE, timeZoneOrDefault } from "@/lib/timezone";
 import { overallProgress } from "@/lib/project";
 import { one, type ProjectStatus } from "@/lib/types";
 
@@ -11,6 +13,10 @@ export type DashboardProject = {
   status: ProjectStatus;
   clientName: string | null;
   companyName: string | null;
+  // The company's currency: how every amount on this project is shown.
+  currency: string;
+  // The company's time zone, which decides what "today" is for this project.
+  timeZone: string;
   progress: number;
   coverUrl: string | null;
   // Budget is null when the viewer isn't allowed to see it.
@@ -43,6 +49,7 @@ export type ActivityItem = {
   actor: string;
   title: string;
   amount?: number;
+  currency?: string;
   status?: PaymentStatus;
   hidden?: boolean;
 };
@@ -65,6 +72,8 @@ export type Dashboard = {
   attention: AttentionItem[];
   activity: ActivityItem[];
   photos: FreshPhoto[];
+  // The viewer's time zone: their company's, or for a homeowner their first project's.
+  timeZone: string;
 };
 
 type ProjectRow = {
@@ -73,7 +82,7 @@ type ProjectRow = {
   location: string;
   status: ProjectStatus;
   client: { name: string } | { name: string }[] | null;
-  company: { name: string } | { name: string }[] | null;
+  company: { name: string; currency: string; timezone: string } | { name: string; currency: string; timezone: string }[] | null;
   milestones: { id: string; progress_percent: number }[];
   project_updates: { update_date: string; text: string }[];
   archived_at: string | null;
@@ -122,8 +131,8 @@ const dayNumber = (isoDate: string) => {
 };
 
 // The last `count` calendar months ending this month, oldest first, as "yyyy-mm".
-function lastMonths(count: number): string[] {
-  const [y, m] = todayInKarachi().split("-").map(Number);
+function lastMonths(count: number, timeZone: string): string[] {
+  const [y, m] = todayIn(timeZone).split("-").map(Number);
   return Array.from({ length: count }, (_, i) => {
     const index = y * 12 + (m - 1) - (count - 1 - i);
     return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
@@ -141,7 +150,7 @@ export async function fetchDashboard(
     supabase
       .from("projects")
       .select(
-        "id, name, location, status, archived_at, client:clients(name), company:companies(name), milestones(id, progress_percent), project_updates(update_date, text), budget:project_budgets(amount)",
+        "id, name, location, status, archived_at, client:clients(name), company:companies(name, currency, timezone), milestones(id, progress_percent), project_updates(update_date, text), budget:project_budgets(amount)",
       )
       .order("created_at", { ascending: false })
       .order("update_date", { referencedTable: "project_updates", ascending: false })
@@ -191,9 +200,10 @@ export async function fetchDashboard(
     if (url && !coverByProject.has(p.project_id)) coverByProject.set(p.project_id, url);
   }
 
-  const today = dayNumber(todayInKarachi());
   const projects: DashboardProject[] = projectRows.map((row) => {
     const last = row.project_updates?.[0] ?? null;
+    const timeZone = timeZoneOrDefault(one(row.company)?.timezone);
+    const today = dayNumber(todayIn(timeZone));
     const mine = payments.filter((p) => p.project_id === row.id);
     return {
       id: row.id,
@@ -202,6 +212,8 @@ export async function fetchDashboard(
       status: row.status,
       clientName: one(row.client)?.name ?? null,
       companyName: one(row.company)?.name ?? null,
+      currency: currencyOrDefault(one(row.company)?.currency),
+      timeZone,
       progress: overallProgress(row.milestones),
       coverUrl: coverByProject.get(row.id) ?? null,
       budget: one(row.budget)?.amount ?? null,
@@ -217,6 +229,7 @@ export async function fetchDashboard(
     };
   });
   const nameOf = new Map(projects.map((p) => [p.id, p.name]));
+  const currencyOf = new Map(projects.map((p) => [p.id, p.currency]));
 
   // Everything below describes current work, so archived projects are left out.
   const live = projects.filter((p) => !p.archived);
@@ -225,7 +238,8 @@ export async function fetchDashboard(
   const liveExpenses = expenses.filter((e) => liveIds.has(e.project_id));
 
   // Totals and the trend lines behind the stat tiles.
-  const months = lastMonths(MONTHS);
+  const timeZone = projects[0]?.timeZone ?? DEFAULT_TIMEZONE;
+  const months = lastMonths(MONTHS, timeZone);
   const receivedByMonth = new Map(months.map((m) => [m, 0]));
   const spentByMonth = new Map(months.map((m) => [m, 0]));
   for (const p of livePayments) {
@@ -281,7 +295,7 @@ export async function fetchDashboard(
         tone: "warn",
         projectId: p.id,
         projectName: p.name,
-        text: count === 1 ? `${first} is due (${formatPKR(total)})` : `${count} instalments are due (${formatPKR(total)})`,
+        text: count === 1 ? `${first} is due (${formatMoney(total, p.currency)})` : `${count} instalments are due (${formatMoney(total, p.currency)})`,
         href: `/dashboard/projects/${p.id}/payments`,
       });
     }
@@ -325,6 +339,7 @@ export async function fetchDashboard(
       actor: p.created_by_name,
       title: p.reference || (p.side === "contractor" ? "Payment received" : "Payment made"),
       amount: Number(p.amount),
+      currency: currencyOf.get(p.project_id),
       status: p.status,
     })),
     ...liveExpenses.slice(0, 8).map<ActivityItem>((e) => ({
@@ -336,6 +351,7 @@ export async function fetchDashboard(
       actor: e.created_by_name,
       title: e.vendor_note || e.category,
       amount: Number(e.amount),
+      currency: currencyOf.get(e.project_id),
       hidden: !e.client_visible,
     })),
   ]
@@ -368,5 +384,6 @@ export async function fetchDashboard(
     attention,
     activity,
     photos,
+    timeZone,
   };
 }

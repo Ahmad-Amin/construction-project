@@ -63,7 +63,7 @@ export function buildWhatsAppMessage(
 
   switch (n.kind) {
     case "payment_recorded": {
-      const amount = n.title.match(/PKR [\d,]+/)?.[0] ?? "an amount";
+      const amount = n.title.match(/[A-Z]{3} [\d,]+/)?.[0] ?? "an amount";
       return { template: "payment_to_confirm", params: [name, amount, project, link] };
     }
     case "update_posted":

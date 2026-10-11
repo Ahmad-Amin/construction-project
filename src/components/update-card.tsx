@@ -10,9 +10,11 @@ import type { UpdateItem } from "@/lib/updates";
 export function UpdateCard({
   update,
   projectId,
+  timeZone,
   canDelete,
   shareHref,
 }: {
+  timeZone: string;
   update: UpdateItem;
   projectId: string;
   canDelete: boolean;
@@ -33,8 +35,8 @@ export function UpdateCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="font-semibold">
-                {formatRelativeDate(update.date)}
-                {formatRelativeDate(update.date) !== formatDate(update.date) && (
+                {formatRelativeDate(update.date, timeZone)}
+                {formatRelativeDate(update.date, timeZone) !== formatDate(update.date) && (
                   <span className="ml-2 font-normal text-muted">{formatDate(update.date)}</span>
                 )}
               </p>

@@ -18,7 +18,7 @@ export function ExpenseFilterBar({
 }: {
   base: string;
   filters: ExpenseFilters;
-  today: string; // yyyy-mm-dd, in Pakistan
+  today: string; // yyyy-mm-dd, in the company's time zone
   isTeam: boolean;
 }) {
   const href = (changes: Partial<ExpenseFilters>) => `${base}${filtersToQuery(filters, changes)}`;

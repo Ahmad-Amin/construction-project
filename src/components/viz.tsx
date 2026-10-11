@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { formatPKR } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 
 const clamp = (n: number) => Math.min(100, Math.max(0, n));
 
@@ -142,12 +142,14 @@ export function MoneyBars({
   budget,
   received,
   spent,
+  currency,
   receivedLabel = "Received",
   spentLabel = "Spent",
 }: {
   budget: number | null;
   received: number | null;
   spent: number;
+  currency: string;
   receivedLabel?: string;
   spentLabel?: string;
 }) {
@@ -171,7 +173,7 @@ export function MoneyBars({
             <div className="mb-1.5 flex items-start justify-between gap-3 text-sm">
               <span className="font-medium">{row.label}</span>
               <span className="text-right tabular-nums">
-                <span className="block font-semibold">{formatPKR(row.value)}</span>
+                <span className="block font-semibold">{formatMoney(row.value, currency)}</span>
                 {ofBudget && <span className="block text-xs text-muted">{ofBudget}</span>}
               </span>
             </div>

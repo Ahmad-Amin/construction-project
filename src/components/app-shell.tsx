@@ -9,6 +9,7 @@ import {
   Bell,
   Camera,
   ChevronRight,
+  FolderOpen,
   History,
   Home,
   LayoutDashboard,
@@ -58,6 +59,7 @@ const SECTION_LABELS: Record<string, string> = {
   updates: "Updates",
   expenses: "Expenses",
   payments: "Payments",
+  documents: "Documents",
   edit: "Edit project",
   statement: "Statement",
 };
@@ -146,6 +148,7 @@ function SidebarContent({
     { href: `${base}/updates`, label: "Updates", icon: Camera },
     { href: `${base}/expenses`, label: "Expenses", icon: Receipt },
     { href: `${base}/payments`, label: "Payments", icon: Banknote },
+    { href: `${base}/documents`, label: "Documents", icon: FolderOpen },
   ];
 
   const live = projects.filter((p) => !p.archived);

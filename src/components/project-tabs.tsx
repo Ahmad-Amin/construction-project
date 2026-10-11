@@ -13,6 +13,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
     { href: `${base}/updates`, label: "Updates" },
     { href: `${base}/expenses`, label: "Expenses" },
     { href: `${base}/payments`, label: "Payments" },
+    { href: `${base}/documents`, label: "Documents" },
   ];
 
   return (

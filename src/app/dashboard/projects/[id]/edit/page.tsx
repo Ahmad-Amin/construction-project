@@ -1,8 +1,10 @@
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { ProjectDangerZone } from "@/components/project-danger-zone";
 import { ProjectForm } from "@/components/project-form";
 import { createClient } from "@/lib/supabase/server";
 import { one, type ClientInfo } from "@/lib/types";
+import { phoneCountryFor } from "@/lib/phone";
 import { getViewer } from "@/lib/viewer";
 import { updateProject } from "../../actions";
 
@@ -50,6 +52,8 @@ export default async function EditProjectPage({
       <ProjectForm
         action={updateProject.bind(null, id)}
         mode="edit"
+        currency={viewer.company.currency}
+        phoneCountry={phoneCountryFor((await headers()).get("x-vercel-ip-country"), viewer.company.timeZone)}
         emailLocked={!!client?.user_id}
         cancelHref={`/dashboard/projects/${id}`}
         defaults={{

@@ -1,4 +1,4 @@
-import { formatPKR, whatsappNumber } from "@/lib/format";
+import { formatMoney, whatsappNumber } from "@/lib/format";
 
 // Click-to-chat link: opens WhatsApp with the message ready to send. It is the person's
 // own tap that sends it; nothing is sent automatically. With no phone number, WhatsApp
@@ -60,14 +60,15 @@ export function paymentReminder(p: {
   recordedBy: "contractor" | "client";
   projectName: string;
   amount: number;
+  currency: string;
   date: string;
   link: string;
 }) {
   const hello = p.to ? `${GREETING} ${p.to},` : `${GREETING},`;
   const what =
     p.recordedBy === "contractor"
-      ? `I've recorded your payment of ${formatPKR(p.amount)} (${p.date}) for ${p.projectName}.`
-      : `I've recorded a payment of ${formatPKR(p.amount)} (${p.date}) for ${p.projectName}.`;
+      ? `I've recorded your payment of ${formatMoney(p.amount, p.currency)} (${p.date}) for ${p.projectName}.`
+      : `I've recorded a payment of ${formatMoney(p.amount, p.currency)} (${p.date}) for ${p.projectName}.`;
   return `${hello}\n\n${what} Please confirm it here so we both have the same record: ${p.link}\n\n– ${p.from}`;
 }
 
@@ -78,11 +79,12 @@ export function scheduledPaymentRequest(p: {
   projectName: string;
   title: string;
   amount: number;
+  currency: string;
   link: string;
 }) {
   const hello = p.to ? `${GREETING} ${p.to},` : `${GREETING},`;
   return (
-    `${hello}\n\nThe next payment on ${p.projectName} is due: ${p.title}, ${formatPKR(p.amount)}.\n\n` +
+    `${hello}\n\nThe next payment on ${p.projectName} is due: ${p.title}, ${formatMoney(p.amount, p.currency)}.\n\n` +
     `When you have paid, please record it here so we both have the same record: ${p.link}\n\n– ${p.from}`
   );
 }

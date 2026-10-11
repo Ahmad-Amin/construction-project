@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { emptyProjectValues, ProjectForm } from "@/components/project-form";
+import { phoneCountryFor } from "@/lib/phone";
 import { getViewer } from "@/lib/viewer";
 import { createProject } from "../actions";
 
@@ -19,6 +21,8 @@ export default async function NewProjectPage() {
         action={createProject}
         mode="create"
         defaults={emptyProjectValues}
+        currency={viewer.company.currency}
+        phoneCountry={phoneCountryFor((await headers()).get("x-vercel-ip-country"), viewer.company.timeZone)}
         cancelHref="/dashboard"
       />
     </main>

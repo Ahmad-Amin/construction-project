@@ -224,7 +224,7 @@ export default function Home() {
                 <ul className="mt-6 space-y-3" aria-label="Sample payments">
                   <li className="flex items-center justify-between rounded-xl bg-surface-2 px-4 py-3">
                     <span>
-                      <span className="block text-sm font-medium">PKR 4,000,000</span>
+                      <span className="block text-sm font-medium">USD 40,000</span>
                       <span className="block text-xs text-muted">Bank transfer</span>
                     </span>
                     <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 text-xs font-semibold text-success">
@@ -233,7 +233,7 @@ export default function Home() {
                   </li>
                   <li className="flex items-center justify-between rounded-xl bg-surface-2 px-4 py-3">
                     <span>
-                      <span className="block text-sm font-medium">PKR 1,500,000</span>
+                      <span className="block text-sm font-medium">USD 15,000</span>
                       <span className="block text-xs text-muted">Cheque</span>
                     </span>
                     <span className="flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-data-accent">

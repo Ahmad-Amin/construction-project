@@ -46,7 +46,7 @@ export default async function TimelinePage({
 
   return (
     <div>
-      <TimelineFeed events={events} />
+      <TimelineFeed events={events} currency={project.currency} timeZone={project.timeZone} />
       {hasMore && limit < MAX && (
         <div className="mt-8 text-center">
           <Link href={`?n=${limit + STEP}`} scroll={false} className={button("secondary", "sm")}>

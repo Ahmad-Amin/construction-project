@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { FormFrame, FormHeading } from "@/components/form-frame";
 import { PaymentForm } from "@/components/payment-form";
 import { ScheduleForm } from "@/components/schedule-form";
-import { formatPKR, todayInKarachi } from "@/lib/format";
+import { formatMoney, todayIn } from "@/lib/format";
 import { fetchSchedule, fetchStages } from "@/lib/payment-schedule";
 import { PAYMENT_COLUMNS, toPaymentItem, viewerSide, withReceiptUrls } from "@/lib/payments";
 import { getProjectBasic } from "@/lib/projects";
@@ -32,7 +32,7 @@ export async function NewPaymentView({ projectId: id, forItem, sheet }: ViewProp
   const side = viewerSide(isTeam, isOwner);
   if (!viewer || !side) redirect(`/dashboard/projects/${id}/payments`);
 
-  const today = todayInKarachi();
+  const today = todayIn(project.timeZone);
 
   // Instalments still waiting for money. "Record payment" on one of them arrives with it picked
   // and the amount filled in.
@@ -47,10 +47,11 @@ export async function NewPaymentView({ projectId: id, forItem, sheet }: ViewProp
         mode="create"
         side={side}
         projectId={id}
+        currency={project.currency}
         draftId={crypto.randomUUID()}
         today={today}
         action={createPayment.bind(null, id)}
-        scheduleOptions={open.map((i) => ({ id: i.id, label: `${i.title} · ${formatPKR(i.left)} to go` }))}
+        scheduleOptions={open.map((i) => ({ id: i.id, label: `${i.title} · ${formatMoney(i.left, project.currency)} to go` }))}
         initial={{
           amount: chosen ? String(chosen.left) : "",
           payment_date: today,
@@ -104,7 +105,8 @@ export async function EditPaymentView({ projectId: id, paymentId, sheet }: ViewP
         mode="edit"
         side={side}
         projectId={id}
-        today={todayInKarachi()}
+        currency={project.currency}
+        today={todayIn(project.timeZone)}
         paymentId={paymentId}
         receipt={payment.receiptPath ? { path: payment.receiptPath, url: payment.receiptUrl } : null}
         action={updatePayment.bind(null, id, paymentId)}
@@ -115,7 +117,7 @@ export async function EditPaymentView({ projectId: id, paymentId, sheet }: ViewP
           note: payment.note,
           schedule_item_id: payment.scheduleItemId ?? "",
         }}
-        scheduleOptions={options.map((i) => ({ id: i.id, label: `${i.title} · ${formatPKR(i.amount)}` }))}
+        scheduleOptions={options.map((i) => ({ id: i.id, label: `${i.title} · ${formatMoney(i.amount, project.currency)}` }))}
       />
     </FormFrame>
   );
@@ -139,6 +141,7 @@ export async function NewScheduleView({ projectId: id, sheet }: ViewProps) {
         sheet={sheet}
         mode="create"
         projectId={id}
+        currency={project.currency}
         stages={stages}
         action={createScheduleItem.bind(null, id)}
         initial={{ title: "", amount: "", milestone_id: "" }}
@@ -177,6 +180,7 @@ export async function EditScheduleView({ projectId: id, itemId, sheet }: ViewPro
         sheet={sheet}
         mode="edit"
         projectId={id}
+        currency={project.currency}
         stages={stages}
         action={updateScheduleItem.bind(null, id, itemId)}
         initial={{ title: item.title, amount: String(item.amount), milestone_id: item.milestone_id ?? "" }}

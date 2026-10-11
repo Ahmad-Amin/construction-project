@@ -4,7 +4,7 @@ import { DeleteExpenseButton, VisibilityToggle } from "@/components/expense-cont
 import { LinkPending } from "@/components/link-pending";
 import { ReceiptButton } from "@/components/receipt-button";
 import { expenseCategoryLabel, type ExpenseCategory, type ExpenseItem } from "@/lib/expenses";
-import { formatDate, formatPKR } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
 
 const categoryIcon: Record<ExpenseCategory, LucideIcon> = {
   material: Boxes,
@@ -21,12 +21,14 @@ const categoryIcon: Record<ExpenseCategory, LucideIcon> = {
 export function ExpenseCard({
   expense: e,
   projectId,
+  currency,
   isTeam,
   isOwner,
   canEdit,
 }: {
   expense: ExpenseItem;
   projectId: string;
+  currency: string;
   isTeam: boolean;
   isOwner: boolean;
   canEdit: boolean;
@@ -63,7 +65,7 @@ export function ExpenseCard({
           </p>
         </div>
 
-        <p className="shrink-0 text-lg font-bold tabular-nums sm:text-xl">{formatPKR(e.amount)}</p>
+        <p className="shrink-0 text-lg font-bold tabular-nums sm:text-xl">{formatMoney(e.amount, currency)}</p>
       </div>
 
       {hasStrip && (

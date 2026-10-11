@@ -23,7 +23,7 @@ import { StageStrip } from "@/components/stage-strip";
 import { TimelineFeed } from "@/components/timeline-feed";
 import { MoneyBars, ProgressRing } from "@/components/viz";
 import { fetchExpenseTotals } from "@/lib/expenses";
-import { daysFromToday, formatDate, formatPKR, formatRelativeDate, karachiDay } from "@/lib/format";
+import { daysFromToday, formatDate, formatMoney, formatRelativeDate, dayInZone } from "@/lib/format";
 import { awaitingMyResponse, fetchPaymentTotals, viewerSide } from "@/lib/payments";
 import { getOrigin } from "@/lib/origin";
 import { formatPhone } from "@/lib/phone";
@@ -93,7 +93,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
   const milestones = (details?.milestones ?? []) as Milestone[];
   const percent = overallProgress(milestones);
 
-  const [photos, timeline, expenseTotals, paymentTotals, lastUpdateRow, updateCount, sharedExpenseCount] = await Promise.all([
+  const [photos, timeline, expenseTotals, paymentTotals, lastUpdateRow, updateCount, sharedExpenseCount, sharedDocumentCount, documentCount] = await Promise.all([
     fetchProjectPhotos(supabase, id, 10),
     fetchTimeline(supabase, id, 5),
     fetchExpenseTotals(supabase, id),
@@ -112,6 +112,12 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
       .select("id", { count: "exact", head: true })
       .eq("project_id", id)
       .eq("client_visible", true),
+    supabase
+      .from("project_documents")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", id)
+      .eq("client_visible", true),
+    supabase.from("project_documents").select("id", { count: "exact", head: true }).eq("project_id", id),
   ]);
   const waitingOnMe = awaitingMyResponse(paymentTotals, side);
   const cover = photos[0]?.full ?? null;
@@ -123,12 +129,12 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
     milestones.find((m) => m.progress_percent < 100);
 
   // Timing facts for the hero.
-  const startedDays = project.start_date ? -daysFromToday(project.start_date) : null;
-  const daysToGo = project.expected_completion_date ? daysFromToday(project.expected_completion_date) : null;
+  const startedDays = project.start_date ? -daysFromToday(project.start_date, project.timeZone) : null;
+  const daysToGo = project.expected_completion_date ? daysFromToday(project.expected_completion_date, project.timeZone) : null;
   const dueText =
     project.status === "completed"
       ? project.completed_at
-        ? `Completed on ${formatDate(karachiDay(project.completed_at))}`
+        ? `Completed on ${formatDate(dayInZone(project.completed_at, project.timeZone))}`
         : "Completed"
       : daysToGo === null
         ? null
@@ -247,7 +253,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
             <li className="flex items-center gap-2">
               <Clock className="size-4 shrink-0 text-amber-300" aria-hidden />
               <span>
-                {lastUpdateDate ? `Last site update ${formatRelativeDate(lastUpdateDate).toLowerCase()}` : "No site updates yet"}
+                {lastUpdateDate ? `Last site update ${formatRelativeDate(lastUpdateDate, project.timeZone).toLowerCase()}` : "No site updates yet"}
               </span>
             </li>
           </ul>
@@ -304,6 +310,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
         }
       >
         <MoneyBars
+          currency={project.currency}
           budget={budget?.amount ?? null}
           received={isTeam && !isOwner ? null : paymentTotals.confirmedTotal}
           spent={expenseTotals.total}
@@ -314,7 +321,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
           <ul className="mt-5 space-y-1.5 border-t border-line pt-4 text-sm">
             {paymentTotals.pendingCount > 0 && (
               <li className="text-primary-hover">
-                {formatPKR(paymentTotals.pendingTotal)} in payments awaiting confirmation
+                {formatMoney(paymentTotals.pendingTotal, project.currency)} in payments awaiting confirmation
               </li>
             )}
             {paymentTotals.disputedCount > 0 && (
@@ -330,12 +337,15 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
       {isOwner && (
         <ClientVisibilityCard
           projectId={id}
+          currency={project.currency}
           updates={updateCount.count ?? 0}
           payments={paymentTotals.confirmedCount + paymentTotals.pendingCount + paymentTotals.disputedCount}
           expensesShared={sharedExpenseCount.count ?? 0}
           expensesTotal={expenseTotals.count}
           sharedAmount={expenseTotals.sharedTotal}
           hiddenAmount={expenseTotals.total - expenseTotals.sharedTotal}
+          documentsShared={sharedDocumentCount.count ?? 0}
+          documentsHidden={(documentCount.count ?? 0) - (sharedDocumentCount.count ?? 0)}
           budgetShown={budget ? budget.visible_to_client : null}
         />
       )}
@@ -350,6 +360,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
           companyEnabled={one(details?.company as { weekly_summary: boolean } | { weekly_summary: boolean }[] | null)?.weekly_summary ?? false}
           active={project.status === "active" && !project.archived_at}
           lastSentAt={details?.last_summary_at ?? null}
+          timeZone={project.timeZone}
         />
         </div>
       )}
@@ -379,7 +390,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
         }
       >
         {timeline.events.length > 0 ? (
-          <TimelineFeed events={timeline.events} />
+          <TimelineFeed events={timeline.events} currency={project.currency} timeZone={project.timeZone} />
         ) : (
           <p className="text-sm text-muted">Nothing here yet. Updates, shared expenses and payments will appear as they happen.</p>
         )}

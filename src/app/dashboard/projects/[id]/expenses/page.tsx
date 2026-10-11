@@ -7,7 +7,7 @@ import { ExpenseCard } from "@/components/expense-card";
 import { ExpenseFilterBar } from "@/components/expense-filter-bar";
 import { fetchExpenseOverview } from "@/lib/expenses";
 import { filtersToQuery, hasActiveFilters, parseExpenseFilters } from "@/lib/expense-filters";
-import { formatPKR, todayInKarachi } from "@/lib/format";
+import { formatMoney, todayIn } from "@/lib/format";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
@@ -27,6 +27,7 @@ export default async function ExpensesPage({
   const { id } = await params;
   const project = await getProjectBasic(id);
   if (!project) notFound();
+  const currency = project.currency;
 
   const viewer = await getViewer();
   const isTeam = !!viewer?.company && viewer.company.id === project.company_id;
@@ -48,17 +49,18 @@ export default async function ExpensesPage({
         <p className="text-sm text-muted">
           {isTeam ? (filtered ? "Spent (filtered)" : "Total spent") : "Expenses shared with you"}
         </p>
-        <p className="mt-1 text-3xl font-bold tabular-nums">{formatPKR(overview.total)}</p>
+        <p className="mt-1 text-3xl font-bold tabular-nums">{formatMoney(overview.total, currency)}</p>
         <p className="mt-1 text-sm text-muted">
           {overview.count} {overview.count === 1 ? "expense" : "expenses"}
-          {isTeam && overview.count > 0 && ` · ${formatPKR(overview.sharedTotal)} shown to client`}
+          {isTeam && overview.count > 0 && ` · ${formatMoney(overview.sharedTotal, currency)} shown to client`}
         </p>
       </section>
 
       {hasAnyExpenses && (
         <>
-          <ExpenseFilterBar base={base} filters={filters} today={todayInKarachi()} isTeam={isTeam} />
+          <ExpenseFilterBar base={base} filters={filters} today={todayIn(project.timeZone)} isTeam={isTeam} />
           <ExpenseBreakdown
+            currency={currency}
             breakdown={overview.breakdown}
             total={overview.total}
             selected={filters.category}
@@ -109,6 +111,7 @@ export default async function ExpensesPage({
               key={e.id}
               expense={e}
               projectId={id}
+              currency={currency}
               isTeam={isTeam}
               isOwner={isOwner}
               canEdit={isOwner || (isTeam && e.createdBy === viewer?.userId)}

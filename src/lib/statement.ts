@@ -1,12 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { expenseCategoryLabel, type ExpenseCategory } from "@/lib/expenses";
-import { todayInKarachi } from "@/lib/format";
+import { todayIn } from "@/lib/format";
 import type { PaymentSide, PaymentStatus } from "@/lib/payments";
 import { overallProgress } from "@/lib/project";
 import { one, type MilestoneStatus, type ProjectStatus } from "@/lib/types";
 
 export type StatementData = {
   generatedOn: string;
+  // The company's currency code, such as "PKR" or "AED".
+  currency: string;
+  timeZone: string;
   company: { name: string; logo: Buffer | null };
   project: {
     name: string;
@@ -62,7 +65,7 @@ async function download(url: string): Promise<Buffer | null> {
 export async function buildStatement(
   supabase: SupabaseClient,
   projectId: string,
-  company: { name: string; logoUrl: string | null },
+  company: { name: string; logoUrl: string | null; currency: string; timeZone: string },
 ): Promise<StatementData | null> {
   const [projectRes, paymentsRes, expensesRes, updatesRes, photosRes] = await Promise.all([
     supabase
@@ -183,7 +186,9 @@ export async function buildStatement(
   });
 
   return {
-    generatedOn: todayInKarachi(),
+    generatedOn: todayIn(company.timeZone),
+    currency: company.currency,
+    timeZone: company.timeZone,
     company: { name: company.name, logo },
     project: {
       name: p.name,

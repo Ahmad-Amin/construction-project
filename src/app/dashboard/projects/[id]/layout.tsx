@@ -7,7 +7,7 @@ import { CompletedBanner } from "@/components/completed-banner";
 import { ProjectContent } from "@/components/project-content";
 import { ProjectTabs } from "@/components/project-tabs";
 import { StatusBadge } from "@/components/project-bits";
-import { formatDate, karachiDay } from "@/lib/format";
+import { formatDate, dayInZone } from "@/lib/format";
 import { getProjectBasic } from "@/lib/projects";
 import { getViewer } from "@/lib/viewer";
 
@@ -66,7 +66,7 @@ export default async function ProjectLayout({
       {project.status === "completed" && (
         <CompletedBanner
           projectId={id}
-          completedOn={project.completed_at ? karachiDay(project.completed_at) : null}
+          completedOn={project.completed_at ? dayInZone(project.completed_at, project.timeZone) : null}
           isOwner={isOwner}
           canGetStatement={isOwner || !viewer?.company}
         />

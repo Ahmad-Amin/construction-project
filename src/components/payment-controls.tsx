@@ -85,7 +85,7 @@ export function PaymentResponse({
           onChange={(e) => setReason(e.target.value)}
           rows={2}
           maxLength={300}
-          placeholder="For example: I received PKR 4,000,000, not 5,000,000."
+          placeholder="For example: I received 4,000,000, not 5,000,000."
           className={inputClass}
         />
         {error && (

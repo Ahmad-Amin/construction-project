@@ -41,7 +41,7 @@ export function DateField({
   // Earliest and latest date that can be picked, as YYYY-MM-DD.
   min?: string;
   max?: string;
-  // Today's date as YYYY-MM-DD (the page knows it in Pakistan time); the device's date if omitted.
+  // Today's date as YYYY-MM-DD (the page knows it in the company's time zone); the device's date if omitted.
   today?: string;
   required?: boolean;
   placeholder?: string;

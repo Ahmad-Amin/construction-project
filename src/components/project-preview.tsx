@@ -15,9 +15,9 @@ export function ProjectPreview({ compact = false }: { compact?: boolean }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold leading-tight">Ahmed Residence</h3>
+          <h3 className="text-lg font-bold leading-tight">Carter Residence</h3>
           <p className="mt-1 flex items-center gap-1 text-sm text-muted">
-            <MapPin className="size-3.5" aria-hidden /> DHA Lahore
+            <MapPin className="size-3.5" aria-hidden /> Lakeview Estate
           </p>
         </div>
         <span className="rounded-full bg-success-soft px-2.5 py-1 text-xs font-semibold text-success">
@@ -57,11 +57,11 @@ export function ProjectPreview({ compact = false }: { compact?: boolean }) {
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div className="rounded-xl bg-surface-2 p-3">
           <p className="text-xs text-muted">Received</p>
-          <p className="mt-0.5 font-bold">PKR 17.5M</p>
+          <p className="mt-0.5 font-bold">USD 175K</p>
         </div>
         <div className="rounded-xl bg-surface-2 p-3">
           <p className="text-xs text-muted">Spent</p>
-          <p className="mt-0.5 font-bold">PKR 12.4M</p>
+          <p className="mt-0.5 font-bold">USD 124K</p>
         </div>
       </div>
 

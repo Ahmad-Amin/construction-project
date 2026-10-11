@@ -1,14 +1,16 @@
 import { cache } from "react";
+import { currencyOrDefault } from "@/lib/currency";
+import { timeZoneOrDefault } from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/types";
 
-type CompanyRow = { id: string; name: string; logo_url: string | null };
+type CompanyRow = { id: string; name: string; logo_url: string | null; currency: string; timezone: string };
 
 export type Viewer = {
   userId: string;
   name: string;
   email: string;
-  company: { id: string; name: string; logoUrl: string | null; role: "owner" | "staff" } | null;
+  company: { id: string; name: string; logoUrl: string | null; currency: string; timeZone: string; role: "owner" | "staff" } | null;
   isClient: boolean;
 };
 
@@ -22,7 +24,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
 
   const userId = claims.sub;
   const [membership, client, profile] = await Promise.all([
-    supabase.from("company_members").select("role, companies(id, name, logo_url)").limit(1),
+    supabase.from("company_members").select("role, companies(id, name, logo_url, currency, timezone)").limit(1),
     supabase.from("clients").select("id").eq("user_id", userId).limit(1),
     supabase.from("profiles").select("name").eq("id", userId).maybeSingle(),
   ]);
@@ -38,7 +40,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     email: typeof claims.email === "string" ? claims.email : "",
     company:
       row && company
-        ? { id: company.id, name: company.name, logoUrl: company.logo_url, role: row.role }
+        ? { id: company.id, name: company.name, logoUrl: company.logo_url, currency: currencyOrDefault(company.currency), timeZone: timeZoneOrDefault(company.timezone), role: row.role }
         : null,
     isClient: (client.data?.length ?? 0) > 0,
   };

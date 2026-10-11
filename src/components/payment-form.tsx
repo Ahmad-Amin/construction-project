@@ -22,6 +22,7 @@ export type PaymentFormValues = {
 export function PaymentForm({
   action,
   projectId,
+  currency,
   draftId,
   paymentId,
   receipt,
@@ -34,6 +35,7 @@ export function PaymentForm({
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   projectId: string;
+  currency: string;
   // Present when creating, so a double tap can never record the payment twice.
   draftId?: string;
   // Present when editing: the payment being changed.
@@ -80,7 +82,7 @@ export function PaymentForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">
-              {received ? "Amount received (PKR)" : "Amount you paid (PKR)"}
+              {received ? `Amount received (${currency})` : `Amount you paid (${currency})`}
             </span>
             <AmountInput
               name="amount"
