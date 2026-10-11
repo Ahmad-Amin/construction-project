@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { History } from "lucide-react";
+import { LinkPending } from "@/components/link-pending";
 import { TimelineFeed } from "@/components/timeline-feed";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
@@ -50,6 +51,7 @@ export default async function TimelinePage({
         <div className="mt-8 text-center">
           <Link href={`?n=${limit + STEP}`} scroll={false} className={button("secondary", "sm")}>
             Show older
+            <LinkPending className="size-4" />
           </Link>
         </div>
       )}

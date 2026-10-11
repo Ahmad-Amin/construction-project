@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Spinner } from "@/components/spinner";
 
 // The controls sit on a dark chip, not a see-through one, so they stay readable on a bright photo.
+const subscribe = () => () => {};
+
 const chip = "bg-black/70 text-white ring-1 ring-white/25 backdrop-blur-sm";
 
 // Full-screen image viewer. Used for both site photos and receipts.
@@ -12,6 +15,9 @@ const chip = "bg-black/70 text-white ring-1 ring-white/25 backdrop-blur-sm";
 // Opening a photo only loads its small preview; the full-size picture arrives on demand. To keep
 // stepping quick, the photos next to the current one are fetched ahead of time, and while a
 // full-size photo is still arriving the small preview is shown (enlarged) in its place.
+//
+// It is drawn straight into <body>. Inside a card with a blur, transform or similar effect, a
+// "fixed" element is confined to that card's box instead of covering the screen.
 export function Lightbox({
   images,
   index,
@@ -29,6 +35,8 @@ export function Lightbox({
   previews?: string[];
 }) {
   const [loaded, setLoaded] = useState<ReadonlySet<string>>(() => new Set());
+  // Portals only exist in the browser; this is false while the server renders and true after.
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -63,12 +71,14 @@ export function Lightbox({
   const preview = previews?.[index];
   const ready = loaded.has(src);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label={`${label} viewer`}
-      className="fixed inset-0 z-50 bg-black/90"
+      className="fixed inset-0 z-[60] bg-black/90"
       onClick={onClose}
     >
       {/* The picture gets its own padded area, so the buttons and the counter never sit on top of it. */}
@@ -130,6 +140,7 @@ export function Lightbox({
           </p>
         </>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

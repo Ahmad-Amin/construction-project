@@ -36,7 +36,13 @@ export function PhotoStrip({ photos }: { photos: UpdatePhoto[] }) {
         ))}
       </ul>
       {open !== null && (
-        <Lightbox images={photos.map((p) => p.full)} index={open} onClose={close} onStep={step} />
+        <Lightbox
+          images={photos.map((p) => p.full)}
+          previews={photos.map((p) => p.thumb)}
+          index={open}
+          onClose={close}
+          onStep={step}
+        />
       )}
     </>
   );

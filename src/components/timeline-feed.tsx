@@ -1,4 +1,4 @@
-import { AlertTriangle, Banknote, Camera, CheckCircle2, Flag, Receipt, User } from "lucide-react";
+import { AlertTriangle, Banknote, Camera, CheckCircle2, Flag, Receipt, type LucideIcon } from "lucide-react";
 import { PhotoGallery } from "@/components/photo-gallery";
 import { expenseCategoryLabel } from "@/lib/expenses";
 import { formatDate, formatPKR, formatRelativeDate, formatTime } from "@/lib/format";
@@ -11,8 +11,9 @@ const statusBadge: Record<PaymentStatus, { label: string; style: string }> = {
   disputed: { label: "Disputed", style: "bg-danger-soft text-danger" },
 };
 
-// One chronological feed, grouped by day. Every event says what it is, when,
-// who did it, and the amount or details.
+// One chronological feed, grouped by day. On a wide screen each day is a heading on the left with
+// its events stacked beside it; on a phone the heading sits above. Every event says what it is,
+// when, who did it, and the amount or details.
 export function TimelineFeed({ events }: { events: TimelineEvent[] }) {
   const days: { date: string; items: TimelineEvent[] }[] = [];
   for (const e of events) {
@@ -24,19 +25,20 @@ export function TimelineFeed({ events }: { events: TimelineEvent[] }) {
   return (
     <div className="space-y-8">
       {days.map((day) => (
-        <section key={day.date}>
-          <h2 className="mb-3 text-sm font-semibold">
+        <section key={day.date} className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-6">
+          <h2 className="text-sm font-semibold lg:sticky lg:top-20 lg:self-start lg:pt-3">
             {formatRelativeDate(day.date)}
             {formatRelativeDate(day.date) !== formatDate(day.date) && (
-              <span className="ml-2 font-normal text-muted">{formatDate(day.date)}</span>
+              <span className="ml-2 font-normal text-muted lg:ml-0 lg:block">{formatDate(day.date)}</span>
             )}
+            <span className="mt-0.5 hidden text-xs font-normal text-muted lg:block">
+              {day.items.length} {day.items.length === 1 ? "event" : "events"}
+            </span>
           </h2>
-          <ul className="relative space-y-3">
-            <span aria-hidden className="absolute bottom-4 left-[17px] top-4 w-px bg-line" />
+          <ul className="min-w-0 space-y-2.5">
             {day.items.map((e) => (
-              <li key={e.id} className="relative pl-12">
-                <EventIcon event={e} />
-                <EventCard event={e} />
+              <li key={e.id}>
+                <EventRow event={e} />
               </li>
             ))}
           </ul>
@@ -46,91 +48,112 @@ export function TimelineFeed({ events }: { events: TimelineEvent[] }) {
   );
 }
 
-function EventIcon({ event: e }: { event: TimelineEvent }) {
-  let Icon = Camera;
-  let tone = "bg-primary-soft text-primary";
-  if (e.kind === "expense") Icon = Receipt;
-  if (e.kind === "payment") {
-    Icon = Banknote;
-    tone = "bg-success-soft text-success";
-  }
-  if (e.kind === "payment_response") {
-    const disputed = e.status === "disputed";
-    Icon = disputed ? AlertTriangle : CheckCircle2;
-    tone = disputed ? "bg-danger-soft text-danger" : "bg-success-soft text-success";
-  }
+// The shape every event shares: a round icon, a small label with the time and who did it, the
+// content, and on the right the amount with its status.
+function Row({
+  icon: Icon,
+  tone,
+  label,
+  time,
+  by,
+  amount,
+  amountTone = "",
+  pill,
+  children,
+}: {
+  icon: LucideIcon;
+  tone: string;
+  label: string;
+  time: string;
+  by?: string;
+  amount?: number;
+  amountTone?: string;
+  pill?: { label: string; style: string };
+  children: React.ReactNode;
+}) {
   return (
-    <span className={`absolute left-0 top-3 flex size-9 items-center justify-center rounded-full ring-4 ring-background ${tone}`}>
-      <Icon className="size-4" aria-hidden />
-    </span>
+    <article className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-4 sm:gap-4 sm:px-5">
+      <span className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full sm:size-10 ${tone}`}>
+        <Icon className="size-4 sm:size-5" aria-hidden />
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-muted">
+          <span className="font-semibold uppercase tracking-wide">{label}</span>
+          <span aria-hidden> · </span>
+          {time}
+          {by && (
+            <>
+              <span aria-hidden> · </span>
+              {by}
+            </>
+          )}
+        </p>
+        <div className="mt-1">{children}</div>
+      </div>
+
+      {(amount !== undefined || pill) && (
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          {amount !== undefined && <p className={`text-lg font-bold tabular-nums sm:text-xl ${amountTone}`}>{formatPKR(amount)}</p>}
+          {pill && (
+            <span className={`hidden rounded-full px-2.5 py-0.5 text-xs font-semibold sm:inline ${pill.style}`}>{pill.label}</span>
+          )}
+        </div>
+      )}
+    </article>
   );
 }
 
-function Header({ label, time, amount }: { label: string; time: string; amount?: number }) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-        {label} <span className="font-normal normal-case tracking-normal">· {time}</span>
-      </p>
-      {amount !== undefined && <p className="shrink-0 text-lg font-bold tabular-nums">{formatPKR(amount)}</p>}
-    </div>
-  );
-}
-
-function By({ name, suffix }: { name: string; suffix?: string }) {
-  if (!name) return null;
-  return (
-    <p className="mt-2 flex items-center gap-1 text-xs text-muted">
-      <User className="size-3" aria-hidden /> {name}
-      {suffix && ` ${suffix}`}
-    </p>
-  );
-}
-
-function EventCard({ event: e }: { event: TimelineEvent }) {
+function EventRow({ event: e }: { event: TimelineEvent }) {
   const time = formatTime(e.occurredAt);
-  const card = "rounded-2xl border border-line bg-surface p-4";
 
   if (e.kind === "update") {
     return (
-      <article className={card}>
-        <Header label="Site update" time={time} />
-        <p className="mt-2 whitespace-pre-line leading-relaxed">{e.update.text}</p>
+      <Row icon={Camera} tone="bg-primary-soft text-primary" label="Site update" time={time} by={e.actorName}>
+        <p className="max-w-3xl whitespace-pre-line leading-relaxed">{e.update.text}</p>
         {e.update.milestone && (
-          <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium">
+          <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium">
             <Flag className="size-3" aria-hidden /> {e.update.milestone}
           </p>
         )}
-        <PhotoGallery photos={e.update.photos} />
-        <By name={e.actorName} />
-      </article>
+        <PhotoGallery photos={e.update.photos} layout="row" />
+      </Row>
     );
   }
 
   if (e.kind === "expense") {
     return (
-      <article className={card}>
-        <Header label={`Expense · ${expenseCategoryLabel[e.category]}`} time={time} amount={e.amount} />
-        <p className="mt-2 font-medium">{e.title || expenseCategoryLabel[e.category]}</p>
-        <By name={e.actorName} />
-      </article>
+      <Row
+        icon={Receipt}
+        tone="bg-surface-2 text-muted"
+        label={`Expense · ${expenseCategoryLabel[e.category]}`}
+        time={time}
+        by={e.actorName}
+        amount={e.amount}
+      >
+        <p className="font-medium">{e.title || expenseCategoryLabel[e.category]}</p>
+      </Row>
     );
   }
 
   if (e.kind === "payment") {
     const badge = statusBadge[e.status];
     return (
-      <article className={card}>
-        <Header label="Payment recorded" time={time} amount={e.amount} />
-        <p className="mt-2 font-medium">
-          {e.title || (e.side === "contractor" ? "Payment received" : "Payment made")}
-        </p>
-        {e.note && <p className="mt-1 text-sm text-muted">{e.note}</p>}
-        <span className={`mt-3 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${badge.style}`}>
+      <Row
+        icon={Banknote}
+        tone="bg-success-soft text-success"
+        label="Payment recorded"
+        time={time}
+        by={e.actorName ? `${e.actorName} (${sideLabel[e.side].toLowerCase()})` : undefined}
+        amount={e.amount}
+        pill={badge}
+      >
+        <p className="font-medium">{e.title || (e.side === "contractor" ? "Payment received" : "Payment made")}</p>
+        {e.note && <p className="mt-0.5 text-sm text-muted">{e.note}</p>}
+        <span className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold sm:hidden ${badge.style}`}>
           {badge.label}
         </span>
-        <By name={e.actorName} suffix={`(${sideLabel[e.side].toLowerCase()})`} />
-      </article>
+      </Row>
     );
   }
 
@@ -138,13 +161,19 @@ function EventCard({ event: e }: { event: TimelineEvent }) {
   const disputed = e.status === "disputed";
   const recorder = sideLabel[e.side].toLowerCase();
   return (
-    <article className={card}>
-      <Header label={disputed ? "Payment disputed" : "Payment confirmed"} time={time} amount={e.amount} />
-      <p className="mt-2 text-sm">
-        <span className="font-medium">{e.actorName || "The other party"}</span>{" "}
-        {disputed ? "disputed" : "confirmed"} the {recorder}&apos;s payment.
+    <Row
+      icon={disputed ? AlertTriangle : CheckCircle2}
+      tone={disputed ? "bg-danger-soft text-danger" : "bg-success-soft text-success"}
+      label={disputed ? "Payment disputed" : "Payment confirmed"}
+      time={time}
+      amount={e.amount}
+      amountTone={disputed ? "text-danger" : ""}
+    >
+      <p>
+        <span className="font-medium">{e.actorName || "The other party"}</span> {disputed ? "disputed" : "confirmed"} the{" "}
+        {recorder}&apos;s payment.
       </p>
-      {disputed && e.reason && <p className="mt-1 text-sm italic text-muted">&ldquo;{e.reason}&rdquo;</p>}
-    </article>
+      {disputed && e.reason && <p className="mt-0.5 text-sm italic text-muted">&ldquo;{e.reason}&rdquo;</p>}
+    </Row>
   );
 }
