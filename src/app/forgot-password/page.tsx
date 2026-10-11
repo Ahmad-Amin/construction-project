@@ -3,7 +3,7 @@ import { AuthForm } from "@/components/auth-form";
 import { AuthShell } from "@/components/auth-shell";
 import { requestPasswordReset } from "./actions";
 
-export const metadata = { title: "Reset your password" };
+export const metadata = { title: "Reset your password", robots: { index: false, follow: false } };
 
 export default function ForgotPasswordPage() {
   return (

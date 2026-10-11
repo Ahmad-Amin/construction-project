@@ -7,7 +7,9 @@ import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
 import { acceptInviteSignedIn, acceptInviteWithPassword } from "./actions";
 
-export const metadata = { title: "Your project invite" };
+// Invite links are personal: kept out of search engines, and the preview when one is shared says
+// nothing about the person or the project.
+export const metadata = { title: "Your project invite", robots: { index: false, follow: false } };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

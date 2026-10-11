@@ -3,7 +3,11 @@ import { AuthForm } from "@/components/auth-form";
 import { AuthShell } from "@/components/auth-shell";
 import { signup } from "@/app/login/actions";
 
-export const metadata = { title: "Create your account" };
+export const metadata = {
+  title: "Create your account",
+  description: "Set up your company and your first project in a few minutes. Nothing for your client to install.",
+  alternates: { canonical: "/signup" },
+};
 
 export default function SignupPage() {
   return (

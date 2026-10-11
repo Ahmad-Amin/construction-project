@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PRODUCT_NAME } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,12 +13,20 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const DESCRIPTION = "Progress, money, receipts and project updates, shared between contractor and homeowner.";
+
 export const metadata: Metadata = {
-  title: { default: "Client Portal", template: "%s · Client Portal" },
-  description:
-    "Progress, money, receipts and project updates, shared between contractor and homeowner.",
+  // Makes every address in the tags below absolute, which link previews need. Set SITE_URL in production.
+  metadataBase: new URL(process.env.SITE_URL?.trim() || "http://localhost:3000"),
+  applicationName: PRODUCT_NAME,
+  title: { default: PRODUCT_NAME, template: `%s · ${PRODUCT_NAME}` },
+  description: DESCRIPTION,
   icons: { apple: "/apple-icon.png" },
-  appleWebApp: { capable: true, title: "Client Portal", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: PRODUCT_NAME, statusBarStyle: "default" },
+  // What shows when a link is shared on WhatsApp, Facebook, LinkedIn and the like. The picture
+  // comes from opengraph-image.tsx next to this file.
+  openGraph: { type: "website", siteName: PRODUCT_NAME, title: PRODUCT_NAME, description: DESCRIPTION, locale: "en_PK" },
+  twitter: { card: "summary_large_image", title: PRODUCT_NAME, description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {

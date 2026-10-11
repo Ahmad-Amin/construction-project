@@ -95,6 +95,14 @@ Homeowners who switch on **Settings → Notifications → Send me updates on Wha
 - **Dates** use a proper calendar (`components/date-field.tsx`, built on DayPicker) instead of the browser's own date input. It submits `YYYY-MM-DD` like before, so nothing server-side changed. Pass `max` to stop future dates, and `today` so "Today" follows Pakistan time.
 - **Money fields** (`components/amount-input.tsx`) show commas as you type and submit plain digits.
 
+## Security and link previews
+
+- **Who can see what** is enforced by the database (row-level security on every table, private storage, and server-side checks inside every function), not by the pages. `supabase/` has the rules; nothing in the app trusts the browser.
+- **Headers** (`next.config.ts`): no framing of the site, no content-type guessing, a strict referrer policy, HTTPS-only (HSTS), and a content policy that stops other sites framing it or redirecting its forms.
+- **`SITE_URL` must be set in production** (for example `https://app.yourdomain.com`). Links in emails, invites and WhatsApp messages, the sitemap and the link-preview tags are all built from it, so a forged request can't put another site's address into a message someone receives.
+- **Link previews:** the picture shown when the site is shared is drawn in code (`src/app/opengraph-image.tsx`); the title and description come from each page's metadata. Invite pages are kept out of search engines and say nothing about the person or project.
+- **Search engines:** `robots.txt` and the sitemap are generated (`src/app/robots.ts`, `sitemap.ts`). The dashboard, invite links, sign-in and API routes are not indexed.
+
 ## Sharing with clients
 
 - **WhatsApp:** one-tap, pre-written messages that open the client's chat (click-to-chat links; nothing is sent automatically). Available on each site update, on the project Overview ("Share progress"), right after posting an update, and as a reminder on payments that are waiting for the other side to confirm. Messages are built in `src/lib/whatsapp.ts` and contain only progress, update text and payments, never expenses.

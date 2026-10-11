@@ -10,6 +10,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { ProjectStatus } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
 
+export const metadata = { robots: { index: false, follow: false } };
+
 // Everything behind login lives under /dashboard. The proxy does a quick
 // signed-in check; this is the real one, and it also builds the side navigation.
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {

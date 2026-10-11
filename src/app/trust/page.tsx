@@ -18,6 +18,7 @@ import { button } from "@/lib/ui";
 export const metadata = {
   title: "Private by design",
   description: "How your project records, client details and money information are protected.",
+  alternates: { canonical: "/trust" },
 };
 
 const promises = [

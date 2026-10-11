@@ -12,6 +12,11 @@ import { button } from "@/lib/ui";
 
 export const metadata = {
   title: { absolute: `${PRODUCT_NAME}: show your clients how the work is going` },
+  description:
+    "One private page for every project: photos from site, progress and payments. You post from your phone, your client looks whenever they like. Built for home builders and renovators.",
+  alternates: { canonical: "/" },
+  openGraph: { url: "/", title: `${PRODUCT_NAME}: show your clients how the work is going` },
+  twitter: { title: `${PRODUCT_NAME}: show your clients how the work is going` },
 };
 
 const wrap = "mx-auto w-full max-w-[96rem] px-5 sm:px-8 lg:px-12 2xl:px-16";
@@ -87,9 +92,23 @@ const anchors = [
 ];
 
 // Public landing page. Anything behind login lives under /dashboard.
+// Tells search engines what this is, in a form they read directly. Built from constants only;
+// the "<" is escaped so the text can never close the script tag.
+const structuredData = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: PRODUCT_NAME,
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  description:
+    "One private page for every construction project: photos from site, progress and payments, shared between contractor and homeowner.",
+  audience: { "@type": "Audience", audienceType: "Home builders and renovators" },
+}).replace(/</g, "\\u003c");
+
 export default function Home() {
   return (
     <div className="flex min-h-full flex-col">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structuredData }} />
       <PublicHeader wide>
         <SectionNav items={anchors} />
       </PublicHeader>

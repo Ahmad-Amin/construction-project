@@ -3,7 +3,7 @@ import { AuthShell } from "@/components/auth-shell";
 import { DemoButtons } from "@/components/demo-buttons";
 import { LoginMethods } from "@/components/login-methods";
 
-export const metadata = { title: "Sign in" };
+export const metadata = { title: "Sign in", robots: { index: false, follow: true } };
 
 export default async function LoginPage({
   searchParams,
