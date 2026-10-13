@@ -1,8 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getOrigin } from "@/lib/origin";
 
 // `values` echoes submitted fields back so a failed save doesn't wipe the form
 // (React resets uncontrolled inputs when a form action finishes).
@@ -37,7 +37,7 @@ export async function sendMagicLink(
   const email = text(formData, "email");
   if (!email) return { error: "Please enter your email." };
 
-  const origin = (await headers()).get("origin");
+  const origin = await getOrigin();
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email,
@@ -71,7 +71,7 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
     return { error: "Your password needs at least 8 characters." };
   }
 
-  const origin = (await headers()).get("origin");
+  const origin = await getOrigin();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,

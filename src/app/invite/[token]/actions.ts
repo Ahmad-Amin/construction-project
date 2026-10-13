@@ -1,10 +1,10 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { FormState } from "@/app/login/actions";
 import { queueNotificationDelivery } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
+import { getOrigin } from "@/lib/origin";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const INVALID = "This invite link isn't valid. Please ask your contractor to send it again.";
@@ -27,7 +27,7 @@ export async function acceptInviteWithPassword(
     return { error: "This invite has already been used. Please sign in instead." };
   }
 
-  const origin = (await headers()).get("origin");
+  const origin = await getOrigin();
   const { data, error } = await supabase.auth.signUp({
     email: invite.email,
     password,

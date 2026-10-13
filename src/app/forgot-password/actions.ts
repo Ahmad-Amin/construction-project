@@ -1,8 +1,9 @@
 "use server";
 
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import type { FormState } from "@/app/login/actions";
 import { createClient } from "@/lib/supabase/server";
+import { getOrigin } from "@/lib/origin";
 
 export async function requestPasswordReset(_: FormState, formData: FormData): Promise<FormState> {
   const email = String(formData.get("email") ?? "").trim();
@@ -17,7 +18,7 @@ export async function requestPasswordReset(_: FormState, formData: FormData): Pr
     path: "/",
   });
 
-  const origin = (await headers()).get("origin");
+  const origin = await getOrigin();
   const supabase = await createClient();
   await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/auth/callback` });
 
