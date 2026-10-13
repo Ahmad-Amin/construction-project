@@ -4,6 +4,8 @@
 //   npm run whatsapp:templates -- --status   show every template and whether Meta approved it
 //   npm run whatsapp:templates -- --env .env.whatsapp-prod   read the values from another file
 //   npm run whatsapp:templates -- --subscribe   switch on the webhook for this WhatsApp account (once)
+//   npm run whatsapp:templates -- --check-webhook   show which apps get this account's webhook events,
+//                                  and any webhook address set on the phone number itself
 //
 // Needs WHATSAPP_BUSINESS_ACCOUNT_ID and WHATSAPP_ACCESS_TOKEN in .env.local (or in the file given
 // with --env, which is read instead; use it for the real account so its token never goes into
@@ -59,6 +61,29 @@ if (process.argv.includes("--subscribe")) {
     process.exit(1);
   }
   console.log("Subscribed this WhatsApp account to the app's webhook.");
+  process.exit(0);
+}
+
+if (process.argv.includes("--check-webhook")) {
+  const graph = `https://graph.facebook.com/${env.WHATSAPP_API_VERSION || "v23.0"}`;
+  const subscribed = await fetch(`${graph}/${env.WHATSAPP_BUSINESS_ACCOUNT_ID}/subscribed_apps`, { headers });
+  const subscribedJson = await subscribed.json().catch(() => ({}));
+  if (!subscribed.ok) console.error("Could not read the subscriptions:", subscribedJson.error?.message ?? subscribed.status);
+  else {
+    const apps = subscribedJson.data ?? [];
+    console.log(apps.length ? `Apps that receive this account's events: ${apps.map((a) => a.whatsapp_business_api_data?.name ?? a.name ?? a.id).join(", ")}` : "No app is subscribed to this WhatsApp account. Run again with --subscribe.");
+  }
+  if (env.WHATSAPP_PHONE_NUMBER_ID) {
+    const phone = await fetch(`${graph}/${env.WHATSAPP_PHONE_NUMBER_ID}?fields=display_phone_number,verified_name,webhook_configuration`, { headers });
+    const phoneJson = await phone.json().catch(() => ({}));
+    if (!phone.ok) console.error("Could not read the phone number:", phoneJson.error?.message ?? phone.status);
+    else {
+      console.log(`Phone number ${phoneJson.display_phone_number} (${phoneJson.verified_name ?? "name not approved yet"})`);
+      console.log("Webhook set on the number itself:", JSON.stringify(phoneJson.webhook_configuration ?? "none (uses the app's)"));
+    }
+  } else {
+    console.log("Add WHATSAPP_PHONE_NUMBER_ID=... to the file to also check the phone number.");
+  }
   process.exit(0);
 }
 
