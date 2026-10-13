@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en"><body style="margin:0;background:#f5f5f4;font-family:Helvetica,Arial,sans-serif;color:#1c1917;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Confirm the new email address for your BuildPeek account.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f4;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e7e5e4;">
+        <tr><td style="background:#f59e0b;padding:18px 24px;font-size:16px;font-weight:700;color:#1c1917;">BuildPeek</td></tr>
+        <tr><td style="padding:28px 24px 8px 24px;">
+          <h1 style="margin:0 0 12px 0;font-size:20px;line-height:1.3;color:#1c1917;">Confirm your new email address</h1>
+          <p style="margin:0 0 24px 0;font-size:15px;line-height:1.6;color:#44403c;">You asked to change the email on your BuildPeek account to {{ .NewEmail }}. Tap the button below to confirm the change.</p>
+          <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#f59e0b;color:#1c1917;font-weight:700;font-size:15px;text-decoration:none;padding:12px 20px;border-radius:10px;">Confirm new email</a>
+          <p style="margin:24px 0 0 0;font-size:13px;line-height:1.6;color:#78716c;">If you didn't ask for this, ignore this email and your address stays the same.</p>
+        </td></tr>
+        <tr><td style="padding:20px 24px 24px 24px;font-size:12px;line-height:1.6;color:#78716c;">
+          If the button doesn't work, copy this link into your browser:<br>
+          <a href="{{ .ConfirmationURL }}" style="color:#78716c;word-break:break-all;">{{ .ConfirmationURL }}</a>
+          <br><br>
+          Questions? Write to <a href="mailto:hello@buildpeek.app" style="color:#78716c;">hello@buildpeek.app</a>.
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>
