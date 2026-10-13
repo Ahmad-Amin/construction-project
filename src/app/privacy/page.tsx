@@ -68,7 +68,7 @@ export default function PrivacyPage() {
         <p>We use these providers to run the service. They process data only to provide their part of it.</p>
         <LegalList>
           <li><strong className="text-foreground">Supabase:</strong> the database, sign-in and file storage.</li>
-          <li><strong className="text-foreground">Vercel:</strong> hosting the website and the app.</li>
+          <li><strong className="text-foreground">Vercel:</strong> hosting the website and the app, and counting visits to pages (see Cookies below).</li>
           <li><strong className="text-foreground">Resend:</strong> delivering emails.</li>
           <li><strong className="text-foreground">Meta (WhatsApp):</strong> delivering WhatsApp messages, only for people who switched them on.</li>
           <li><strong className="text-foreground">A content delivery network</strong> that serves the small country-flag pictures in the phone-number picker, which means your browser contacts it when that picker is shown.</li>
@@ -83,7 +83,7 @@ export default function PrivacyPage() {
       <LegalSection title="Cookies and similar storage">
         <p>
           We use only what is needed to keep you signed in and to remember small choices, such as your theme, whether
-          the sidebar is folded and whether a card is hidden. There are no advertising or tracking cookies.
+          the sidebar is folded and whether a card is hidden. There are no advertising or tracking cookies. To see which pages are visited, we use Vercel Web Analytics, which counts page views without cookies and without following you across other sites.
         </p>
       </LegalSection>
 
