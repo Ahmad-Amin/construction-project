@@ -7,7 +7,7 @@ import { Camera, Images, Info, X } from "lucide-react";
 import { createUpdate } from "@/app/dashboard/projects/[id]/updates/actions";
 import { DateField } from "@/components/date-field";
 import { newId } from "@/lib/ids";
-import { prepareImage } from "@/lib/images";
+import { IMAGE_TOO_BIG, imageTooBig, prepareImage } from "@/lib/images";
 import { createClient } from "@/lib/supabase/client";
 import { button, inputClass } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
@@ -59,7 +59,9 @@ export function UpdateForm({
 
   function addFiles(files: FileList | null) {
     if (!files) return;
-    const images = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const picked = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const images = picked.filter((f) => !imageTooBig(f));
+    if (images.length < picked.length) setError(IMAGE_TOO_BIG);
     setPhotos((current) => {
       const room = MAX_PHOTOS - current.length;
       const added = images.slice(0, Math.max(room, 0)).map((file) => ({

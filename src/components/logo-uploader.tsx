@@ -5,7 +5,7 @@ import { ImagePlus, Trash2 } from "lucide-react";
 import { setCompanyLogo } from "@/app/dashboard/settings/actions";
 import { CompanyBadge } from "@/components/company-badge";
 import { newId } from "@/lib/ids";
-import { prepareLogo } from "@/lib/images";
+import { IMAGE_TOO_BIG, imageTooBig, prepareLogo } from "@/lib/images";
 import { createClient } from "@/lib/supabase/client";
 import { button } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
@@ -28,6 +28,7 @@ export function LogoUploader({
     if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) {
       return setError("Please choose a PNG, JPG or WebP image.");
     }
+    if (imageTooBig(file)) return setError(IMAGE_TOO_BIG);
     setBusy(true);
     setError(null);
     try {

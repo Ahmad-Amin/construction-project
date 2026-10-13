@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Camera, Images, X } from "lucide-react";
 import { newId } from "@/lib/ids";
-import { prepareReceipt } from "@/lib/images";
+import { IMAGE_TOO_BIG, imageTooBig, prepareReceipt } from "@/lib/images";
 import { createClient } from "@/lib/supabase/client";
 import { button } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
@@ -44,6 +44,10 @@ export function PaymentReceiptField({
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       setError("Please choose a photo.");
+      return;
+    }
+    if (imageTooBig(file)) {
+      setError(IMAGE_TOO_BIG);
       return;
     }
     setError(null);

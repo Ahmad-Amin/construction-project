@@ -1,5 +1,16 @@
 import imageCompression from "browser-image-compression";
 
+// The biggest original photo we will try to shrink. Phone photos are 3-12 MB, so this is generous;
+// it only stops something huge (a 60 MB scan) from freezing a small phone while it is processed.
+// The shrunk copy that is actually uploaded is always far smaller.
+export const MAX_ORIGINAL_IMAGE_BYTES = 25 * 1024 * 1024;
+
+export function imageTooBig(file: { size: number }) {
+  return file.size > MAX_ORIGINAL_IMAGE_BYTES;
+}
+
+export const IMAGE_TOO_BIG = "That photo is too large (over 25 MB). Please choose a smaller one.";
+
 // Phone photos are often 4-8 MB. Shrink them before upload so a weak 4G
 // connection can still post an update, and so the client's page loads quickly.
 const FULL = { maxWidthOrHeight: 1600, maxSizeMB: 0.7, initialQuality: 0.8 };

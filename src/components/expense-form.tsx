@@ -13,7 +13,7 @@ import { DateField } from "@/components/date-field";
 import { EXPENSE_CATEGORIES, expenseCategoryLabel, type ExpenseCategory } from "@/lib/expenses";
 import { parseAmount } from "@/lib/forms";
 import { newId } from "@/lib/ids";
-import { prepareReceipt } from "@/lib/images";
+import { IMAGE_TOO_BIG, imageTooBig, prepareReceipt } from "@/lib/images";
 import { createClient } from "@/lib/supabase/client";
 import { button, inputClass } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
@@ -79,7 +79,10 @@ export function ExpenseForm({
 
   function pick(files: FileList | null) {
     const picked = files?.[0];
-    if (!picked || !picked.type.startsWith("image/")) return;
+    if (!picked) return;
+    if (!picked.type.startsWith("image/")) return setError("Please choose a photo of the receipt.");
+    if (imageTooBig(picked)) return setError(IMAGE_TOO_BIG);
+    setError(null);
     setFile((current) => {
       if (current) URL.revokeObjectURL(current.preview);
       return { file: picked, preview: URL.createObjectURL(picked) };
