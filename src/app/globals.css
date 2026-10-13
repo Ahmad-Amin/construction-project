@@ -225,6 +225,10 @@ body {
   min-width: 0;
   width: 100%;
 }
+/* Room for the "checking" spinner or the tick on the right of the number. */
+.phone-field [data-status] .react-international-phone-input {
+  padding-right: 2.5rem;
+}
 .phone-field .react-international-phone-input:focus,
 .phone-field .react-international-phone-country-selector-button:focus-visible {
   outline: none;

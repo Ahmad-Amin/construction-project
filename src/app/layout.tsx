@@ -50,7 +50,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      {/* Some browser extensions (ColorZilla's cz-shortcut-listen, password managers) add attributes
+          to <body> before React loads. This only silences that attribute mismatch on this one
+          element; real mismatches anywhere inside the page are still reported. */}
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

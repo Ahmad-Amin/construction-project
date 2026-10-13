@@ -49,6 +49,10 @@ export default async function SettingsPage({
     .eq("id", viewer.userId)
     .maybeSingle();
 
+  // Whether the person has confirmed this email address (the link we sent when they signed up).
+  const { data: authUser } = await supabase.auth.getUser();
+  const emailVerified = !!authUser.user?.email_confirmed_at;
+
   const { data: companyRow } = isOwnerViewer(viewer)
     ? await supabase.from("companies").select("weekly_summary").eq("id", viewer.company!.id).maybeSingle()
     : { data: null };
@@ -112,7 +116,14 @@ export default async function SettingsPage({
             submitLabel="Save"
             fields={[
               { name: "name", label: "Your name", defaultValue: name, autoComplete: "name" },
-              { name: "email", label: "Email", defaultValue: viewer.email, readOnly: true },
+              {
+                name: "email",
+                label: "Email",
+                defaultValue: viewer.email,
+                readOnly: true,
+                badge: emailVerified ? { label: "Verified", tone: "ok" } : { label: "Not verified", tone: "warn" },
+                hint: emailVerified ? undefined : "Open the confirmation email we sent to this address to verify it.",
+              },
             ]}
           />
         </SettingsSection>
