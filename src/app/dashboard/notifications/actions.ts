@@ -47,3 +47,27 @@ export async function setEmailNotifications(enabled: boolean) {
 export async function setWhatsAppNotifications(enabled: boolean) {
   return saveProfileFlag("whatsapp_notifications", enabled);
 }
+
+// The card that offers WhatsApp updates after a homeowner's first sign-in: "Turn on" ...
+export async function enableWhatsAppFromPrompt(): Promise<{ error?: string }> {
+  const result = await saveProfileFlag("whatsapp_notifications", true);
+  if (!result.error) revalidatePath("/dashboard", "layout");
+  return result;
+}
+
+// ... and "Not now", which hides it for good (it is still in Settings).
+export async function dismissWhatsAppPrompt(): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub;
+  if (!userId) return { error: "Please sign in again." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ whatsapp_prompt_dismissed_at: new Date().toISOString() })
+    .eq("id", userId);
+  if (error) return { error: "We couldn't save that. Please try again." };
+
+  revalidatePath("/dashboard", "layout");
+  return {};
+}

@@ -15,6 +15,7 @@ import { ClientVisibilityCard } from "@/components/client-visibility-card";
 import { CompleteProjectButton } from "@/components/complete-project-button";
 import { InvitePanel } from "@/components/invite-panel";
 import { PhotoStrip } from "@/components/photo-strip";
+import { WhatsAppPrompt } from "@/components/whatsapp-prompt";
 import { StatementButtons } from "@/components/statement-buttons";
 import { WeeklySummaryCard } from "@/components/weekly-summary-card";
 import { WhatsAppButton } from "@/components/whatsapp-button";
@@ -119,6 +120,17 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
       .eq("client_visible", true),
     supabase.from("project_documents").select("id", { count: "exact", head: true }).eq("project_id", id),
   ]);
+  // A homeowner who hasn't switched WhatsApp updates on, and hasn't said "not now", is offered them
+  // once their contractor has saved a phone number for them.
+  let offerWhatsApp = false;
+  if (!isTeam && viewer && client?.phone && whatsappEnabled()) {
+    const { data: prefs } = await supabase
+      .from("profiles")
+      .select("whatsapp_notifications, whatsapp_prompt_dismissed_at")
+      .eq("id", viewer.userId)
+      .maybeSingle();
+    offerWhatsApp = !!prefs && !prefs.whatsapp_notifications && !prefs.whatsapp_prompt_dismissed_at;
+  }
   const waitingOnMe = awaitingMyResponse(paymentTotals, side);
   const cover = photos[0]?.full ?? null;
   const lastUpdateDate = (lastUpdateRow.data?.update_date as string | undefined) ?? null;
@@ -175,6 +187,9 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
 
   return (
     <div className="space-y-5">
+      {offerWhatsApp && client?.phone && (
+        <WhatsAppPrompt phone={formatPhone(client.phone)} companyName={project.company?.name ?? ""} />
+      )}
       <div className="flex flex-wrap items-center gap-2">
         {isOwner && (
           <Link href={`${base}/edit`} className={button("secondary", "sm")}>
