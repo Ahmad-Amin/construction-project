@@ -37,8 +37,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Bad request." }, { status: 400 });
   }
 
-  const senders = inboundSenders(payload, process.env.WHATSAPP_PHONE_NUMBER_ID || undefined);
-  if (senders.length === 0 || !whatsappEnabled()) return NextResponse.json({ ok: true });
+  const wantedNumber = process.env.WHATSAPP_PHONE_NUMBER_ID || undefined;
+  const senders = inboundSenders(payload, wantedNumber);
+  // These lines say why nothing was sent; they never include a phone number or message text.
+  if (senders.length === 0) {
+    const anyMessages = inboundSenders(payload).length > 0;
+    console.info(
+      anyMessages
+        ? "[whatsapp-webhook] a message arrived for a different number than WHATSAPP_PHONE_NUMBER_ID, so it was ignored"
+        : "[whatsapp-webhook] event received, no incoming message in it (delivery or read update)",
+    );
+    return NextResponse.json({ ok: true });
+  }
+  if (!whatsappEnabled()) {
+    console.info("[whatsapp-webhook] message received, but WHATSAPP_MODE is off, so no reply was sent");
+    return NextResponse.json({ ok: true });
+  }
 
   const reply = autoReplyText(`${await getOrigin()}/dashboard/settings`);
 
@@ -49,12 +63,21 @@ export async function POST(request: Request) {
       try {
         const { data: claimed, error } = await admin.rpc("claim_whatsapp_autoreply", { p_phone: phone });
         if (error) {
-          console.error("[whatsapp-webhook] could not check the reply log", error.message);
+          console.error("[whatsapp-webhook] could not check the reply log:", error.message);
           continue;
         }
-        if (!claimed) continue;
+        if (!claimed) {
+          console.info("[whatsapp-webhook] this person was already answered in the last 24 hours");
+          continue;
+        }
         const result = await sendWhatsAppText(phone, reply);
-        if (!result.ok) console.error("[whatsapp-webhook] the reply was not sent:", result.error);
+        if (result.ok) {
+          console.info("[whatsapp-webhook] reply sent");
+        } else {
+          console.error("[whatsapp-webhook] the reply was not sent:", result.error);
+          // Give the day's reply back, so their next message gets another try.
+          await admin.rpc("release_whatsapp_autoreply", { p_phone: phone });
+        }
       } catch (error) {
         console.error("[whatsapp-webhook] failed", error);
       }
