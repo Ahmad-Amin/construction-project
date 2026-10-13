@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/weekly-summary",
       "schedule": "0 13 * * 0"
+    },
+    {
+      "path": "/api/cron/keep-alive",
+      "schedule": "0 6 * * *"
     }
   ]
 }
