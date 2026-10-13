@@ -34,6 +34,11 @@ export default function PrivacyPage() {
           created and whether they were delivered.
         </p>
         <p>
+          <strong className="text-foreground">If you message our WhatsApp number:</strong> that number only sends
+          updates and does not read messages. We reply once a day to say so, and to do that we keep your phone
+          number for up to 30 days. We don&apos;t store or look at what you wrote.
+        </p>
+        <p>
           <strong className="text-foreground">Technical information:</strong> the usual details a web service sees,
           such as your IP address, browser and the time of a request, kept in logs for security and to fix problems.
         </p>

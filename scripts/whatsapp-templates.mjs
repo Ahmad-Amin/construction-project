@@ -3,6 +3,7 @@
 //   npm run whatsapp:templates            create the ones that don't exist yet
 //   npm run whatsapp:templates -- --status   show every template and whether Meta approved it
 //   npm run whatsapp:templates -- --env .env.whatsapp-prod   read the values from another file
+//   npm run whatsapp:templates -- --subscribe   switch on the webhook for this WhatsApp account (once)
 //
 // Needs WHATSAPP_BUSINESS_ACCOUNT_ID and WHATSAPP_ACCESS_TOKEN in .env.local (or in the file given
 // with --env, which is read instead; use it for the real account so its token never goes into
@@ -47,6 +48,18 @@ async function existing() {
     process.exit(1);
   }
   return json.data;
+}
+
+if (process.argv.includes("--subscribe")) {
+  // Lets Meta's webhook (the app's callback address) report this account's messages to our app.
+  const response = await fetch(`https://graph.facebook.com/${env.WHATSAPP_API_VERSION || "v23.0"}/${env.WHATSAPP_BUSINESS_ACCOUNT_ID}/subscribed_apps`, { method: "POST", headers });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    console.error("Could not subscribe:", json.error?.message ?? response.status);
+    process.exit(1);
+  }
+  console.log("Subscribed this WhatsApp account to the app's webhook.");
+  process.exit(0);
 }
 
 const current = await existing();

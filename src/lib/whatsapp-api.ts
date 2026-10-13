@@ -131,3 +131,36 @@ export async function sendWhatsAppTemplate(
     return { ok: false, error: error instanceof Error ? error.message : "Could not reach WhatsApp." };
   }
 }
+
+// Sends a plain text message. WhatsApp only allows this inside the 24 hours after the person last
+// wrote to us, which is the only time we use it: the one-line answer to someone who messaged the number.
+export async function sendWhatsAppText(to: string, body: string): Promise<WhatsAppResult> {
+  const mode = whatsappMode();
+  if (mode === "off") return { ok: false, error: "WhatsApp sending is switched off." };
+  if (!/^[0-9]{6,20}$/.test(to)) return { ok: false, error: "That phone number isn't valid." };
+
+  if (mode === "log") {
+    console.log(`[whatsapp:log] ${PRODUCT_NAME} → +${to} · text · ${JSON.stringify(body)}`);
+    return { ok: true };
+  }
+
+  const id = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  if (!id || !token) return { ok: false, error: "WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN is not set." };
+
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/${process.env.WHATSAPP_API_VERSION || "v23.0"}/${id}/messages`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body } }),
+      },
+    );
+    if (response.ok) return { ok: true };
+    const detail = (await response.json().catch(() => null)) as { error?: { message?: string; code?: number } } | null;
+    return { ok: false, error: `WhatsApp ${detail?.error?.code ?? response.status}: ${detail?.error?.message ?? "request failed"}`.slice(0, 280) };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Could not reach WhatsApp." };
+  }
+}
