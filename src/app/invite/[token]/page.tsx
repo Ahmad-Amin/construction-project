@@ -101,6 +101,17 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
           { name: "password", label: "Choose a password (8+ characters)", type: "password", autoComplete: "new-password" },
         ]}
       />
+      <p className="mt-4 text-center text-xs text-muted">
+        By continuing you agree to the{" "}
+        <Link href="/terms" className="font-medium underline underline-offset-4">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="font-medium underline underline-offset-4">
+          Privacy policy
+        </Link>
+        .
+      </p>
     </AuthShell>
   );
 }

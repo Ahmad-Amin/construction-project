@@ -33,6 +33,12 @@ export function PublicFooter({ wide = false }: { wide?: boolean }) {
         <Link href="/trust" className="font-medium hover:text-foreground">
           Private by design
         </Link>
+        <Link href="/terms" className="hover:text-foreground">
+          Terms
+        </Link>
+        <Link href="/privacy" className="hover:text-foreground">
+          Privacy
+        </Link>
         <Link href="/login" className="hover:text-foreground">
           Sign in
         </Link>

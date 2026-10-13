@@ -35,6 +35,17 @@ export default function SignupPage() {
         ]}
       />
       <p className="mt-4 text-center text-xs text-muted">
+        By creating an account you agree to the{" "}
+        <Link href="/terms" className="font-medium underline underline-offset-4">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="font-medium underline underline-offset-4">
+          Privacy policy
+        </Link>
+        .
+      </p>
+      <p className="mt-2 text-center text-xs text-muted">
         Your data stays yours.{" "}
         <Link href="/trust" className="font-medium underline underline-offset-4">
           See how we protect it
