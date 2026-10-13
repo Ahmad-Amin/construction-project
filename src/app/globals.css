@@ -317,3 +317,23 @@ body {
   border: 1px solid var(--line);
   color: var(--foreground);
 }
+
+/* The logo comes in two colourings. The light one shows by default; on a dark page (the device is
+   dark and the person hasn't chosen light, or they chose dark) the dark one takes over. */
+.brand-dark {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .brand-light {
+    display: none;
+  }
+  :root:not([data-theme="light"]) .brand-dark {
+    display: block;
+  }
+}
+:root[data-theme="dark"] .brand-light {
+  display: none;
+}
+:root[data-theme="dark"] .brand-dark {
+  display: block;
+}

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Logo } from "@/components/logo";
+import { BrandImage, Logo } from "@/components/logo";
 import { ThemeQuickToggle } from "@/components/theme-quick-toggle";
-import { CONTACT_EMAIL, OPERATOR_NAME } from "@/lib/site";
+import { CONTACT_EMAIL, OPERATOR_NAME, PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
 
 // `wide` is for the landing page; the text pages (privacy) use the narrow width.
@@ -26,31 +26,89 @@ export function PublicHeader({ wide = false, children }: { wide?: boolean; child
   );
 }
 
+const footerLink = "text-muted transition-colors hover:text-foreground";
+
+// The footer of every public page: the logo and a line about what BuildPeek is, three short lists
+// of links, and the small print along the bottom.
 export function PublicFooter({ wide = false }: { wide?: boolean }) {
   return (
-    <footer className={`mx-auto w-full px-5 pb-10 pt-4 text-sm text-muted sm:px-6 ${wide ? "max-w-[96rem] lg:px-12 2xl:px-16" : "max-w-3xl"}`}>
-      <nav className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2" aria-label="Footer">
-        <Link href="/trust" className="font-medium hover:text-foreground">
-          Private by design
-        </Link>
-        <Link href="/terms" className="hover:text-foreground">
-          Terms
-        </Link>
-        <Link href="/privacy" className="hover:text-foreground">
-          Privacy
-        </Link>
-        <Link href="/login" className="hover:text-foreground">
-          Sign in
-        </Link>
-        {CONTACT_EMAIL && (
-          <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-foreground">
-            {CONTACT_EMAIL}
-          </a>
-        )}
-      </nav>
-      <p className="text-xs">
-        © {new Date().getFullYear()} {OPERATOR_NAME}
-      </p>
+    <footer className="mt-16 border-t border-line bg-surface-2/40">
+      <div className={`mx-auto w-full px-5 py-12 sm:px-6 ${wide ? "max-w-[96rem] lg:px-12 2xl:px-16" : "max-w-3xl"}`}>
+        <div className={`grid gap-10 ${wide ? "sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]" : "sm:grid-cols-3"}`}>
+          <div className={wide ? "sm:col-span-2 lg:col-span-1" : "sm:col-span-3"}>
+            <Link href="/" aria-label={PRODUCT_NAME} className="inline-block">
+              <BrandImage variant="vertical" className="h-24" />
+            </Link>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">
+              Show your clients how the work is going: progress, photos, payments and documents in one place.
+            </p>
+          </div>
+
+          <nav aria-label="Product">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-foreground">Product</h2>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              <li>
+                <Link href="/" className={footerLink}>
+                  Overview
+                </Link>
+              </li>
+              <li>
+                <Link href="/signup" className={footerLink}>
+                  Create an account
+                </Link>
+              </li>
+              <li>
+                <Link href="/login" className={footerLink}>
+                  Sign in
+                </Link>
+              </li>
+            </ul>
+          </nav>
+
+          <nav aria-label="Trust and legal">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-foreground">Trust</h2>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              <li>
+                <Link href="/trust" className={footerLink}>
+                  Private by design
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className={footerLink}>
+                  Privacy policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className={footerLink}>
+                  Terms of use
+                </Link>
+              </li>
+            </ul>
+          </nav>
+
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-foreground">Contact</h2>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              {CONTACT_EMAIL ? (
+                <li>
+                  <a href={`mailto:${CONTACT_EMAIL}`} className={footerLink}>
+                    {CONTACT_EMAIL}
+                  </a>
+                </li>
+              ) : (
+                <li className="text-muted">Ask the person who set up your account.</li>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-10 flex flex-col gap-2 border-t border-line pt-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:pr-16">
+          <p>
+            © {new Date().getFullYear()} {OPERATOR_NAME}. All rights reserved.
+          </p>
+          <p>Built for contractors and the people they build for.</p>
+        </div>
+      </div>
     </footer>
   );
 }

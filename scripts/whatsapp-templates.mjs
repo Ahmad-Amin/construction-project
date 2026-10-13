@@ -2,22 +2,35 @@
 //
 //   npm run whatsapp:templates            create the ones that don't exist yet
 //   npm run whatsapp:templates -- --status   show every template and whether Meta approved it
+//   npm run whatsapp:templates -- --env .env.whatsapp-prod   read the values from another file
 //
-// Needs WHATSAPP_BUSINESS_ACCOUNT_ID and WHATSAPP_ACCESS_TOKEN in .env.local. The wording lives
+// Needs WHATSAPP_BUSINESS_ACCOUNT_ID and WHATSAPP_ACCESS_TOKEN in .env.local (or in the file given
+// with --env, which is read instead; use it for the real account so its token never goes into
+// .env.local, and keep that file out of git: every .env* file is ignored already). The wording lives
 // in src/lib/whatsapp-templates.json. Meta reviews each new template (usually within minutes
 // for these simple utility messages); until it says APPROVED, that message can't be sent.
 // Approved templates can't be edited: to change the wording, give the template a new name.
 import { readFileSync } from "node:fs";
 
+const envFlag = process.argv.indexOf("--env");
+const envFile = envFlag !== -1 ? process.argv[envFlag + 1] : ".env.local";
+if (envFlag !== -1 && !envFile) {
+  console.error("--env needs a file name, for example --env .env.whatsapp-prod");
+  process.exit(1);
+}
 try {
-  process.loadEnvFile(".env.local");
+  process.loadEnvFile(envFile);
 } catch {
-  // Variables may already be set in the environment.
+  if (envFlag !== -1) {
+    console.error(`Could not read ${envFile}.`);
+    process.exit(1);
+  }
+  // Otherwise the variables may already be set in the environment.
 }
 
 const env = process.env;
 if (!env.WHATSAPP_BUSINESS_ACCOUNT_ID || !env.WHATSAPP_ACCESS_TOKEN) {
-  console.error("Missing WHATSAPP_BUSINESS_ACCOUNT_ID or WHATSAPP_ACCESS_TOKEN in .env.local.");
+  console.error(`Missing WHATSAPP_BUSINESS_ACCOUNT_ID or WHATSAPP_ACCESS_TOKEN in ${envFile}.`);
   process.exit(1);
 }
 
