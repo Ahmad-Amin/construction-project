@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { CookieSettingsButton } from "@/components/analytics-consent";
 import { BrandImage, Logo } from "@/components/logo";
 import { ThemeQuickToggle } from "@/components/theme-quick-toggle";
+import { GA_ID } from "@/lib/analytics";
 import { CONTACT_EMAIL, OPERATOR_NAME, PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
 
@@ -88,6 +90,11 @@ export function PublicFooter({ wide = false }: { wide?: boolean }) {
                   Terms of use
                 </Link>
               </li>
+              {GA_ID && (
+                <li>
+                  <CookieSettingsButton className={footerLink} />
+                </li>
+              )}
             </ul>
           </nav>
 

@@ -1,4 +1,5 @@
 import { LegalList, LegalPage, LegalSection } from "@/components/legal-page";
+import { GA_ID } from "@/lib/analytics";
 import { CONTACT_EMAIL, DELETION_DAYS, OPERATOR_NAME, PRODUCT_NAME } from "@/lib/site";
 
 export const metadata = {
@@ -82,6 +83,9 @@ export default function PrivacyPage() {
           <li><strong className="text-foreground">Supabase:</strong> the database, sign-in and file storage.</li>
           <li><strong className="text-foreground">Vercel:</strong> hosting the website and the app, and counting visits to pages (see Cookies below).</li>
           <li><strong className="text-foreground">Resend:</strong> delivering emails.</li>
+          {GA_ID && (
+            <li><strong className="text-foreground">Google (Analytics):</strong> counting visits to our public pages, only if you accept analytics cookies.</li>
+          )}
           <li><strong className="text-foreground">Meta (WhatsApp):</strong> delivering WhatsApp messages, only for people who switched them on.</li>
           <li><strong className="text-foreground">A content delivery network</strong> that serves the small country-flag pictures in the phone-number picker, which means your browser contacts it when that picker is shown.</li>
         </LegalList>
@@ -92,11 +96,23 @@ export default function PrivacyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="Cookies and similar storage">
+      <LegalSection title="Cookies and similar storage" id="cookies">
         <p>
           We use only what is needed to keep you signed in and to remember small choices, such as your theme, whether
-          the sidebar is folded and whether a card is hidden. There are no advertising or tracking cookies. To see which pages are visited, we use Vercel Web Analytics, which counts page views without cookies and without following you across other sites.
+          the sidebar is folded and whether a card is hidden. {GA_ID ? "Apart from the optional analytics described below, there" : "There"} are no advertising or tracking cookies. To see which pages are visited, we use Vercel Web Analytics, which counts page views without cookies and without following you across other sites.
         </p>
+        {GA_ID && (
+          <p>
+            <strong className="text-foreground">Optional analytics:</strong> on our public pages only (the home page,
+            pricing, sign-in and sign-up, and the legal pages) we would also like to use Google Analytics to understand
+            which pages are useful. It sets cookies, so it starts only if you choose Accept in the banner there. You can
+            change your mind at any time with “Cookie settings” at the bottom of those pages, which also removes
+            the cookies. We turn off Google&apos;s advertising features, and Google Analytics is never used inside your
+            account (your projects, payments, documents and photos) or on invitation links. Google acts on our behalf, and
+            the information it collects, such as your browser and approximate location, may be processed in the United
+            States.
+          </p>
+        )}
       </LegalSection>
 
       <LegalSection title="Photos">

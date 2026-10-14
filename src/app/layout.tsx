@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AnalyticsConsent } from "@/components/analytics-consent";
 import { RouteProgress } from "@/components/route-progress";
 import { PRODUCT_NAME } from "@/lib/site";
 import "./globals.css";
@@ -60,6 +61,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         {/* Vercel Web Analytics: page views only, no cookies. It does nothing until you turn Analytics on for the project in Vercel. */}
         <Analytics />
+        {/* Google Analytics: only if NEXT_PUBLIC_GA_ID is set, only on public pages, and only after the visitor says yes. */}
+        <AnalyticsConsent />
       </body>
     </html>
   );
