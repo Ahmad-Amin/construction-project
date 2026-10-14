@@ -1,6 +1,12 @@
-// Where emails meant for the person running the service go: plan requests and feedback. Each can have
-// its own address; they all fall back to the public contact address.
-export function adminInbox(kind: "feedback" | "plan"): string {
-  const specific = kind === "feedback" ? process.env.FEEDBACK_EMAIL : process.env.PLAN_REQUEST_EMAIL;
-  return (specific || process.env.PLAN_REQUEST_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "").trim();
+import { platformAdminEmails } from "@/lib/admin";
+
+// Where emails meant for the person running the service go: plan requests and feedback. They go to the
+// addresses in PLATFORM_ADMIN_EMAILS, the same people who can open the admin pages and get the bell
+// notifications. (Only if that is empty do they fall back to the public contact address, so a request
+// is never lost.)
+export function adminInbox(): string[] {
+  const admins = platformAdminEmails();
+  if (admins.length > 0) return admins;
+  const contact = (process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "").trim();
+  return contact ? [contact] : [];
 }

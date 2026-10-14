@@ -21,8 +21,8 @@ export async function requestPlanUpgrade(plan: string, yearly: boolean): Promise
   const viewer = await getViewer();
   if (viewer?.company?.role !== "owner") return { ok: false, message: "Only the company owner can ask for a plan." };
 
-  const to = adminInbox("plan");
-  if (!to) return { ok: false, message: "We can't take requests here right now. Please write to us directly." };
+  const to = adminInbox();
+  if (to.length === 0) return { ok: false, message: "We can't take requests here right now. Please write to us directly." };
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("request_plan_upgrade", { p_plan: plan, p_yearly: yearly });
@@ -102,7 +102,7 @@ export async function requestPlanUpgrade(plan: string, yearly: boolean): Promise
       </td></tr>
     </table>
   </td></tr></table></body></html>`;
-  await sendEmail({ to: viewer.email, subject: `We got your ${info.name} plan request`, text: confirmText.join("\n"), html: confirmHtml, replyTo: to });
+  await sendEmail({ to: viewer.email, subject: `We got your ${info.name} plan request`, text: confirmText.join("\n"), html: confirmHtml, replyTo: to[0] });
 
   // The bell, for the people running the service. After everything above, and never in the way of it.
   await notifyPlatformAdmins({

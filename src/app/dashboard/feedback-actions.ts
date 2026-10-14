@@ -35,8 +35,8 @@ export async function sendFeedback(category: string, message: string, page: stri
     return { ok: false, message: "You've sent a few messages in the last hour. Please try again a little later." };
   }
 
-  const to = adminInbox("feedback");
-  if (to) {
+  const to = adminInbox();
+  if (to.length > 0) {
     const kind = LABEL[category as (typeof CATEGORIES)[number]];
     const who = [r.name, r.email].filter(Boolean).join(" · ") || "unknown";
     const where = [r.role, r.company_name].filter(Boolean).join(" · ");

@@ -14,7 +14,7 @@ import { PRODUCT_NAME } from "@/lib/site";
 //   EMAIL_PROVIDER=resend    Resend's HTTP API (set RESEND_API_KEY). For production.
 //   EMAIL_PROVIDER=none      Don't send (the default outside development with nothing configured).
 
-export type Email = { to: string; subject: string; text: string; html: string; replyTo?: string };
+export type Email = { to: string | string[]; subject: string; text: string; html: string; replyTo?: string };
 export type SendResult = { ok: true; preview?: string } | { ok: false; error: string };
 
 type Provider = "smtp" | "ethereal" | "resend" | "none";
@@ -86,7 +86,7 @@ export async function sendEmail(email: Email): Promise<SendResult> {
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: from(),
-          to: [email.to],
+          to: Array.isArray(email.to) ? email.to : [email.to],
           subject: email.subject,
           text: email.text,
           html: email.html,
