@@ -28,7 +28,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Row-level security decides which projects come back: a company sees its own,
   // a homeowner only theirs. Payments waiting on this person show as badges.
   const supabase = await createClient();
-  const [projectsRes, pendingRes, unread] = await Promise.all([
+  const [projectsRes, pendingRes, unread, activeRes] = await Promise.all([
     supabase
       .from("projects")
       .select("id, name, status, archived_at")
@@ -38,6 +38,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       ? supabase.from("payments").select("project_id").eq("status", "pending").neq("side", side).limit(1000)
       : Promise.resolve({ data: [] as { project_id: string }[] }),
     countUnread(supabase),
+    // How many projects are Active right now (an exact count, not the first 40 in the list above).
+    viewer.company
+      ? supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "active").is("archived_at", null)
+      : Promise.resolve({ count: 0 }),
   ]);
 
   const awaiting = new Map<string, number>();
@@ -63,6 +67,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
           role: roleOf(isOwner, !!viewer.company),
         }}
         company={viewer.company ? { name: viewer.company.name, logoUrl: viewer.company.logoUrl } : null}
+        plan={
+          viewer.company
+            ? { id: viewer.company.plan, activeProjects: activeRes.count ?? 0, lapsed: viewer.company.planLapsed }
+            : null
+        }
         projects={projects}
         isOwner={isOwner}
         unread={unread}

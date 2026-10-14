@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { currencyOrDefault } from "@/lib/currency";
+import { effectivePlan, type PlanId } from "@/lib/plans";
 import { timeZoneOrDefault } from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
 import { one, type ProjectStatus } from "@/lib/types";
@@ -14,11 +15,13 @@ export type ProjectBasic = {
   status: ProjectStatus;
   archived_at: string | null;
   completed_at: string | null;
-  company: { name: string; logo_url: string | null; currency: string; timezone: string } | null;
+  company: { name: string; logo_url: string | null; currency: string; timezone: string; plan: string; plan_until: string | null } | null;
   // The company's currency code, ready to use when showing any amount on this project.
   currency: string;
   // The company's time zone: what "today" is and which day an event belongs to on this project.
   timeZone: string;
+  // The plan of the company that runs this project (what it includes: statements, WhatsApp updates).
+  plan: PlanId;
 };
 
 // The project header shared by every project screen. Cached so the layout and
@@ -27,7 +30,7 @@ export const getProjectBasic = cache(async (id: string): Promise<ProjectBasic | 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("projects")
-    .select("id, company_id, name, location, start_date, expected_completion_date, status, archived_at, completed_at, company:companies(name, logo_url, currency, timezone)")
+    .select("id, company_id, name, location, start_date, expected_completion_date, status, archived_at, completed_at, company:companies(name, logo_url, currency, timezone, plan, plan_until)")
     .eq("id", id)
     .maybeSingle();
   // A project you can't see (or that doesn't exist) is "not found". A real database problem,
@@ -37,9 +40,9 @@ export const getProjectBasic = cache(async (id: string): Promise<ProjectBasic | 
   }
   if (!data) return null;
   // The company is a single related row; normalise whatever shape the API returns.
-  const row = data as unknown as Omit<ProjectBasic, "company" | "currency" | "timeZone"> & {
+  const row = data as unknown as Omit<ProjectBasic, "company" | "currency" | "timeZone" | "plan"> & {
     company: ProjectBasic["company"] | NonNullable<ProjectBasic["company"]>[];
   };
   const company = one(row.company);
-  return { ...row, company, currency: currencyOrDefault(company?.currency), timeZone: timeZoneOrDefault(company?.timezone) };
+  return { ...row, company, currency: currencyOrDefault(company?.currency), timeZone: timeZoneOrDefault(company?.timezone), plan: effectivePlan(company?.plan, company?.plan_until) };
 });

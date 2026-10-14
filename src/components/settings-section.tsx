@@ -2,18 +2,21 @@ import type { LucideIcon } from "lucide-react";
 
 // One group of settings: a short explanation on the left (above on phones), the controls on the right.
 export function SettingsSection({
+  id,
   icon: Icon,
   title,
   description,
   children,
 }: {
+  // Lets a link jump straight to this section, like /dashboard/settings#plan.
+  id?: string;
   icon: LucideIcon;
   title: string;
   description: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="animate-rise grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[14rem_minmax(0,1fr)] md:gap-8">
+    <section id={id} className="animate-rise scroll-mt-20 grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[14rem_minmax(0,1fr)] md:gap-8">
       <div>
         <h2 className="flex items-center gap-2 font-semibold">
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary-soft text-data-accent">

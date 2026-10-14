@@ -1,5 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
+import { canMakeStatements } from "@/lib/plans";
 import { getProjectBasic } from "@/lib/projects";
 import { buildStatement } from "@/lib/statement";
 import { StatementDocument } from "@/lib/statement-pdf";
@@ -19,6 +20,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const isTeam = !!viewer?.company && viewer.company.id === project.company_id;
   if (isTeam && viewer?.company?.role !== "owner") {
     return NextResponse.json({ error: "Only the company owner can create statements." }, { status: 403 });
+  }
+
+  // PDF statements are part of the paid plans, for the contractor and for their client alike.
+  if (!canMakeStatements(project.plan)) {
+    return NextResponse.json({ error: "PDF statements are part of the Pro plan." }, { status: 403 });
   }
 
   const supabase = await createClient();

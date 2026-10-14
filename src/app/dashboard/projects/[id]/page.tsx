@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
+  FileText,
   Hammer,
   Pencil,
   Phone,
@@ -30,6 +31,7 @@ import { getOrigin } from "@/lib/origin";
 import { formatPhone } from "@/lib/phone";
 import { whatsappEnabled } from "@/lib/whatsapp-api";
 import { overallProgress } from "@/lib/project";
+import { canMakeStatements, canSendWhatsApp } from "@/lib/plans";
 import { getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { fetchTimeline } from "@/lib/timeline";
@@ -123,7 +125,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
   // A homeowner who hasn't switched WhatsApp updates on, and hasn't said "not now", is offered them
   // once their contractor has saved a phone number for them.
   let offerWhatsApp = false;
-  if (!isTeam && viewer && client?.phone && whatsappEnabled()) {
+  if (!isTeam && viewer && client?.phone && whatsappEnabled() && canSendWhatsApp(project.plan)) {
     const { data: prefs } = await supabase
       .from("profiles")
       .select("whatsapp_notifications, whatsapp_prompt_dismissed_at")
@@ -208,7 +210,14 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
           />
         )}
         {progressShare && <WhatsAppButton href={progressShare}>Share progress</WhatsAppButton>}
-        {(isOwner || !isTeam) && <StatementButtons projectId={id} projectName={project.name} />}
+        {(isOwner || !isTeam) &&
+          (canMakeStatements(project.plan) ? (
+            <StatementButtons projectId={id} projectName={project.name} />
+          ) : isOwner ? (
+            <Link href="/dashboard/settings#plan" className={button("secondary", "sm")}>
+              <FileText className="size-4" aria-hidden /> PDF statement · Pro
+            </Link>
+          ) : null)}
       </div>
 
       {/* Hero: the latest site photo, with one number that matters most. */}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Bell, Building2, CalendarDays, Database, KeyRound, LogOut, Palette, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, Bell, Building2, CalendarDays, Database, KeyRound, LogOut, Palette, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { Avatar } from "@/components/avatar";
 import { AuthForm } from "@/components/auth-form";
@@ -17,9 +17,12 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { WhatsAppToggle } from "@/components/whatsapp-toggle";
 import { isDemoEmail } from "@/lib/demo";
 import { formatPhone } from "@/lib/phone";
+import { PlanSection } from "@/components/plan-section";
 import { CURRENCIES } from "@/lib/currency";
+import { canSendWhatsApp, effectivePlan } from "@/lib/plans";
 import { timeZoneOptions } from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
+import { one } from "@/lib/types";
 import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
 import { whatsappEnabled } from "@/lib/whatsapp-api";
@@ -57,11 +60,24 @@ export default async function SettingsPage({
     ? await supabase.from("companies").select("weekly_summary").eq("id", viewer.company!.id).maybeSingle()
     : { data: null };
 
+  // How many projects are Active, for the plan section (the owner's own company, by row-level security).
+  const { count: activeCount } = isOwnerViewer(viewer)
+    ? await supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "active").is("archived_at", null)
+    : { count: 0 };
+  const activeProjects = activeCount ?? 0;
+
   // Homeowners can ask for WhatsApp updates once sending is switched on for the product.
   const showWhatsApp = !viewer.company && whatsappEnabled();
-  const { data: clientRow } = showWhatsApp
-    ? await supabase.from("clients").select("phone").eq("user_id", viewer.userId).limit(1).maybeSingle()
+  const { data: clientRows } = showWhatsApp
+    ? await supabase.from("clients").select("phone, company:companies(plan, plan_until)").eq("user_id", viewer.userId)
     : { data: null };
+  const clientRow = clientRows?.[0] ?? null;
+  // Automatic WhatsApp updates are part of the contractor's paid plan: offer the switch only when at least one of
+  // the companies this person is a client of has one.
+  const whatsappAvailable = (clientRows ?? []).some((r) => {
+    const company = one(r.company as { plan: string; plan_until: string | null } | { plan: string; plan_until: string | null }[] | null);
+    return canSendWhatsApp(effectivePlan(company?.plan, company?.plan_until));
+  });
 
   const name = profile?.name ?? "";
   const isOwner = viewer.company?.role === "owner";
@@ -139,6 +155,7 @@ export default async function SettingsPage({
               <WhatsAppToggle
                 initial={profile?.whatsapp_notifications ?? false}
                 phone={clientRow?.phone ? formatPhone(clientRow.phone) : null}
+                available={whatsappAvailable}
               />
             )}
           </div>
@@ -239,6 +256,24 @@ export default async function SettingsPage({
                 </div>
               </div>
             </div>
+          </SettingsSection>
+        )}
+
+        {isOwner && viewer.company && (
+          <SettingsSection
+            id="plan"
+            icon={Sparkles}
+            title="Plan"
+            description="What your company's plan includes, and how to move to a bigger one."
+          >
+            <PlanSection
+              plan={viewer.company.plan}
+              until={viewer.company.planUntil}
+              lapsed={viewer.company.planLapsed}
+              activeProjects={activeProjects}
+              companyName={viewer.company.name}
+              timeZone={viewer.company.timeZone}
+            />
           </SettingsSection>
         )}
 

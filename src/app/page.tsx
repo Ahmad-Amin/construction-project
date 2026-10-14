@@ -88,6 +88,7 @@ const anchors = [
   { href: "#day", label: "How it works" },
   { href: "#inside", label: "What's inside" },
   { href: "#privacy", label: "Privacy" },
+  { href: "/pricing", label: "Pricing" },
   { href: "#questions", label: "Questions" },
 ];
 

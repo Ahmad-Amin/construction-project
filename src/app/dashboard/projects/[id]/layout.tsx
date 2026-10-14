@@ -8,6 +8,7 @@ import { ProjectContent } from "@/components/project-content";
 import { ProjectTabs } from "@/components/project-tabs";
 import { StatusBadge } from "@/components/project-bits";
 import { formatDate, dayInZone } from "@/lib/format";
+import { canMakeStatements } from "@/lib/plans";
 import { getProjectBasic } from "@/lib/projects";
 import { getViewer } from "@/lib/viewer";
 
@@ -68,7 +69,7 @@ export default async function ProjectLayout({
           projectId={id}
           completedOn={project.completed_at ? dayInZone(project.completed_at, project.timeZone) : null}
           isOwner={isOwner}
-          canGetStatement={isOwner || !viewer?.company}
+          canGetStatement={(isOwner || !viewer?.company) && canMakeStatements(project.plan)}
         />
       )}
       {project.archived_at && <ArchivedBanner projectId={id} canRestore={isOwner} />}

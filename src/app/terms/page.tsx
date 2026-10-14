@@ -77,15 +77,28 @@ export default function TermsPage() {
 
       <LegalSection title="The service as it is today">
         <p>
-          {PRODUCT_NAME} is a young product and may be offered free for now. We work to keep it available and
+          {PRODUCT_NAME} is a young product. We work to keep it available and
           your data safe, but we can&apos;t promise it will never be down, slow or lose something. Keep your own
           copy of anything you can&apos;t afford to lose: Settings has downloads for your records, and documents can be
           downloaded one by one.
         </p>
         <p>
-          We may change the service, and we may start charging for it. If we do, we will tell you before it
-          affects you, and you can stop using it instead.
+          We may change the service. If we change something in a way that affects you, we will tell you before it
+          does, and you can stop using it instead.
         </p>
+      </LegalSection>
+
+      <LegalSection title="Plans and payment">
+        <p>
+          {PRODUCT_NAME} has a free plan and paid plans, described on the Pricing page. Only the contractor has a plan:
+          clients are never charged. A plan decides how many projects can be active at once and whether automatic
+          WhatsApp updates and PDF statements are included.
+        </p>
+        <LegalList>
+          <li>Paid plans are paid in advance for a month or a year. Prices are in US dollars and may change; a change doesn&apos;t affect a period you have already paid for.</li>
+          <li>If a paid plan ends, the account goes back to the free plan. Nothing is deleted: your projects and records stay, but you can&apos;t start more active projects than the free plan allows, and the paid features pause until you renew.</li>
+          <li>To cancel or change a plan, write to us. We don&apos;t refund a period already paid for unless the law says we must.</li>
+        </LegalList>
       </LegalSection>
 
       <LegalSection title="Leaving, and deletion">

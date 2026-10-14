@@ -13,7 +13,7 @@ export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || null;
 export const GOVERNING_LAW = process.env.NEXT_PUBLIC_GOVERNING_LAW || "Pakistan";
 
 // Bump this whenever the privacy policy or terms change in a way people should know about.
-export const LEGAL_UPDATED = "13 October 2026";
+export const LEGAL_UPDATED = "14 October 2026";
 
 // How long we take to act on a request to delete an account's data.
 export const DELETION_DAYS = 30;

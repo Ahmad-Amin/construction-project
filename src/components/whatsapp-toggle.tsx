@@ -3,7 +3,19 @@
 import { setWhatsAppNotifications } from "@/app/dashboard/notifications/actions";
 import { PreferenceToggle } from "@/components/preference-toggle";
 
-export function WhatsAppToggle({ initial, phone }: { initial: boolean; phone: string | null }) {
+export function WhatsAppToggle({ initial, phone, available = true }: { initial: boolean; phone: string | null; available?: boolean }) {
+  // The contractor's plan decides whether WhatsApp updates exist at all: say so, rather than show a switch that does nothing.
+  if (!available) {
+    return (
+      <div>
+        <p className="text-sm font-medium">Updates on WhatsApp</p>
+        <p className="mt-1 text-sm text-muted">
+          Not available for your project. Your contractor&apos;s plan doesn&apos;t include WhatsApp updates. You still get every
+          update in the app and by email.
+        </p>
+      </div>
+    );
+  }
   return (
     <PreferenceToggle
       id="whatsapp-toggle"

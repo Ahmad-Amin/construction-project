@@ -7,6 +7,8 @@ import { dateOrNull, parseAmount, snapshot, text } from "@/lib/forms";
 import { flash } from "@/lib/flash";
 import { queueNotificationDelivery } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
+import { canSendWhatsApp } from "@/lib/plans";
+import { getProjectBasic } from "@/lib/projects";
 
 const GENERIC = "Something went wrong saving this payment. Please try again.";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -225,12 +227,15 @@ export async function sendPaymentReminder(projectId: string, paymentId: string):
   if (r.whatsapp) {
     return { ok: true, message: `Reminder sent to ${name} on WhatsApp${r.email ? " and by email" : ""}.` };
   }
+  const project = await getProjectBasic(projectId);
   const why =
     r.whatsapp_reason === "no_phone"
       ? `there's no phone number saved for ${name}`
       : r.whatsapp_reason === "not_opted_in"
         ? `${name} hasn't switched on WhatsApp updates`
-        : "WhatsApp isn't available right now";
+        : project && !canSendWhatsApp(project.plan)
+          ? "automatic WhatsApp updates are part of the Pro plan"
+          : "WhatsApp isn't available right now";
   return {
     ok: true,
     offerManual: true,

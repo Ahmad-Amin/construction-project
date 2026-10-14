@@ -30,6 +30,8 @@ import { CompanyBadge } from "@/components/company-badge";
 import { NotificationBell } from "@/components/notification-bell";
 import { ThemeQuickToggle } from "@/components/theme-quick-toggle";
 import { Logo } from "@/components/logo";
+import { PlanBadge } from "@/components/plan-badge";
+import type { PlanId } from "@/lib/plans";
 import { LinkPending } from "@/components/link-pending";
 import { RoleTag, type Role } from "@/components/role-tag";
 import { SubmitButton } from "@/components/submit-button";
@@ -43,6 +45,8 @@ export type ShellProject = { id: string; name: string; status: ProjectStatus; aw
 export type ShellProps = {
   user: { name: string; email: string; role: Role };
   company: { name: string; logoUrl: string | null } | null;
+  // The company's plan and how many projects are Active, for the plan card (contractor team only).
+  plan: { id: PlanId; activeProjects: number; lapsed: boolean } | null;
   projects: ShellProject[];
   isOwner: boolean;
   // Notifications the person hasn't opened yet.
@@ -135,7 +139,7 @@ function SidebarContent({
   // Icons only. Used by the desktop sidebar when the person has folded it away.
   collapsed?: boolean;
 }) {
-  const { user, company, projects, isOwner } = props;
+  const { user, company, plan, projects, isOwner } = props;
   const [showArchived, setShowArchived] = useState(false);
   const match = pathname.match(/^\/dashboard\/projects\/([0-9a-f-]{36})/);
   const currentId = match?.[1] ?? null;
@@ -284,6 +288,17 @@ function SidebarContent({
             </div>
           </div>
         ))}
+
+      {plan && (
+        <PlanBadge
+          plan={plan.id}
+          activeProjects={plan.activeProjects}
+          lapsed={plan.lapsed}
+          isOwner={isOwner}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+        />
+      )}
 
       <nav className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-3 ${collapsed ? "px-2" : "px-3"}`} aria-label="Main">
         {isOwner && (

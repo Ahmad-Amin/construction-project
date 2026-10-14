@@ -226,7 +226,10 @@ async function main() {
   const homeowner = await signIn(HOMEOWNER.email);
 
   // Company, project, client, budget and milestones.
-  must(await contractor.rpc("create_company", { p_name: COMPANY }), "create company");
+  const companyId = must(await contractor.rpc("create_company", { p_name: COMPANY }), "create company");
+  // The demo shows everything the product can do, so it gets the biggest plan (a plan can only be set
+  // with the service key, never from the app).
+  must(await admin.from("companies").update({ plan: "business", plan_updated_at: new Date().toISOString() }).eq("id", companyId), "give the demo company the Business plan");
   const projectId = must(
     await contractor.rpc("create_project", {
       p_name: "Ahmed Residence",

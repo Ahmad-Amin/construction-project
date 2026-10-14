@@ -86,7 +86,7 @@ export async function updateProject(
     .eq("id", id)
     .select("client_id")
     .maybeSingle();
-  if (projectError) return fail(formData, GENERIC_ERROR);
+  if (projectError) return fail(formData, friendly(projectError));
   if (!project) return fail(formData, "Only the company owner can edit this project.");
 
   const clientUpdate: { name: string; phone: string | null; email?: string } = {
@@ -129,7 +129,7 @@ export async function archiveProject(projectId: string, archived: boolean): Prom
     .update({ archived_at: archived ? new Date().toISOString() : null })
     .eq("id", projectId)
     .select("id");
-  if (error) return { error: GENERIC_ERROR };
+  if (error) return { error: friendly(error) };
   if (!data?.length) return { error: "Only the company owner can archive a project." };
 
   revalidatePath("/dashboard", "layout");
@@ -173,7 +173,7 @@ export async function setProjectStatus(
     .update({ status })
     .eq("id", projectId)
     .select("id");
-  if (error) return { error: GENERIC_ERROR };
+  if (error) return { error: friendly(error) };
   if (!data?.length) return { error: "Only the company owner can change a project's status." };
 
   revalidatePath("/dashboard", "layout");

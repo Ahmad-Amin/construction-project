@@ -53,6 +53,11 @@ export function PublicFooter({ wide = false }: { wide?: boolean }) {
                 </Link>
               </li>
               <li>
+                <Link href="/pricing" className={footerLink}>
+                  Pricing
+                </Link>
+              </li>
+              <li>
                 <Link href="/signup" className={footerLink}>
                   Create an account
                 </Link>
