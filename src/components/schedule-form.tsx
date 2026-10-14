@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import { Info } from "lucide-react";
 import type { FormState } from "@/app/login/actions";
 import { AmountInput } from "@/components/amount-input";
 import type { Stage } from "@/lib/payment-schedule";
+import { CancelLink, useSheetBusy } from "@/components/sheet-lock";
 import { button, inputClass } from "@/lib/ui";
 
 export type ScheduleFormValues = { title: string; amount: string; milestone_id: string };
@@ -29,6 +29,7 @@ export function ScheduleForm({
   sheet?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
+  useSheetBusy(pending);
   const v = (key: keyof ScheduleFormValues) => state.values?.[key] ?? initial[key];
 
   return (
@@ -85,9 +86,7 @@ export function ScheduleForm({
             : "pt-1"
         }`}
       >
-        <Link href={`/dashboard/projects/${projectId}/payments`} className={button("secondary")}>
-          Cancel
-        </Link>
+        <CancelLink href={`/dashboard/projects/${projectId}/payments`} busy={pending} />
         <button type="submit" disabled={pending} className={button("primary")}>
           {pending ? "Saving…" : mode === "create" ? "Add to schedule" : "Save changes"}
         </button>

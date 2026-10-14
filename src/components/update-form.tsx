@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Images, Info, X } from "lucide-react";
@@ -9,6 +8,7 @@ import { DateField } from "@/components/date-field";
 import { newId } from "@/lib/ids";
 import { IMAGE_TOO_BIG, imageTooBig, prepareImage } from "@/lib/images";
 import { createClient } from "@/lib/supabase/client";
+import { CancelLink, useSheetBusy } from "@/components/sheet-lock";
 import { button, inputClass } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
 import { useToast } from "@/components/toast";
@@ -44,6 +44,7 @@ export function UpdateForm({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const busy = status !== null;
+  useSheetBusy(busy);
 
   const cameraInput = useRef<HTMLInputElement>(null);
   const galleryInput = useRef<HTMLInputElement>(null);
@@ -302,9 +303,7 @@ export function UpdateForm({
             : "pt-1"
         }`}
       >
-        <Link href={`/dashboard/projects/${projectId}/updates`} className={button("secondary")}>
-          Cancel
-        </Link>
+        <CancelLink href={`/dashboard/projects/${projectId}/updates`} busy={busy} />
         <button type="submit" disabled={busy} className={button("primary")}>
           {busy ? "Please wait…" : "Post update"}
         </button>

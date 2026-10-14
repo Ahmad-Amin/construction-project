@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Images, Receipt, X } from "lucide-react";
@@ -15,6 +14,7 @@ import { parseAmount } from "@/lib/forms";
 import { newId } from "@/lib/ids";
 import { IMAGE_TOO_BIG, imageTooBig, prepareReceipt } from "@/lib/images";
 import { createClient } from "@/lib/supabase/client";
+import { CancelLink, useSheetBusy } from "@/components/sheet-lock";
 import { button, inputClass } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
 import { useToast } from "@/components/toast";
@@ -65,6 +65,7 @@ export function ExpenseForm({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const busy = status !== null;
+  useSheetBusy(busy);
 
   const cameraInput = useRef<HTMLInputElement>(null);
   const galleryInput = useRef<HTMLInputElement>(null);
@@ -314,9 +315,7 @@ export function ExpenseForm({
             : "pt-1"
         }`}
       >
-        <Link href={`/dashboard/projects/${projectId}/expenses`} className={button("secondary")}>
-          Cancel
-        </Link>
+        <CancelLink href={`/dashboard/projects/${projectId}/expenses`} busy={busy} />
         <button type="submit" disabled={busy} className={button("primary")}>
           {busy ? "Please wait…" : editing ? "Save changes" : "Save expense"}
         </button>

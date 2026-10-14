@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { FileText, FileUp, Info, Upload, X } from "lucide-react";
@@ -23,6 +22,7 @@ import {
 } from "@/lib/documents";
 import { newId } from "@/lib/ids";
 import { createClient } from "@/lib/supabase/client";
+import { CancelLink, useSheetBusy } from "@/components/sheet-lock";
 import { button, inputClass } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
 
@@ -93,6 +93,7 @@ export function DocumentForm({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const busy = status !== null;
+  useSheetBusy(busy);
   const input = useRef<HTMLInputElement>(null);
 
   function pick(files: FileList | null) {
@@ -323,9 +324,7 @@ export function DocumentForm({
             : "pt-1"
         }`}
       >
-        <Link href={`/dashboard/projects/${projectId}/documents`} className={button("secondary")}>
-          Cancel
-        </Link>
+        <CancelLink href={`/dashboard/projects/${projectId}/documents`} busy={busy} />
         <button type="submit" disabled={busy} className={button("primary")}>
           {busy ? "Please wait…" : editing ? "Save changes" : "Add document"}
         </button>

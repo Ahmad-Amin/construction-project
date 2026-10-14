@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Info } from "lucide-react";
 import type { FormState } from "@/app/login/actions";
@@ -8,6 +7,7 @@ import { AmountInput } from "@/components/amount-input";
 import { DateField } from "@/components/date-field";
 import { PaymentReceiptField } from "@/components/payment-receipt-field";
 import { sideLabel, type PaymentSide } from "@/lib/payments";
+import { CancelLink, useSheetBusy } from "@/components/sheet-lock";
 import { button, inputClass } from "@/lib/ui";
 
 export type PaymentFormValues = {
@@ -54,6 +54,7 @@ export function PaymentForm({
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const [uploading, setUploading] = useState(false);
+  useSheetBusy(pending || uploading);
   // After a failed save, show what was just submitted rather than the original values.
   const v = (key: keyof PaymentFormValues) => state.values?.[key] ?? initial[key];
   const received = side === "contractor";
@@ -150,9 +151,7 @@ export function PaymentForm({
             : "pt-1"
         }`}
       >
-        <Link href={`/dashboard/projects/${projectId}/payments`} className={button("secondary")}>
-          Cancel
-        </Link>
+        <CancelLink href={`/dashboard/projects/${projectId}/payments`} busy={pending || uploading} />
         <button type="submit" disabled={pending || uploading} className={button("primary")}>
           {uploading ? "Uploading receipt…" : pending ? "Saving…" : mode === "create" ? "Record payment" : "Save changes"}
         </button>
