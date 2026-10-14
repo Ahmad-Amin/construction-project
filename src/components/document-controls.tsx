@@ -6,6 +6,7 @@ import { Spinner } from "@/components/spinner";
 import { useToast } from "@/components/toast";
 import {
   deleteDocument,
+  setDocumentSharedWithTeam,
   setDocumentVisibility,
   type ActionResult,
 } from "@/app/dashboard/projects/[id]/documents/actions";
@@ -63,6 +64,46 @@ export function DocumentVisibilityToggle({
         className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-opacity disabled:opacity-50 ${style}`}
       >
         {pending ? <Spinner className="size-3.5" /> : <Icon className="size-3.5" aria-hidden />} {label}
+      </button>
+      {error && (
+        <span role="alert" className="mt-1 block text-xs text-danger">
+          {error}
+        </span>
+      )}
+    </span>
+  );
+}
+
+// The homeowner's own document: whether their contractor can see it. Only the homeowner can flip it.
+export function ClientShareToggle({
+  projectId,
+  documentId,
+  shared,
+}: {
+  projectId: string;
+  documentId: string;
+  shared: boolean;
+}) {
+  const { pending, error, run } = useAction();
+  const Icon = shared ? Eye : EyeOff;
+  const style = shared ? "bg-success-soft text-success" : "bg-surface-2 text-muted";
+
+  return (
+    <span>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          run(
+            () => setDocumentSharedWithTeam(projectId, documentId, !shared),
+            shared ? "No longer shared with your contractor" : "Shared with your contractor",
+          )
+        }
+        title={shared ? "Tap to stop sharing with your contractor" : "Tap to share with your contractor"}
+        className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-opacity disabled:opacity-50 ${style}`}
+      >
+        {pending ? <Spinner className="size-3.5" /> : <Icon className="size-3.5" aria-hidden />}{" "}
+        {shared ? "Shared with contractor" : "Private, only you can see it"}
       </button>
       {error && (
         <span role="alert" className="mt-1 block text-xs text-danger">

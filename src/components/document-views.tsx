@@ -13,11 +13,11 @@ export async function NewDocumentView({ projectId: id, sheet }: ViewProps) {
   const project = await getProjectBasic(id);
   if (!project) notFound();
 
-  // Homeowners only read documents; the company's team adds them.
+  // The contractor's team and the project's homeowner can add documents. Row-level security stops anyone else.
   const viewer = await getViewer();
-  if (!viewer?.company || viewer.company.id !== project.company_id) {
-    redirect(`/dashboard/projects/${id}/documents`);
-  }
+  if (!viewer) redirect("/login");
+  const isTeam = !!viewer.company && viewer.company.id === project.company_id;
+  const isOwner = isTeam && viewer.company?.role === "owner";
 
   return (
     <FormFrame sheet={sheet}>
@@ -25,8 +25,8 @@ export async function NewDocumentView({ projectId: id, sheet }: ViewProps) {
       <DocumentForm
         sheet={sheet}
         projectId={id}
-        isOwner={viewer.company.role === "owner"}
-        initial={{ title: "", category: "other", clientVisible: viewer.company.role === "owner" }}
+        role={isTeam ? (isOwner ? "owner" : "staff") : "client"}
+        initial={{ title: "", category: "other", clientVisible: isOwner, teamVisible: true }}
       />
     </FormFrame>
   );
@@ -37,9 +37,8 @@ export async function EditDocumentView({ projectId: id, documentId, sheet }: Vie
   if (!project) notFound();
 
   const viewer = await getViewer();
-  if (!viewer?.company || viewer.company.id !== project.company_id) {
-    redirect(`/dashboard/projects/${id}/documents`);
-  }
+  if (!viewer) redirect("/login");
+  const isTeam = !!viewer.company && viewer.company.id === project.company_id;
 
   const supabase = await createClient();
   const { data } = await supabase
@@ -51,9 +50,17 @@ export async function EditDocumentView({ projectId: id, documentId, sheet }: Vie
   if (!data) notFound();
 
   const doc = toDocumentItem(data);
-  const isOwner = viewer.company.role === "owner";
-  // Staff can only edit what they added themselves.
-  if (!isOwner && doc.createdBy !== viewer.userId) redirect(`/dashboard/projects/${id}/documents`);
+  const isOwner = isTeam && viewer.company?.role === "owner";
+  const back = `/dashboard/projects/${id}/documents`;
+
+  if (!isTeam) {
+    // A homeowner edits only the documents they added themselves.
+    if (!doc.fromClient || doc.createdBy !== viewer.userId) redirect(back);
+  } else {
+    // The team can't edit what the homeowner added. Staff can only edit what they added themselves.
+    if (doc.fromClient) redirect(back);
+    if (!isOwner && doc.createdBy !== viewer.userId) redirect(back);
+  }
 
   return (
     <FormFrame sheet={sheet}>
@@ -62,9 +69,9 @@ export async function EditDocumentView({ projectId: id, documentId, sheet }: Vie
         sheet={sheet}
         projectId={id}
         documentId={documentId}
-        isOwner={isOwner}
+        role={isTeam ? (isOwner ? "owner" : "staff") : "client"}
         existingFile={{ name: doc.fileName || doc.title, size: doc.fileSize }}
-        initial={{ title: doc.title, category: doc.category, clientVisible: doc.clientVisible }}
+        initial={{ title: doc.title, category: doc.category, clientVisible: doc.clientVisible, teamVisible: doc.teamVisible }}
       />
     </FormFrame>
   );

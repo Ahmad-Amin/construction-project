@@ -27,7 +27,9 @@ export default function PrivacyPage() {
         <p>
           <strong className="text-foreground">The project records you add:</strong> milestones, site updates and
           photos, expenses and receipts, payment records and receipts, and documents such as contracts and
-          drawings. These can include prices and other business or personal information.
+          drawings. These can include prices and other business or personal information. A client can add
+          documents of their own (for example an ID or an approval letter). They are private to the client unless
+          the client chooses to share them with the contractor.
         </p>
         <p>
           <strong className="text-foreground">Messages we send you:</strong> a record of the notifications we

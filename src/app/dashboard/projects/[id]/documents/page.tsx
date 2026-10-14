@@ -21,7 +21,34 @@ export default async function DocumentsPage({ params }: { params: Promise<{ id: 
   const isOwner = isTeam && viewer?.company?.role === "owner";
 
   const documents = await fetchDocuments(await createClient(), id);
-  const shared = documents.filter((d) => d.clientVisible).length;
+  const viewerIsClient = !isTeam;
+  // The contractor's documents, grouped by type; the homeowner's own are kept apart.
+  const contractorDocs = documents.filter((d) => !d.fromClient);
+  const clientDocs = documents.filter((d) => d.fromClient);
+  const shared = contractorDocs.filter((d) => d.clientVisible).length;
+
+  const clientGroup = clientDocs.length > 0 && (
+    <section aria-label={viewerIsClient ? "Added by you" : "From your client"}>
+      <h3 className="mb-3 text-sm font-semibold text-muted">
+        {viewerIsClient ? "Added by you" : "From your client"}
+        <span className="ml-2 font-normal">{clientDocs.length}</span>
+      </h3>
+      <div className="space-y-3">
+        {clientDocs.map((d) => (
+          <DocumentCard
+            key={d.id}
+            document={d}
+            projectId={id}
+            timeZone={project.timeZone}
+            isTeam={isTeam}
+            isOwner={isOwner}
+            canEdit={false}
+            viewerIsClient={viewerIsClient}
+          />
+        ))}
+      </div>
+    </section>
+  );
 
   return (
     <div>
@@ -34,12 +61,10 @@ export default async function DocumentsPage({ params }: { params: Promise<{ id: 
             </span>
           )}
         </h2>
-        {isTeam && (
-          <Link href={`/dashboard/projects/${id}/documents/new`} className={button("primary", "sm")}>
-            <Plus className="size-4" aria-hidden /> Add document
-            <LinkPending className="size-4" />
-          </Link>
-        )}
+        <Link href={`/dashboard/projects/${id}/documents/new`} className={button("primary", "sm")}>
+          <Plus className="size-4" aria-hidden /> Add document
+          <LinkPending className="size-4" />
+        </Link>
       </div>
 
       {documents.length === 0 ? (
@@ -50,14 +75,15 @@ export default async function DocumentsPage({ params }: { params: Promise<{ id: 
           <h3 className="mt-4 font-semibold">No documents yet</h3>
           <p className="mt-1 max-w-xs text-sm text-muted">
             {isTeam
-              ? "Keep the contract, drawings and permits in one place. You choose which ones your client can open."
-              : "The contract, drawings and permits your contractor shares with you will appear here."}
+              ? "Keep the contract, drawings and permits in one place. You choose which ones your client can open. Your client can add documents for you too."
+              : "The contract, drawings and permits your contractor shares with you will appear here. You can add your own documents too, and choose whether your contractor sees them."}
           </p>
         </div>
       ) : (
         <div className="space-y-8">
+          {isTeam && clientGroup}
           {DOCUMENT_CATEGORIES.map((category) => {
-            const items = documents.filter((d) => d.category === category);
+            const items = contractorDocs.filter((d) => d.category === category);
             if (items.length === 0) return null;
             return (
               <section key={category} aria-label={documentCategoryHeading[category]}>
@@ -81,6 +107,7 @@ export default async function DocumentsPage({ params }: { params: Promise<{ id: 
               </section>
             );
           })}
+          {viewerIsClient && clientGroup}
         </div>
       )}
     </div>

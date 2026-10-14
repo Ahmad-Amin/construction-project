@@ -11,6 +11,7 @@ const icons: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   payment_recorded: { icon: Banknote, tone: "bg-primary-soft text-data-accent" },
   payment_due: { icon: CalendarClock, tone: "bg-primary-soft text-data-accent" },
   document_shared: { icon: FileText, tone: "bg-primary-soft text-data-accent" },
+  document_received: { icon: FileText, tone: "bg-primary-soft text-data-accent" },
   feedback_received: { icon: MessageSquarePlus, tone: "bg-primary-soft text-data-accent" },
   plan_requested: { icon: Sparkles, tone: "bg-primary-soft text-data-accent" },
   payment_confirmed: { icon: CheckCircle2, tone: "bg-success-soft text-success" },

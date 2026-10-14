@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Download, ExternalLink, FileSpreadsheet, FileText, Image as ImageIcon, Pencil, type LucideIcon } from "lucide-react";
-import { DeleteDocumentButton, DocumentVisibilityToggle } from "@/components/document-controls";
+import { ClientShareToggle, DeleteDocumentButton, DocumentVisibilityToggle } from "@/components/document-controls";
 import { LinkPending } from "@/components/link-pending";
 import {
   DOCUMENT_TYPES,
@@ -31,6 +31,7 @@ export function DocumentCard({
   isTeam,
   isOwner,
   canEdit,
+  viewerIsClient = false,
 }: {
   document: DocumentItem;
   projectId: string;
@@ -38,6 +39,8 @@ export function DocumentCard({
   isTeam: boolean;
   isOwner: boolean;
   canEdit: boolean;
+  // The homeowner is looking at this page.
+  viewerIsClient?: boolean;
 }) {
   const kind = DOCUMENT_TYPES[d.mime].kind;
   const Icon = kindIcon[kind];
@@ -66,7 +69,7 @@ export function DocumentCard({
             {d.createdByName && (
               <>
                 <span aria-hidden> · </span>
-                Added by {d.createdByName}
+                {d.fromClient && viewerIsClient ? "Added by you" : `Added by ${d.createdByName}`}
               </>
             )}
           </p>
@@ -84,7 +87,8 @@ export function DocumentCard({
         </div>
       </div>
 
-      {isTeam && (
+      {/* The contractor's own document, seen by the team: who it is shared with, edit, delete. */}
+      {isTeam && !d.fromClient && (
         <div className="flex flex-wrap items-center gap-2 border-t border-line bg-surface-2/40 px-4 py-2.5 sm:px-5">
           <DocumentVisibilityToggle projectId={projectId} documentId={d.id} visible={d.clientVisible} interactive={isOwner} />
           <span className="ml-auto flex items-center gap-1">
@@ -100,6 +104,25 @@ export function DocumentCard({
               </Link>
             )}
             {canEdit && <DeleteDocumentButton projectId={projectId} documentId={d.id} label={d.title} />}
+          </span>
+        </div>
+      )}
+
+      {/* The homeowner's own document: they choose whether the contractor sees it. */}
+      {viewerIsClient && d.fromClient && (
+        <div className="flex flex-wrap items-center gap-2 border-t border-line bg-surface-2/40 px-4 py-2.5 sm:px-5">
+          <ClientShareToggle projectId={projectId} documentId={d.id} shared={d.teamVisible} />
+          <span className="ml-auto flex items-center gap-1">
+            <Link
+              href={`/dashboard/projects/${projectId}/documents/${d.id}/edit`}
+              aria-label="Edit document"
+              title="Edit document"
+              className="relative flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface hover:text-foreground"
+            >
+              <Pencil className="size-4" aria-hidden />
+              <LinkPending className="absolute size-4 rounded-full bg-surface" />
+            </Link>
+            <DeleteDocumentButton projectId={projectId} documentId={d.id} label={d.title} />
           </span>
         </div>
       )}

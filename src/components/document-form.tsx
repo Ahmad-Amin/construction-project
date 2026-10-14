@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { FileText, FileUp, Info, Upload, X } from "lucide-react";
 import {
   createDocument,
+  updateClientDocument,
   updateDocument,
 } from "@/app/dashboard/projects/[id]/documents/actions";
 import { useToast } from "@/components/toast";
@@ -29,6 +30,8 @@ export type DocumentFormValues = {
   title: string;
   category: DocumentCategory;
   clientVisible: boolean;
+  // For a homeowner's document: whether the contractor's team can see it.
+  teamVisible: boolean;
 };
 
 // "Site_Plan-v3.pdf" -> "Site Plan v3"
@@ -57,7 +60,7 @@ export function DocumentForm({
   documentId,
   initial,
   existingFile,
-  isOwner,
+  role,
   sheet = false,
 }: {
   projectId: string;
@@ -65,13 +68,15 @@ export function DocumentForm({
   documentId?: string;
   initial: DocumentFormValues;
   existingFile?: { name: string; size: number };
-  isOwner: boolean;
+  // Who is filling the form in: it decides who the document can be shared with.
+  role: "owner" | "staff" | "client";
   // Shown in the slide-over panel: the buttons stay in view along the bottom while the form scrolls.
   sheet?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
   const editing = !!documentId;
+  const isClient = role === "client";
   // One id per draft. Retrying a failed save re-uses it, so it can never add the document twice.
   const draftId = useRef(documentId ?? newId());
   const uploadedPath = useRef<string | null>(null);
@@ -79,7 +84,8 @@ export function DocumentForm({
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState(initial.title);
   const [category, setCategory] = useState<DocumentCategory>(initial.category);
-  const [clientVisible, setClientVisible] = useState(initial.clientVisible);
+  // The checkbox: for the contractor's owner it shares with the client; for a homeowner, with the contractor.
+  const [shared, setShared] = useState(isClient ? initial.teamVisible : initial.clientVisible);
   // Whether the person has typed their own name / chosen their own type, so picking a file
   // never overwrites that.
   const [titleTouched, setTitleTouched] = useState(editing);
@@ -124,7 +130,9 @@ export function DocumentForm({
     try {
       if (editing) {
         setStatus("Saving…");
-        const result = await updateDocument(projectId, draftId.current, { title, category, clientVisible });
+        const result = isClient
+          ? await updateClientDocument(projectId, draftId.current, { title, category, teamVisible: shared })
+          : await updateDocument(projectId, draftId.current, { title, category, clientVisible: shared });
         if (result.error) return setError(result.error);
         toast.success("Document updated");
         router.push(`/dashboard/projects/${projectId}/documents`);
@@ -146,7 +154,8 @@ export function DocumentForm({
       const result = await createDocument(projectId, draftId.current, {
         title,
         category,
-        clientVisible,
+        clientVisible: isClient ? false : shared,
+        teamVisible: isClient ? shared : false,
         filePath: uploadedPath.current,
         fileName: file!.name,
         fileSize: file!.size,
@@ -268,19 +277,22 @@ export function DocumentForm({
         </label>
 
         <div className="border-t border-line pt-4">
-          {isOwner ? (
+          {isClient || role === "owner" ? (
             <label className="flex items-start gap-3">
               <input
                 type="checkbox"
-                checked={clientVisible}
-                onChange={(e) => setClientVisible(e.target.checked)}
+                checked={shared}
+                onChange={(e) => setShared(e.target.checked)}
                 className="mt-0.5 size-4 accent-primary"
               />
               <span className="text-sm">
-                <span className="font-medium">Share this document with the client</span>
+                <span className="font-medium">
+                  {isClient ? "Share this document with the contractor" : "Share this document with the client"}
+                </span>
                 <span className="block text-xs text-muted">
-                  They are told, and can open or download it from their Documents tab. Leave it off for anything internal,
-                  like supplier quotes.
+                  {isClient
+                    ? "Your contractor is told, and can open or download it. Leave it off to keep it private: only you can see it."
+                    : "They are told, and can open or download it from their Documents tab. Leave it off for anything internal, like supplier quotes."}
                 </span>
               </span>
             </label>

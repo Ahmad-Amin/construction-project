@@ -119,8 +119,14 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
       .from("project_documents")
       .select("id", { count: "exact", head: true })
       .eq("project_id", id)
+      .eq("from_client", false)
       .eq("client_visible", true),
-    supabase.from("project_documents").select("id", { count: "exact", head: true }).eq("project_id", id),
+    // The contractor's own documents only: what the homeowner adds isn't the team's to share or hide.
+    supabase
+      .from("project_documents")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", id)
+      .eq("from_client", false),
   ]);
   // A homeowner who hasn't switched WhatsApp updates on, and hasn't said "not now", is offered them
   // once their contractor has saved a phone number for them.

@@ -40,6 +40,9 @@ export const DOCUMENT_TYPES = {
 export type DocumentMime = keyof typeof DOCUMENT_TYPES;
 export type DocumentKind = (typeof DOCUMENT_TYPES)[DocumentMime]["kind"];
 
+// A homeowner can add this many documents to one project (enforced by the database too).
+export const MAX_CLIENT_DOCUMENTS = 25;
+
 export const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024;
 
 // For the file picker. Extensions as well as types, because some phones label Office files oddly.
@@ -79,6 +82,9 @@ export type DocumentItem = {
   fileSize: number;
   mime: DocumentMime;
   clientVisible: boolean;
+  // Added by the homeowner rather than the contractor's team, and whether the team can see it.
+  fromClient: boolean;
+  teamVisible: boolean;
   createdBy: string;
   createdByName: string;
   createdAt: string;
@@ -92,13 +98,15 @@ type Row = {
   file_size: number;
   mime_type: string;
   client_visible: boolean;
+  from_client: boolean;
+  team_visible: boolean;
   created_by: string;
   created_by_name: string;
   created_at: string;
 };
 
 export const DOCUMENT_COLUMNS =
-  "id, title, category, file_name, file_size, mime_type, client_visible, created_by, created_by_name, created_at";
+  "id, title, category, file_name, file_size, mime_type, client_visible, from_client, team_visible, created_by, created_by_name, created_at";
 
 export function toDocumentItem(r: Row): DocumentItem {
   return {
@@ -110,6 +118,8 @@ export function toDocumentItem(r: Row): DocumentItem {
     // The database only ever stores a supported type; fall back to PDF rather than crash.
     mime: isDocumentMime(r.mime_type) ? r.mime_type : "application/pdf",
     clientVisible: r.client_visible,
+    fromClient: r.from_client,
+    teamVisible: r.team_visible,
     createdBy: r.created_by,
     createdByName: r.created_by_name,
     createdAt: r.created_at,
@@ -118,8 +128,8 @@ export function toDocumentItem(r: Row): DocumentItem {
 
 const LIMIT = 300;
 
-// Row-level security decides what this person gets back: the team sees everything, a homeowner
-// only what was shared with them.
+// Row-level security decides what this person gets back: the team sees its own documents plus the ones
+// the homeowner shared with it; a homeowner sees what the contractor shared with them plus their own.
 export async function fetchDocuments(supabase: SupabaseClient, projectId: string): Promise<DocumentItem[]> {
   const { data } = await supabase
     .from("project_documents")
