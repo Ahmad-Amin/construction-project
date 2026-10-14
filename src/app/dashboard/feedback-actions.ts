@@ -2,9 +2,11 @@
 
 import { escapeHtml, sendEmail } from "@/lib/email";
 import { adminInbox } from "@/lib/inbox";
+import { notifyPlatformAdmins } from "@/lib/admin-notify";
 import { getOrigin } from "@/lib/origin";
 import { PRODUCT_NAME } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/viewer";
 
 export type FeedbackResult = { ok: boolean; message: string };
 const CATEGORIES = ["problem", "idea", "question"] as const;
@@ -62,6 +64,17 @@ export async function sendFeedback(category: string, message: string, page: stri
     });
     if (!result.ok) console.error("[feedback] could not email it (it is saved):", result.error);
   }
+
+  // The bell, for the people running the service. After everything above, and never in the way of it.
+  const viewer = await getViewer();
+  const who2 = [r.name, r.email].filter(Boolean).join(" · ") || "Someone";
+  await notifyPlatformAdmins({
+    kind: "feedback_received",
+    title: `Feedback (${LABEL[category as (typeof CATEGORIES)[number]].toLowerCase()}) from ${who2}`,
+    body: text.replace(/\s+/g, " ").slice(0, 200),
+    link: "/dashboard/admin/feedback",
+    actorId: viewer?.userId ?? null,
+  });
 
   return { ok: true, message: "Thank you. We read every message." };
 }

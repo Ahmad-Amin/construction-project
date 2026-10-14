@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, Banknote, Camera, CalendarClock, CalendarDays, CheckCircle2, FileText, Flag, PartyPopper, UserPlus, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Banknote, Camera, CalendarClock, CalendarDays, CheckCircle2, FileText, Flag, MessageSquarePlus, PartyPopper, Sparkles, UserPlus, type LucideIcon } from "lucide-react";
 import { timeAgo } from "@/lib/format";
 import type { NotificationItem, NotificationKind } from "@/lib/notifications";
 
@@ -7,6 +7,8 @@ const icons: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   payment_recorded: { icon: Banknote, tone: "bg-primary-soft text-data-accent" },
   payment_due: { icon: CalendarClock, tone: "bg-primary-soft text-data-accent" },
   document_shared: { icon: FileText, tone: "bg-primary-soft text-data-accent" },
+  feedback_received: { icon: MessageSquarePlus, tone: "bg-primary-soft text-data-accent" },
+  plan_requested: { icon: Sparkles, tone: "bg-primary-soft text-data-accent" },
   payment_confirmed: { icon: CheckCircle2, tone: "bg-success-soft text-success" },
   payment_disputed: { icon: AlertTriangle, tone: "bg-danger-soft text-danger" },
   update_posted: { icon: Camera, tone: "bg-primary-soft text-data-accent" },

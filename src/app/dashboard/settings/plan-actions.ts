@@ -1,6 +1,7 @@
 "use server";
 
 import { escapeHtml, sendEmail } from "@/lib/email";
+import { notifyPlatformAdmins } from "@/lib/admin-notify";
 import { adminInbox } from "@/lib/inbox";
 import { getOrigin } from "@/lib/origin";
 import { PLANS, isPlanId } from "@/lib/plans";
@@ -102,6 +103,15 @@ export async function requestPlanUpgrade(plan: string, yearly: boolean): Promise
     </table>
   </td></tr></table></body></html>`;
   await sendEmail({ to: viewer.email, subject: `We got your ${info.name} plan request`, text: confirmText.join("\n"), html: confirmHtml, replyTo: to });
+
+  // The bell, for the people running the service. After everything above, and never in the way of it.
+  await notifyPlatformAdmins({
+    kind: "plan_requested",
+    title: `${viewer.company.name} wants ${info.name} (${billing})`,
+    body: `${ownerName} asked for the ${info.name} plan, ${price}.`,
+    link: "/dashboard/admin",
+    actorId: viewer.userId,
+  });
 
   return { ok: true, message: "Request sent. We'll write to you today with the payment details." };
 }

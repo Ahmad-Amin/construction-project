@@ -4,7 +4,7 @@ import { getViewer } from "@/lib/viewer";
 
 // The people allowed to use the plans admin page: PLATFORM_ADMIN_EMAILS in the server's settings, a comma
 // separated list. Not a NEXT_PUBLIC_ variable, so it is never sent to a browser. Empty means nobody.
-function allowList(): string[] {
+export function platformAdminEmails(): string[] {
   return (process.env.PLATFORM_ADMIN_EMAILS ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
@@ -16,7 +16,7 @@ function allowList(): string[] {
 export async function platformAdminEmail(): Promise<string | null> {
   const viewer = await getViewer();
   if (!viewer?.email) return null;
-  if (!allowList().includes(viewer.email.toLowerCase())) return null;
+  if (!platformAdminEmails().includes(viewer.email.toLowerCase())) return null;
 
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
