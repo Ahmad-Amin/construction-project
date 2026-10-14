@@ -11,7 +11,8 @@ import { EmailToggle } from "@/components/email-toggle";
 import { LogoUploader } from "@/components/logo-uploader";
 import { PasswordForm } from "@/components/password-form";
 import { ROLE_LABEL, roleOf } from "@/components/role-tag";
-import { SettingsSection } from "@/components/settings-section";
+import { SettingsNav, type SettingsNavGroup } from "@/components/settings-nav";
+import { SettingsRows, SettingsSection } from "@/components/settings-section";
 import { SubmitButton } from "@/components/submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WhatsAppToggle } from "@/components/whatsapp-toggle";
@@ -87,8 +88,33 @@ export default async function SettingsPage({
     ? new Date(profile.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
     : null;
 
+  const navGroups: SettingsNavGroup[] = [
+    {
+      label: "Account",
+      items: [
+        { id: "profile", label: "Profile" },
+        { id: "notifications", label: "Notifications" },
+        { id: "appearance", label: "Appearance" },
+        { id: "security", label: "Security" },
+      ],
+    },
+    ...(isOwner && viewer.company
+      ? [
+          {
+            label: "Company",
+            items: [
+              { id: "company", label: "Company" },
+              { id: "client-updates", label: "Client updates" },
+              { id: "plan", label: "Plan" },
+              { id: "data", label: "Your data" },
+            ],
+          },
+        ]
+      : []),
+  ];
+
   return (
-    <main className="w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <main className="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <Link
         href="/dashboard"
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
@@ -121,8 +147,12 @@ export default async function SettingsPage({
         </p>
       )}
 
-      <div className="mt-8 space-y-10">
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[14rem_minmax(0,1fr)] xl:gap-10">
+        <SettingsNav groups={navGroups} />
+
+        <div className="min-w-0 space-y-6">
         <SettingsSection
+          id="profile"
           icon={UserRound}
           title="Profile"
           description="Your name appears next to the updates, expenses and payments you add."
@@ -130,6 +160,8 @@ export default async function SettingsPage({
           <AuthForm
             action={updateProfile}
             submitLabel="Save"
+            columns={2}
+            autoWidthButton
             fields={[
               { name: "name", label: "Your name", defaultValue: name, autoComplete: "name" },
               {
@@ -145,11 +177,12 @@ export default async function SettingsPage({
         </SettingsSection>
 
         <SettingsSection
+          id="notifications"
           icon={Bell}
           title="Notifications"
           description="Choose whether you also get an email when something needs your attention."
         >
-          <div className="space-y-5">
+          <SettingsRows>
             <EmailToggle initial={profile?.email_notifications ?? true} />
             {showWhatsApp && (
               <WhatsAppToggle
@@ -158,20 +191,24 @@ export default async function SettingsPage({
                 available={whatsappAvailable}
               />
             )}
-          </div>
+          </SettingsRows>
         </SettingsSection>
 
         {isOwner && (
           <SettingsSection
+            id="client-updates"
             icon={CalendarDays}
             title="Client updates"
             description="Keep your clients informed without lifting a finger. Off until you turn it on."
           >
-            <CompanyWeeklySummaryToggle initial={companyRow?.weekly_summary ?? false} />
+            <SettingsRows>
+              <CompanyWeeklySummaryToggle initial={companyRow?.weekly_summary ?? false} />
+            </SettingsRows>
           </SettingsSection>
         )}
 
         <SettingsSection
+          id="appearance"
           icon={Palette}
           title="Appearance"
           description="Choose how the app looks on this device. System follows your phone or laptop."
@@ -180,6 +217,7 @@ export default async function SettingsPage({
         </SettingsSection>
 
         <SettingsSection
+          id="security"
           icon={ShieldCheck}
           title="Security"
           description="Keep your account safe with a password only you know."
@@ -204,14 +242,17 @@ export default async function SettingsPage({
 
         {isOwner && viewer.company && (
           <SettingsSection
+            id="company"
             icon={Building2}
             title="Company"
             description="Your company name and logo appear on every project page your clients open."
           >
-            <div className="space-y-6">
+            <div className="space-y-8">
               <AuthForm
                 action={updateCompany}
                 submitLabel="Save"
+                columns={3}
+                autoWidthButton
                 fields={[
                   {
                     name: "name",
@@ -236,22 +277,24 @@ export default async function SettingsPage({
                 ]}
               />
 
-              <div className="border-t border-line pt-6">
-                <p className="mb-3 text-sm font-medium">Logo</p>
-                <LogoUploader
-                  companyId={viewer.company.id}
-                  companyName={viewer.company.name}
-                  logoUrl={viewer.company.logoUrl}
-                />
-              </div>
+              <div className="grid gap-6 border-t border-line pt-8 lg:grid-cols-2">
+                <div>
+                  <p className="mb-3 text-sm font-medium">Logo</p>
+                  <LogoUploader
+                    companyId={viewer.company.id}
+                    companyName={viewer.company.name}
+                    logoUrl={viewer.company.logoUrl}
+                  />
+                </div>
 
-              <div className="rounded-xl border border-line bg-surface-2/50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted">How clients see you</p>
-                <div className="mt-3 flex items-center gap-3">
-                  <CompanyBadge name={viewer.company.name} logoUrl={viewer.company.logoUrl} size="md" />
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold">{viewer.company.name}</p>
-                    <p className="text-xs text-muted">on every project page you share</p>
+                <div className="rounded-2xl border border-line bg-surface-2/50 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">How clients see you</p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <CompanyBadge name={viewer.company.name} logoUrl={viewer.company.logoUrl} size="md" />
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{viewer.company.name}</p>
+                      <p className="text-xs text-muted">on every project page you share</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -278,6 +321,7 @@ export default async function SettingsPage({
 
         {isOwner && (
           <SettingsSection
+            id="data"
             icon={Database}
             title="Your data"
             description="Your records belong to you. Download them any time, and leave whenever you like."
@@ -285,6 +329,7 @@ export default async function SettingsPage({
             <DataExport />
           </SettingsSection>
         )}
+        </div>
       </div>
     </main>
   );

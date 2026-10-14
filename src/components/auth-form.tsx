@@ -59,16 +59,23 @@ export function AuthForm({
   fields,
   submitLabel,
   variant = "primary",
+  columns = 1,
+  autoWidthButton = false,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   fields: Field[];
   submitLabel: string;
   variant?: "primary" | "secondary";
+  // Lay the fields out side by side (on wider screens). Used by the settings page.
+  columns?: 1 | 2 | 3;
+  // A button as wide as its label instead of the whole form (settings, where the form is wide).
+  autoWidthButton?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
 
   return (
     <form action={formAction} className="space-y-4">
+      <div className={columns === 1 ? "space-y-4" : columns === 2 ? "grid gap-4 sm:grid-cols-2" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"}>
       {fields.map((f) => (
         <label key={f.name} className="block">
           <span className="mb-1.5 flex items-center justify-between gap-3 text-sm font-medium">
@@ -112,6 +119,7 @@ export function AuthForm({
           {f.hint && <span className="mt-1.5 block text-xs text-muted">{f.hint}</span>}
         </label>
       ))}
+      </div>
 
       {state.error && (
         <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
@@ -127,7 +135,7 @@ export function AuthForm({
       <button
         type="submit"
         disabled={pending}
-        className={`${button(variant)} w-full`}
+        className={`${button(variant)} ${autoWidthButton ? "w-full sm:w-auto sm:min-w-32" : "w-full"}`}
       >
         {pending ? "Please wait…" : submitLabel}
       </button>

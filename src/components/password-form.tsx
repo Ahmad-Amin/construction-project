@@ -44,6 +44,7 @@ function PasswordFields({
 
   return (
     <form action={formAction} className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2">
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">New password</span>
         <span className="relative block">
@@ -79,6 +80,7 @@ function PasswordFields({
           className={inputClass}
         />
       </label>
+      </div>
 
       <ul className="space-y-1">
         <Rule met={longEnough}>At least 8 characters</Rule>

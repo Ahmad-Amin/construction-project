@@ -13,20 +13,20 @@ const files = [
 export function DataExport() {
   return (
     <div>
-      <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line">
+      <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {files.map(({ kind, label, note, icon: Icon }) => (
           <li key={kind}>
             <a
               href={`/dashboard/export/${kind}`}
               download
-              className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2"
+              className="group flex h-full items-center gap-3 rounded-xl border border-line px-4 py-3 transition-colors hover:bg-surface-2"
             >
               <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-data-accent">
                 <Icon className="size-[18px]" aria-hidden />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-medium">{label}</span>
-                <span className="block truncate text-xs text-muted">{note}</span>
+                <span className="block text-xs text-muted">{note}</span>
               </span>
               <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted group-hover:text-foreground">
                 <Download className="size-4" aria-hidden /> CSV

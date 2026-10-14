@@ -24,7 +24,7 @@ export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, readTheme, () => "system" as Theme);
 
   return (
-    <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-2">
+    <div role="radiogroup" aria-label="Theme" className="grid max-w-lg grid-cols-3 gap-2">
       {options.map(({ value, label, icon: Icon }) => {
         const active = theme === value;
         return (
