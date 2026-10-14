@@ -337,3 +337,38 @@ body {
 :root[data-theme="dark"] .brand-dark {
   display: block;
 }
+
+/* The loading bar along the top while a link opens (route-progress.tsx). It creeps towards the right
+   while the next page loads, then runs to the end and fades out. */
+@keyframes route-progress-grow {
+  from { width: 0; }
+  15% { width: 35%; }
+  50% { width: 68%; }
+  to { width: 92%; }
+}
+.route-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 200;
+  height: 3px;
+  background: var(--primary);
+  box-shadow: 0 0 10px var(--primary);
+  pointer-events: none;
+  border-radius: 0 2px 2px 0;
+}
+.route-progress-bar[data-state="loading"] {
+  width: 0;
+  animation: route-progress-grow 12s cubic-bezier(0.1, 0.6, 0.2, 1) forwards;
+}
+.route-progress-bar[data-state="done"] {
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.35s ease-out 0.15s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-progress-bar[data-state="loading"] {
+    animation: none;
+    width: 60%;
+  }
+}

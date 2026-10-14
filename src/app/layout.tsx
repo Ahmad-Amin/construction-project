@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { RouteProgress } from "@/components/route-progress";
 import { PRODUCT_NAME } from "@/lib/site";
 import "./globals.css";
 
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           to <body> before React loads. This only silences that attribute mismatch on this one
           element; real mismatches anywhere inside the page are still reported. */}
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <RouteProgress />
         {children}
         {/* Vercel Web Analytics: page views only, no cookies. It does nothing until you turn Analytics on for the project in Vercel. */}
         <Analytics />
