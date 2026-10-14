@@ -61,6 +61,11 @@ export function DocumentCard({
             <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium">
               {documentCategoryLabel[d.category]}
             </span>
+            {d.fromClient && (
+              <span className="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-medium text-data-accent">
+                {viewerIsClient ? "Yours" : "From client"}
+              </span>
+            )}
           </div>
           <p className="mt-0.5 break-words text-sm text-muted">
             {kindLabel[kind]} · {formatFileSize(d.fileSize)}
