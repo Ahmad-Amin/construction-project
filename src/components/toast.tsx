@@ -4,12 +4,22 @@ import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AlertTriangle, Bell, CheckCircle2, X } from "lucide-react";
+import { markNotificationRead } from "@/app/dashboard/notifications/actions";
 import { NotificationIcon } from "@/components/notification-row";
 import { FLASH_COOKIE } from "@/lib/flash-name";
 import type { NotificationItem } from "@/lib/notifications";
 
 type Tone = "success" | "error" | "info";
-type ToastInput = { title: string; body?: string; href?: string; tone?: Tone; kind?: NotificationItem["kind"]; seconds?: number };
+type ToastInput = {
+  title: string;
+  body?: string;
+  href?: string;
+  tone?: Tone;
+  kind?: NotificationItem["kind"];
+  seconds?: number;
+  // When the toast announces a notification: tapping it opens it, so it is marked as read too.
+  notificationId?: string;
+};
 type ToastItem = ToastInput & { id: number };
 
 type Api = {
@@ -112,7 +122,13 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
       className="animate-rise pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border border-line bg-surface p-3.5 shadow-lg shadow-black/10"
     >
       {toast.href ? (
-        <Link href={toast.href} onClick={onDismiss} className="-m-1 flex min-w-0 flex-1 items-start gap-3 rounded-xl p-1 hover:bg-surface-2">
+        <Link
+          href={toast.href}
+          onClick={() => {
+            onDismiss();
+            if (toast.notificationId) void markNotificationRead(toast.notificationId);
+          }}
+          className="-m-1 flex min-w-0 flex-1 items-start gap-3 rounded-xl p-1 hover:bg-surface-2">
           {icon}
           {text}
         </Link>
@@ -180,7 +196,7 @@ function NotificationWatcher() {
         }
         since = data.latest;
         for (const n of data.items) {
-          toast.show({ title: n.title, body: n.body, href: n.link, kind: n.kind, tone: "info" });
+          toast.show({ title: n.title, body: n.body, href: n.link, kind: n.kind, tone: "info", notificationId: n.id });
         }
         if (data.items.length > 0) router.refresh();
       } catch {

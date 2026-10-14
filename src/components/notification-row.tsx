@@ -1,5 +1,9 @@
+"use client";
+
+import { useTransition } from "react";
 import Link from "next/link";
 import { AlertTriangle, Banknote, Camera, CalendarClock, CalendarDays, CheckCircle2, FileText, Flag, MessageSquarePlus, PartyPopper, Sparkles, UserPlus, type LucideIcon } from "lucide-react";
+import { markNotificationRead } from "@/app/dashboard/notifications/actions";
 import { timeAgo } from "@/lib/format";
 import type { NotificationItem, NotificationKind } from "@/lib/notifications";
 
@@ -28,14 +32,22 @@ export function NotificationIcon({ kind, className = "mt-0.5 size-9 rounded-lg" 
   );
 }
 
-// One notification, used in the bell's dropdown and on the Notifications page.
+// One notification, used in the bell's dropdown and on the Notifications page. Opening it marks it as
+// read: the bell passes its own `onOpen` (which also updates its list on the spot); anywhere else the
+// row does it itself.
 export function NotificationRow({ item, onOpen }: { item: NotificationItem; onOpen?: () => void }) {
   const { icon: Icon, tone } = icons[item.kind];
+  const [, startTransition] = useTransition();
+
+  function open() {
+    if (onOpen) return onOpen();
+    if (!item.read) startTransition(() => markNotificationRead(item.id));
+  }
 
   return (
     <Link
       href={item.link}
-      onClick={onOpen}
+      onClick={open}
       className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-surface-2"
     >
       <span className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg ${tone}`}>
