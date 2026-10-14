@@ -227,7 +227,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
       </div>
 
       {/* Hero: the latest site photo, with one number that matters most. */}
-      <section className="animate-rise relative isolate overflow-hidden rounded-3xl bg-stone-900 text-white">
+      <section data-tour="project-hero" className="animate-rise relative isolate overflow-hidden rounded-3xl bg-stone-900 text-white">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element -- signed, expiring URL
           <img src={cover} alt="" className="absolute inset-0 -z-20 size-full object-cover" />
@@ -455,7 +455,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
               <CheckCircle2 className="size-4" aria-hidden /> {client.name} has joined and can see this project.
             </p>
           ) : inviteLink ? (
-            <div className="mt-5 border-t border-line pt-5">
+            <div data-tour="invite" className="mt-5 border-t border-line pt-5">
               <h3 className="text-sm font-semibold">Invite {client.name}</h3>
               <p className="mt-1 mb-3 text-sm text-muted">
                 Share this private link. They set a password and see only this project.

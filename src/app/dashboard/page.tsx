@@ -134,7 +134,7 @@ export default async function DashboardPage({
     : "Here's where your projects stand.";
 
   const newProjectButton = isOwner ? (
-    <Link href="/dashboard/projects/new" className={button("primary")}>
+    <Link href="/dashboard/projects/new" data-tour="new-project" className={button("primary")}>
       <Plus className="size-4" aria-hidden /> New project
     </Link>
   ) : undefined;

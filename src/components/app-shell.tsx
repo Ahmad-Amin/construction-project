@@ -31,6 +31,7 @@ import { CompanyBadge } from "@/components/company-badge";
 import { NotificationBell } from "@/components/notification-bell";
 import { ThemeQuickToggle } from "@/components/theme-quick-toggle";
 import { FeedbackButton } from "@/components/feedback-button";
+import { TourButton, TourHost } from "@/components/tour";
 import { Logo } from "@/components/logo";
 import { PlanBadge } from "@/components/plan-badge";
 import type { PlanId } from "@/lib/plans";
@@ -57,6 +58,8 @@ export type ShellProps = {
   unread: number;
   // Whether the person folded the desktop sidebar away (remembered in a cookie).
   initialCollapsed: boolean;
+  // The guided tours this person has already been shown (kept on their account).
+  toursSeen: string[];
   children: React.ReactNode;
 };
 
@@ -227,7 +230,7 @@ function SidebarContent({
             )}
           </Link>
           {isCurrent && (
-            <ul className="mt-0.5 space-y-0.5 border-b border-line pb-1" aria-label={`${p.name} sections`}>
+            <ul data-tour="project-sections" className="mt-0.5 space-y-0.5 border-b border-line pb-1" aria-label={`${p.name} sections`}>
               {renderSections(p)}
             </ul>
           )}
@@ -263,7 +266,7 @@ function SidebarContent({
         </Link>
 
         {isCurrent && (
-          <ul className="ml-[1.1rem] mt-0.5 space-y-0.5 border-l border-line pl-2.5" aria-label={`${p.name} sections`}>
+          <ul data-tour="project-sections" className="ml-[1.1rem] mt-0.5 space-y-0.5 border-l border-line pl-2.5" aria-label={`${p.name} sections`}>
             {renderSections(p)}
           </ul>
         )}
@@ -294,14 +297,16 @@ function SidebarContent({
         ))}
 
       {plan && (
-        <PlanBadge
-          plan={plan.id}
-          activeProjects={plan.activeProjects}
-          lapsed={plan.lapsed}
-          isOwner={isOwner}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-        />
+        <div data-tour="plan">
+          <PlanBadge
+            plan={plan.id}
+            activeProjects={plan.activeProjects}
+            lapsed={plan.lapsed}
+            isOwner={isOwner}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
+        </div>
       )}
 
       <nav className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-3 ${collapsed ? "px-2" : "px-3"}`} aria-label="Main">
@@ -311,6 +316,7 @@ function SidebarContent({
             onClick={onNavigate}
             title={collapsed ? "New project" : undefined}
             aria-label="New project"
+            data-tour="new-project"
             className={`${button("primary", "sm")} mb-4 w-full ${collapsed ? "px-0" : ""}`}
           >
             <Plus className="size-4" aria-hidden />
@@ -369,15 +375,19 @@ function SidebarContent({
       </nav>
 
       <div className={`border-t border-line pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 ${collapsed ? "px-2" : "px-3"}`}>
-        <FeedbackButton collapsed={collapsed} onNavigate={onNavigate} />
+        <div data-tour="feedback">
+          <FeedbackButton collapsed={collapsed} onNavigate={onNavigate} />
+        </div>
         {isPlatformAdmin && (
           <Nav href="/dashboard/admin" icon={ShieldCheck} active={pathname.startsWith("/dashboard/admin")} collapsed={collapsed} onNavigate={onNavigate}>
             Plans admin
           </Nav>
         )}
-        <Nav href="/dashboard/settings" icon={Settings} active={pathname.startsWith("/dashboard/settings")} collapsed={collapsed} onNavigate={onNavigate}>
-          Settings
-        </Nav>
+        <div data-tour="settings">
+          <Nav href="/dashboard/settings" icon={Settings} active={pathname.startsWith("/dashboard/settings")} collapsed={collapsed} onNavigate={onNavigate}>
+            Settings
+          </Nav>
+        </div>
         <div className={collapsed ? "mt-2 flex flex-col items-center gap-1 py-1" : "mt-2 flex items-center gap-3 rounded-xl px-3 py-2"}>
           <span title={collapsed ? user.name || user.email : undefined}>
             <Avatar name={user.name || user.email} size="sm" />
@@ -541,7 +551,9 @@ export function AppShell(props: ShellProps) {
                 <RoleTag role={props.user.role} iconOnly />
               </span>
               <ThemeQuickToggle />
-              <NotificationBell unread={props.unread} pathname={pathname} />
+              <span data-tour="bell" className="inline-flex">
+                <NotificationBell unread={props.unread} pathname={pathname} />
+              </span>
             </div>
           </header>
 
@@ -569,8 +581,11 @@ export function AppShell(props: ShellProps) {
                 </Link>
               )}
               <div className="flex items-center gap-1">
+                <TourButton pathname={pathname} />
                 <ThemeQuickToggle />
-                <NotificationBell unread={props.unread} pathname={pathname} />
+                <span data-tour="bell" className="inline-flex">
+                  <NotificationBell unread={props.unread} pathname={pathname} />
+                </span>
               </div>
             </div>
           </div>
@@ -578,6 +593,8 @@ export function AppShell(props: ShellProps) {
           {props.children}
         </div>
       </div>
+
+      <TourHost pathname={pathname} role={props.user.role} seen={props.toursSeen} />
 
       {/* Phone drawer */}
       {open && (

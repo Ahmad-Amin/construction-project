@@ -37,7 +37,7 @@ export function ClientVisibilityCard(p: Props) {
   const hidden = p.expensesTotal - p.expensesShared;
 
   return (
-    <section className="animate-rise rounded-2xl border border-line bg-surface p-5 sm:p-6">
+    <section data-tour="client-sees" className="animate-rise rounded-2xl border border-line bg-surface p-5 sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 font-semibold">
           <Eye className="size-4 text-data-accent" aria-hidden /> What your client sees

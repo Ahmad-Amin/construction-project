@@ -30,7 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Row-level security decides which projects come back: a company sees its own,
   // a homeowner only theirs. Payments waiting on this person show as badges.
   const supabase = await createClient();
-  const [projectsRes, pendingRes, unread, activeRes] = await Promise.all([
+  const [projectsRes, pendingRes, unread, activeRes, toursRes] = await Promise.all([
     supabase
       .from("projects")
       .select("id, name, status, archived_at")
@@ -44,7 +44,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     viewer.company
       ? supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "active").is("archived_at", null)
       : Promise.resolve({ count: 0 }),
+    supabase.from("profiles").select("tours_seen").eq("id", viewer.userId).maybeSingle(),
   ]);
+  // The guided tours this person has already been shown. If that can't be read, assume all of them:
+  // better to skip a tour than to show it again on every page.
+  const toursSeen: string[] = toursRes.error ? ["dashboard", "project"] : ((toursRes.data?.tours_seen as string[] | null) ?? []);
 
   const awaiting = new Map<string, number>();
   for (const row of (pendingRes.data ?? []) as { project_id: string }[]) {
@@ -79,6 +83,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         isPlatformAdmin={isPlatformAdmin}
         unread={unread}
         initialCollapsed={collapsed}
+        toursSeen={toursSeen}
       >
         {children}
       </AppShell>
