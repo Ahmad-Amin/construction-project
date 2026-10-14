@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Check, X } from "lucide-react";
+import { RequestUpgradeButton } from "@/components/request-upgrade-button";
 import { PLAN_IDS, PLANS, type PlanId } from "@/lib/plans";
 import { button } from "@/lib/ui";
 
@@ -35,7 +36,7 @@ function Cell({ value }: { value: string | boolean }) {
   return <span className="text-sm font-medium">{value}</span>;
 }
 
-export type PlanCta = { href: string; label: string; external?: boolean } | null;
+export type PlanCta = { kind: "link"; href: string; label: string } | { kind: "request"; label: string } | null;
 // Where each plan's button goes, for monthly and for yearly billing. Plain data, not a function: it is
 // handed from a server page to this client component.
 export type PlanCtas = { monthly: Record<PlanId, PlanCta>; yearly: Record<PlanId, PlanCta> };
@@ -109,14 +110,13 @@ export function PlanCards({
                       : ""}
               </p>
 
-              {cta && !isCurrent && (
-                <Link
-                  href={cta.href}
-                  {...(cta.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                  className={`${button(featured ? "primary" : "secondary")} mt-5 w-full`}
-                >
+              {cta && !isCurrent && cta.kind === "link" && (
+                <Link href={cta.href} className={`${button(featured ? "primary" : "secondary")} mt-5 w-full`}>
                   {cta.label}
                 </Link>
+              )}
+              {cta && !isCurrent && cta.kind === "request" && id !== "free" && (
+                <RequestUpgradeButton plan={id} yearly={yearly} label={cta.label} featured={featured} />
               )}
               {isCurrent && <p className="mt-5 rounded-lg bg-surface-2 py-2.5 text-center text-sm font-semibold">You are on this plan</p>}
 

@@ -22,6 +22,7 @@ import {
   Plus,
   Receipt,
   Settings,
+  ShieldCheck,
   X,
 } from "lucide-react";
 import { signOut } from "@/app/login/actions";
@@ -49,6 +50,8 @@ export type ShellProps = {
   plan: { id: PlanId; activeProjects: number; lapsed: boolean } | null;
   projects: ShellProject[];
   isOwner: boolean;
+  // Someone on the allow-list for the plans admin page (PLATFORM_ADMIN_EMAILS): they get a link to it.
+  isPlatformAdmin?: boolean;
   // Notifications the person hasn't opened yet.
   unread: number;
   // Whether the person folded the desktop sidebar away (remembered in a cookie).
@@ -139,7 +142,7 @@ function SidebarContent({
   // Icons only. Used by the desktop sidebar when the person has folded it away.
   collapsed?: boolean;
 }) {
-  const { user, company, plan, projects, isOwner } = props;
+  const { user, company, plan, projects, isOwner, isPlatformAdmin } = props;
   const [showArchived, setShowArchived] = useState(false);
   const match = pathname.match(/^\/dashboard\/projects\/([0-9a-f-]{36})/);
   const currentId = match?.[1] ?? null;
@@ -365,6 +368,11 @@ function SidebarContent({
       </nav>
 
       <div className={`border-t border-line pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 ${collapsed ? "px-2" : "px-3"}`}>
+        {isPlatformAdmin && (
+          <Nav href="/dashboard/admin" icon={ShieldCheck} active={pathname.startsWith("/dashboard/admin")} collapsed={collapsed} onNavigate={onNavigate}>
+            Plans admin
+          </Nav>
+        )}
         <Nav href="/dashboard/settings" icon={Settings} active={pathname.startsWith("/dashboard/settings")} collapsed={collapsed} onNavigate={onNavigate}>
           Settings
         </Nav>
@@ -399,6 +407,7 @@ function Breadcrumbs({ pathname, projects }: { pathname: string; projects: Shell
   const crumbs: { label: string; href?: string }[] = [{ label: "Dashboard", href: "/dashboard" }];
 
   if (pathname.startsWith("/dashboard/settings")) crumbs.push({ label: "Settings" });
+  else if (pathname.startsWith("/dashboard/admin")) crumbs.push({ label: "Plans admin" });
   else if (pathname === "/dashboard/projects/new") crumbs.push({ label: "New project" });
   else {
     const m = pathname.match(/^\/dashboard\/projects\/([0-9a-f-]{36})(?:\/([a-z]+))?(?:\/(.+))?/);

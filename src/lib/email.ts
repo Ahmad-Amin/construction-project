@@ -14,7 +14,7 @@ import { PRODUCT_NAME } from "@/lib/site";
 //   EMAIL_PROVIDER=resend    Resend's HTTP API (set RESEND_API_KEY). For production.
 //   EMAIL_PROVIDER=none      Don't send (the default outside development with nothing configured).
 
-export type Email = { to: string; subject: string; text: string; html: string };
+export type Email = { to: string; subject: string; text: string; html: string; replyTo?: string };
 export type SendResult = { ok: true; preview?: string } | { ok: false; error: string };
 
 type Provider = "smtp" | "ethereal" | "resend" | "none";
@@ -90,6 +90,7 @@ export async function sendEmail(email: Email): Promise<SendResult> {
           subject: email.subject,
           text: email.text,
           html: email.html,
+          ...(email.replyTo ? { reply_to: email.replyTo } : {}),
         }),
       });
       if (!response.ok) return { ok: false, error: `Resend ${response.status}: ${(await response.text()).slice(0, 200)}` };
@@ -102,6 +103,7 @@ export async function sendEmail(email: Email): Promise<SendResult> {
       subject: email.subject,
       text: email.text,
       html: email.html,
+      ...(email.replyTo ? { replyTo: email.replyTo } : {}),
     });
     const preview = kind === "ethereal" ? (nodemailer.getTestMessageUrl(info) || undefined) : undefined;
     if (preview) console.log(`[email] "${email.subject}" to ${email.to}. Preview: ${preview}`);

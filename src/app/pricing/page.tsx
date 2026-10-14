@@ -57,7 +57,7 @@ export default function PricingPage() {
         </div>
 
         <div className="mt-12">
-          <PlanCards ctas={planCtas("", true)} />
+          <PlanCards ctas={planCtas(true)} />
           <p className="mt-6 text-center text-sm text-muted">
             Create your free account first; you can move to Pro or Business from Settings whenever you like.
           </p>

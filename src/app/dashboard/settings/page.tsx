@@ -271,7 +271,6 @@ export default async function SettingsPage({
               until={viewer.company.planUntil}
               lapsed={viewer.company.planLapsed}
               activeProjects={activeProjects}
-              companyName={viewer.company.name}
               timeZone={viewer.company.timeZone}
             />
           </SettingsSection>

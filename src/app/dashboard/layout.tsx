@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { ToastProvider } from "@/components/toast";
 import { roleOf } from "@/components/role-tag";
 import { countUnread } from "@/lib/notifications";
+import { platformAdminEmail } from "@/lib/admin";
 import { viewerSide } from "@/lib/payments";
 import { SIDEBAR_COOKIE } from "@/lib/sidebar";
 import { createClient } from "@/lib/supabase/server";
@@ -21,6 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // A brand-new contractor has no company yet. The page shows its own full-screen setup, with no sidebar.
   if (!viewer.company && !viewer.isClient) return <>{children}</>;
 
+  const isPlatformAdmin = (await platformAdminEmail()) !== null;
   const collapsed = (await cookies()).get(SIDEBAR_COOKIE)?.value === "collapsed";
   const isOwner = viewer.company?.role === "owner";
   const side = viewerSide(!!viewer.company, isOwner);
@@ -74,6 +76,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         }
         projects={projects}
         isOwner={isOwner}
+        isPlatformAdmin={isPlatformAdmin}
         unread={unread}
         initialCollapsed={collapsed}
       >

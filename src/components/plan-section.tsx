@@ -12,14 +12,12 @@ export function PlanSection({
   until,
   lapsed,
   activeProjects,
-  companyName,
   timeZone,
 }: {
   plan: PlanId;
   until: string | null;
   lapsed: boolean;
   activeProjects: number;
-  companyName: string;
   timeZone: string;
 }) {
   const info = PLANS[plan];
@@ -57,7 +55,7 @@ export function PlanSection({
         )}
       </div>
 
-      <PlanCards current={plan} ctas={planCtas(companyName)} />
+      <PlanCards current={plan} ctas={planCtas()} />
     </div>
   );
 }
