@@ -1,6 +1,7 @@
 "use server";
 
 import { escapeHtml, sendEmail } from "@/lib/email";
+import { adminInbox } from "@/lib/inbox";
 import { getOrigin } from "@/lib/origin";
 import { PLANS, isPlanId } from "@/lib/plans";
 import { PRODUCT_NAME } from "@/lib/site";
@@ -9,8 +10,6 @@ import { getViewer } from "@/lib/viewer";
 
 export type RequestResult = { ok: boolean; message: string };
 
-// Where requests are sent: PLAN_REQUEST_EMAIL if set, otherwise the public contact address.
-const recipient = () => (process.env.PLAN_REQUEST_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "").trim();
 
 // The owner asks for Pro or Business. The request is written down first (which also enforces
 // one request an hour), then we are emailed, and the owner gets a confirmation. If we can't be
@@ -21,7 +20,7 @@ export async function requestPlanUpgrade(plan: string, yearly: boolean): Promise
   const viewer = await getViewer();
   if (viewer?.company?.role !== "owner") return { ok: false, message: "Only the company owner can ask for a plan." };
 
-  const to = recipient();
+  const to = adminInbox("plan");
   if (!to) return { ok: false, message: "We can't take requests here right now. Please write to us directly." };
 
   const supabase = await createClient();

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AdminTabs } from "@/components/admin-tabs";
 import { AdminPlans, type AdminCompany, type AdminRequest } from "@/components/admin-plans";
 import { requirePlatformAdmin } from "@/lib/admin";
+import { newFeedbackCount } from "@/lib/admin-data";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = { title: "Plans admin", robots: { index: false, follow: false } };
@@ -21,7 +22,7 @@ export default async function AdminPage() {
         Change a company&apos;s plan after you have been paid. A paid plan counts until the end of the day you choose, then the
         company goes back to Free by itself. Nothing is deleted when a plan ends.
       </p>
-      <AdminTabs />
+      <AdminTabs newFeedback={await newFeedbackCount()} />
       <AdminPlans companies={overview.companies} requests={overview.requests} />
     </main>
   );

@@ -34,6 +34,11 @@ export default function PrivacyPage() {
           created and whether they were delivered.
         </p>
         <p>
+          <strong className="text-foreground">If you send us feedback:</strong> we keep what you wrote, your name and
+          email, your role and company, the page you were on and the device you were using, so we can understand and
+          answer you. Please don&apos;t put passwords in a message.
+        </p>
+        <p>
           <strong className="text-foreground">If you message our WhatsApp number:</strong> that number only sends
           updates and does not read messages. We reply once a day to say so, and to do that we keep your phone
           number for up to 30 days. We don&apos;t store or look at what you wrote.

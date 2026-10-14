@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AdminHistory, type PlanChange } from "@/components/admin-history";
 import { AdminTabs } from "@/components/admin-tabs";
 import { requirePlatformAdmin } from "@/lib/admin";
+import { newFeedbackCount } from "@/lib/admin-data";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = { title: "Plan history", robots: { index: false, follow: false } };
@@ -20,7 +21,7 @@ export default async function AdminHistoryPage() {
       <p className="mt-1 mb-6 max-w-3xl text-sm text-muted">
         A record of every plan change: what it was, what it became, who made the change and when. Nothing here can be edited.
       </p>
-      <AdminTabs />
+      <AdminTabs newFeedback={await newFeedbackCount()} />
       <AdminHistory changes={data as PlanChange[]} />
     </main>
   );

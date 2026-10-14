@@ -30,6 +30,7 @@ import { Avatar } from "@/components/avatar";
 import { CompanyBadge } from "@/components/company-badge";
 import { NotificationBell } from "@/components/notification-bell";
 import { ThemeQuickToggle } from "@/components/theme-quick-toggle";
+import { FeedbackButton } from "@/components/feedback-button";
 import { Logo } from "@/components/logo";
 import { PlanBadge } from "@/components/plan-badge";
 import type { PlanId } from "@/lib/plans";
@@ -368,6 +369,7 @@ function SidebarContent({
       </nav>
 
       <div className={`border-t border-line pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 ${collapsed ? "px-2" : "px-3"}`}>
+        <FeedbackButton collapsed={collapsed} onNavigate={onNavigate} />
         {isPlatformAdmin && (
           <Nav href="/dashboard/admin" icon={ShieldCheck} active={pathname.startsWith("/dashboard/admin")} collapsed={collapsed} onNavigate={onNavigate}>
             Plans admin

@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// The two pages of the plans admin: the companies, and the history of every change.
-export function AdminTabs() {
+// The pages of the plans admin: the companies, the history of every change, and the feedback people sent.
+export function AdminTabs({ newFeedback = 0 }: { newFeedback?: number }) {
   const pathname = usePathname();
   const tabs = [
     { href: "/dashboard/admin", label: "Companies" },
     { href: "/dashboard/admin/history", label: "History" },
+    { href: "/dashboard/admin/feedback", label: "Feedback" },
   ];
   return (
     <nav aria-label="Plans admin" className="mb-8 flex gap-1 border-b border-line">
@@ -24,6 +25,9 @@ export function AdminTabs() {
             }`}
           >
             {t.label}
+            {t.label === "Feedback" && newFeedback > 0 && (
+              <span className="ml-2 rounded-full bg-primary px-1.5 py-0.5 text-[0.7rem] font-semibold tabular-nums text-primary-foreground">{newFeedback}</span>
+            )}
           </Link>
         );
       })}
