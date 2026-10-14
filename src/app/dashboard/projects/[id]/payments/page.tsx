@@ -115,7 +115,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
         </p>
       )}
 
-      <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
+      <section data-tour="total" className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
         <p className="text-sm text-muted">{side === "client" ? "Total paid (confirmed)" : "Total received (confirmed)"}</p>
         <p className="mt-1 text-3xl font-bold tabular-nums text-success">{formatMoney(totals.confirmedTotal, currency)}</p>
         <p className="mt-1 text-sm text-muted">
@@ -140,14 +140,14 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
         )}
       </section>
 
-      <div className="mt-6">
+      <div data-tour="schedule" className="mt-6">
         <PaymentSchedule items={schedule} projectId={id} currency={currency} side={side} manualHref={requestFor} initialHidden={scheduleHidden} />
       </div>
 
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="font-semibold">Payments</h2>
         {side && (
-          <Link href={`/dashboard/projects/${id}/payments/new`} className={button("primary", "sm")}>
+          <Link href={`/dashboard/projects/${id}/payments/new`} data-tour="add" className={button("primary", "sm")}>
             <Plus className="size-4" aria-hidden /> {side === "client" ? "I made a payment" : "Record payment"}
             <LinkPending className="size-4" />
           </Link>
@@ -155,7 +155,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
       </div>
 
       {payments.length === 0 ? (
-        <div className="flex flex-col items-center rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
+        <div data-tour="list" className="flex flex-col items-center rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
           <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
             <Banknote className="size-6" aria-hidden />
           </span>
@@ -169,7 +169,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div data-tour="list" className="space-y-3">
           {payments.map((p) => (
             <PaymentCard key={p.id} payment={p} projectId={id} currency={currency} timeZone={project.timeZone} viewerId={viewer?.userId} side={side} nudgeHref={nudgeFor(p)} sendReminders={whatsappEnabled()} forLabel={p.scheduleItemId ? (scheduleTitles.get(p.scheduleItemId) ?? null) : null} />
           ))}

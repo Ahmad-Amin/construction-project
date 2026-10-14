@@ -32,7 +32,7 @@ export default async function TimelinePage({
 
   if (events.length === 0) {
     return (
-      <div className="flex flex-col items-center rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
+      <div data-tour="list" className="flex flex-col items-center rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
         <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
           <History className="size-6" aria-hidden />
         </span>
@@ -46,7 +46,9 @@ export default async function TimelinePage({
 
   return (
     <div>
-      <TimelineFeed events={events} currency={project.currency} timeZone={project.timeZone} />
+      <div data-tour="list">
+        <TimelineFeed events={events} currency={project.currency} timeZone={project.timeZone} />
+      </div>
       {hasMore && limit < MAX && (
         <div className="mt-8 text-center">
           <Link href={`?n=${limit + STEP}`} scroll={false} className={button("secondary", "sm")}>

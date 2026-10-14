@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Compass, X } from "lucide-react";
 import type { Role } from "@/components/role-tag";
 import { markTourSeen } from "@/app/dashboard/tour-actions";
-import { tourFor, tourIdForPath, type TourId, type TourStep } from "@/lib/tours";
+import { isAutoTour, tourFor, tourIdForPath, type TourId, type TourStep } from "@/lib/tours";
 import { button } from "@/lib/ui";
 
 const START_EVENT = "buildpeek:start-tour";
@@ -214,7 +214,7 @@ export function TourHost({ pathname, role, seen }: { pathname: string; role: Rol
       if (steps.length < 2) return;
       // Counts as seen from the moment it opens, so leaving halfway never brings it back uninvited.
       // It is kept on the person's account, so it holds on any device.
-      if (!opened.current.has(id)) {
+      if (isAutoTour(id) && !opened.current.has(id)) {
         opened.current.add(id);
         void markTourSeen(id);
       }
@@ -232,7 +232,7 @@ export function TourHost({ pathname, role, seen }: { pathname: string; role: Rol
     setRunning(null);
   }
 
-  // The first visit, or a tour asked for from another page ("Take a tour" in the menu).
+  // The first visit, or a tour asked for from another page (the compass button in the top bar).
   useEffect(() => {
     const id = tourIdForPath(pathname);
     if (!id) return;
@@ -241,7 +241,8 @@ export function TourHost({ pathname, role, seen }: { pathname: string; role: Rol
       const at = Number(window.sessionStorage.getItem(PENDING_KEY));
       asked = !!at && Date.now() - at < 15_000;
     } catch {}
-    if (!asked && (seen.includes(id) || opened.current.has(id))) return;
+    // Only the dashboard and project tours start by themselves; the section tours wait to be asked for.
+    if (!asked && (!isAutoTour(id) || seen.includes(id) || opened.current.has(id))) return;
     const timer = setTimeout(() => {
       try {
         window.sessionStorage.removeItem(PENDING_KEY);

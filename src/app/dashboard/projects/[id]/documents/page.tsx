@@ -55,14 +55,14 @@ export default async function DocumentsPage({
             </span>
           )}
         </h2>
-        <Link href={`/dashboard/projects/${id}/documents/new`} className={button("primary", "sm")}>
+        <Link href={`/dashboard/projects/${id}/documents/new`} data-tour="add" className={button("primary", "sm")}>
           <Plus className="size-4" aria-hidden /> Add document
           <LinkPending className="size-4" />
         </Link>
       </div>
 
       {documents.length === 0 ? (
-        <div className="flex flex-col items-center rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
+        <div data-tour="list" className="flex flex-col items-center rounded-2xl border border-dashed border-line bg-surface px-6 py-12 text-center">
           <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
             <FolderOpen className="size-6" aria-hidden />
           </span>
@@ -81,7 +81,7 @@ export default async function DocumentsPage({
             counts={counts}
             clientLabel={viewerIsClient ? "Added by you" : "From your client"}
           />
-          <div className="space-y-3">
+          <div data-tour="list" className="space-y-3">
             {shown.map((d) => (
               <DocumentCard
                 key={d.id}

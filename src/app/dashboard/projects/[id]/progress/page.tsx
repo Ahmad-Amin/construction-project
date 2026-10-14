@@ -30,10 +30,14 @@ export default async function ProgressPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <ProgressSummary milestones={milestones} percent={percent} />
+      <div data-tour="summary">
+        <ProgressSummary milestones={milestones} percent={percent} />
+      </div>
 
       <h2 className="mt-8 mb-3 font-semibold">Milestones</h2>
-      <MilestoneEditor projectId={id} milestones={milestones} mode={mode} />
+      <div data-tour="milestones">
+        <MilestoneEditor projectId={id} milestones={milestones} mode={mode} />
+      </div>
     </div>
   );
 }

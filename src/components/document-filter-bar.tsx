@@ -31,7 +31,7 @@ export function DocumentFilterBar({
     }`;
 
   return (
-    <div role="group" aria-label="Filter by type" className="mb-5 flex flex-wrap gap-1.5">
+    <div role="group" aria-label="Filter by type" data-tour="filters" className="mb-5 flex flex-wrap gap-1.5">
       {pills.map(({ value, label }) => {
         const isActive = active === value;
         const count = counts[value];
