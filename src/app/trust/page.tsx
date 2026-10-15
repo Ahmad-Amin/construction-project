@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { PublicFooter, PublicHeader } from "@/components/public-chrome";
-import { GA_ID } from "@/lib/analytics";
+import { GA_ID, GA_REQUIRES_CONSENT } from "@/lib/analytics";
 import { CONTACT_EMAIL, DELETION_DAYS, LEGAL_UPDATED, PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
 
@@ -226,7 +226,7 @@ export default function TrustPage() {
             <KeyRound className="mt-1 size-4 shrink-0 text-data-accent" aria-hidden />
             <span>
               We never see your password. We use only the cookies needed to keep you signed in and to remember your
-              theme choice, and no advertising trackers.{GA_ID ? " On our public pages we also offer optional analytics, which stays off unless you accept it." : ""}
+              theme choice, and no advertising trackers.{GA_ID ? (GA_REQUIRES_CONSENT ? " On our public pages we also offer optional analytics, which stays off unless you accept it." : " On our public pages we also use Google Analytics, which you can switch off at any time.") : ""}
             </span>
           </p>
           <p>

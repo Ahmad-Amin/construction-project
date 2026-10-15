@@ -1,5 +1,5 @@
 import { LegalList, LegalPage, LegalSection } from "@/components/legal-page";
-import { GA_ID } from "@/lib/analytics";
+import { GA_ID, GA_REQUIRES_CONSENT } from "@/lib/analytics";
 import { CONTACT_EMAIL, DELETION_DAYS, OPERATOR_NAME, PRODUCT_NAME } from "@/lib/site";
 
 export const metadata = {
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
           <li><strong className="text-foreground">Vercel:</strong> hosting the website and the app, and counting visits to pages (see Cookies below).</li>
           <li><strong className="text-foreground">Resend:</strong> delivering emails.</li>
           {GA_ID && (
-            <li><strong className="text-foreground">Google (Analytics):</strong> counting visits to our public pages, only if you accept analytics cookies.</li>
+            <li><strong className="text-foreground">Google (Analytics):</strong> counting visits to our public pages{GA_REQUIRES_CONSENT ? ", only if you accept analytics cookies" : ", unless you switch it off"}.</li>
           )}
           <li><strong className="text-foreground">Meta (WhatsApp):</strong> delivering WhatsApp messages, only for people who switched them on.</li>
           <li><strong className="text-foreground">A content delivery network</strong> that serves the small country-flag pictures in the phone-number picker, which means your browser contacts it when that picker is shown.</li>
@@ -103,14 +103,15 @@ export default function PrivacyPage() {
         </p>
         {GA_ID && (
           <p>
-            <strong className="text-foreground">Optional analytics:</strong> on our public pages only (the home page,
-            pricing, sign-in and sign-up, and the legal pages) we would also like to use Google Analytics to understand
-            which pages are useful. It sets cookies, so it starts only if you choose Accept in the banner there. You can
-            change your mind at any time with “Cookie settings” at the bottom of those pages, which also removes
-            the cookies. We turn off Google&apos;s advertising features, and Google Analytics is never used inside your
-            account (your projects, payments, documents and photos) or on invitation links. Google acts on our behalf, and
-            the information it collects, such as your browser and approximate location, may be processed in the United
-            States.
+            <strong className="text-foreground">{GA_REQUIRES_CONSENT ? "Optional analytics" : "Analytics"}:</strong> on our
+            public pages only (the home page, pricing, sign-in and sign-up, and the legal pages) we use Google Analytics to
+            understand which pages are useful. It sets cookies.{" "}
+            {GA_REQUIRES_CONSENT
+              ? "It starts only if you choose Accept in the banner there, and you can change your mind at any time with “Cookie settings” at the bottom of those pages, which also removes the cookies."
+              : "It is on by default, and you can switch it off at any time with “Turn off analytics” at the bottom of those pages, which also removes the cookies."}{" "}
+            We turn off Google&apos;s advertising features, and Google Analytics is never used inside your account (your
+            projects, payments, documents and photos) or on invitation links. Google acts on our behalf, and the
+            information it collects, such as your browser and approximate location, may be processed in the United States.
           </p>
         )}
       </LegalSection>

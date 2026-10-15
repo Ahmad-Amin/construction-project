@@ -4,7 +4,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
-import { ANALYTICS_PAGES, CONSENT_EVENT, CONSENT_KEY, GA_ID } from "@/lib/analytics";
+import { ANALYTICS_PAGES, CONSENT_EVENT, CONSENT_KEY, GA_ID, GA_REQUIRES_CONSENT } from "@/lib/analytics";
 import { button } from "@/lib/ui";
 
 type Choice = "granted" | "denied" | null;
@@ -49,12 +49,20 @@ function clearGoogleCookies() {
   }
 }
 
-// Asks for the visitor's consent on the public pages, and only after a yes loads Google Analytics. Without a yes
-// (or on any page that isn't on the list) nothing is requested from Google at all.
+// What actually applies: the visitor's own choice, and when they have made none, the default: on, unless consent is
+// required first.
+function effective(choice: Choice): Choice {
+  return choice ?? (GA_REQUIRES_CONSENT ? null : "granted");
+}
+
+// Loads Google Analytics on the public pages. By default it is on and the visitor can switch it off (footer link);
+// with NEXT_PUBLIC_GA_CONSENT=required a banner asks first and nothing is requested from Google before a yes. On any
+// page that isn't on the list nothing is requested from Google at all.
 export function AnalyticsConsent() {
   const pathname = usePathname();
   // undefined while the server renders: nothing is drawn until the browser has read the saved choice.
-  const choice = useSyncExternalStore<Choice | undefined>(subscribe, read, () => undefined);
+  const stored = useSyncExternalStore<Choice | undefined>(subscribe, read, () => undefined);
+  const choice = stored === undefined ? undefined : effective(stored);
   const onListedPage = ANALYTICS_PAGES.includes(pathname);
   const tracking = choice === "granted" && onListedPage;
 
@@ -111,12 +119,22 @@ gtag('config','${GA_ID}',{allow_google_signals:false,allow_ad_personalization_si
   );
 }
 
-// The footer link that lets someone change their mind at any time: it takes the saved choice back and asks again.
+// The footer link. By default it switches analytics off (or back on); when consent is required it reopens the banner.
 export function CookieSettingsButton({ className = "" }: { className?: string }) {
-  if (!GA_ID) return null;
+  const stored = useSyncExternalStore<Choice | undefined>(subscribe, read, () => undefined);
+  if (!GA_ID || stored === undefined) return null;
+
+  if (GA_REQUIRES_CONSENT) {
+    return (
+      <button type="button" onClick={() => setAnalyticsChoice(null)} className={className}>
+        Cookie settings
+      </button>
+    );
+  }
+  const on = effective(stored) === "granted";
   return (
-    <button type="button" onClick={() => setAnalyticsChoice(null)} className={className}>
-      Cookie settings
+    <button type="button" onClick={() => setAnalyticsChoice(on ? "denied" : "granted")} className={className}>
+      {on ? "Turn off analytics" : "Turn on analytics"}
     </button>
   );
 }

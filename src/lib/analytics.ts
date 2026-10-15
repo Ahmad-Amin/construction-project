@@ -4,6 +4,11 @@
 const raw = (process.env.NEXT_PUBLIC_GA_ID ?? "").trim();
 export const GA_ID = /^G-[A-Z0-9]{6,20}$/.test(raw) ? raw : "";
 
+// By default Google Analytics is on for everyone on the public pages, and a visitor can switch it off from the footer.
+// Set NEXT_PUBLIC_GA_CONSENT=required to ask first instead: nothing is loaded until the visitor accepts a banner
+// (what EU and UK rules expect from visitors there).
+export const GA_REQUIRES_CONSENT = (process.env.NEXT_PUBLIC_GA_CONSENT ?? "").trim().toLowerCase() === "required";
+
 // The only pages it may run on. Never the dashboard, never invite links (their address holds a private
 // token) and never the sign-in callbacks.
 export const ANALYTICS_PAGES = ["/", "/pricing", "/privacy", "/terms", "/trust", "/login", "/signup", "/forgot-password"];
