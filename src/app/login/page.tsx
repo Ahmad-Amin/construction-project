@@ -45,7 +45,10 @@ export default async function LoginPage({
         </p>
       )}
 
-      <GoogleSignIn label="Continue with Google" />
+      <GoogleSignIn
+        label="Continue with Google"
+        note="Contractors: sign in with Google. Clients: open the invite link your contractor sent you first."
+      />
       <LoginMethods />
 
       <div className="mt-8 border-t border-line pt-6">

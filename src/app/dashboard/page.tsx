@@ -56,6 +56,7 @@ export default async function DashboardPage({
         variant="company"
         title="Set up your company"
         subtitle="This is the name your clients will see on their project page."
+        footer="Invited by a contractor? Open the invite link they sent you. It works only for the email address the invite was sent to."
         topSlot={
           <form action={signOut}>
             <button

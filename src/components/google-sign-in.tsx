@@ -16,7 +16,7 @@ function GoogleG() {
 }
 
 // The Google button and the "or" line under it, above the email form. Draws nothing until Google sign-in is switched on.
-export function GoogleSignIn({ label }: { label: string }) {
+export function GoogleSignIn({ label, note }: { label: string; note?: string }) {
   if (!GOOGLE_AUTH_ENABLED) return null;
   return (
     <div className="mb-6">
@@ -25,6 +25,7 @@ export function GoogleSignIn({ label }: { label: string }) {
           {label}
         </SubmitButton>
       </form>
+      {note && <p className="mt-2.5 text-center text-xs text-muted">{note}</p>}
       <div className="mt-6 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-muted" role="separator" aria-label="or">
         <span className="h-px flex-1 bg-line" />
         or
