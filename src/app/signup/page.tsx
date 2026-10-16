@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AuthForm } from "@/components/auth-form";
 import { AuthShell } from "@/components/auth-shell";
+import { GoogleSignIn } from "@/components/google-sign-in";
 import { signup } from "@/app/login/actions";
 
 export const metadata = {
@@ -25,6 +26,7 @@ export default function SignupPage() {
         </>
       }
     >
+      <GoogleSignIn label="Sign up with Google" />
       <AuthForm
         action={signup}
         submitLabel="Create account"

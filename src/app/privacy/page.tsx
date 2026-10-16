@@ -1,5 +1,6 @@
 import { LegalList, LegalPage, LegalSection } from "@/components/legal-page";
 import { GA_ID, GA_REQUIRES_CONSENT } from "@/lib/analytics";
+import { GOOGLE_AUTH_ENABLED } from "@/lib/auth-flow";
 import { CONTACT_EMAIL, DELETION_DAYS, OPERATOR_NAME, PRODUCT_NAME } from "@/lib/site";
 
 export const metadata = {
@@ -20,6 +21,7 @@ export default function PrivacyPage() {
           <strong className="text-foreground">From a contractor or staff member:</strong> your name, email address
           and password (we never see your password in readable form), your company name and logo, and your
           currency and time zone settings.
+          {GOOGLE_AUTH_ENABLED && " If you sign in with Google, Google tells us your name and email address; we never receive your Google password or anything else from your Google account."}
         </p>
         <p>
           <strong className="text-foreground">About a client:</strong> the name, email address and phone number the
@@ -83,6 +85,9 @@ export default function PrivacyPage() {
           <li><strong className="text-foreground">Supabase:</strong> the database, sign-in and file storage.</li>
           <li><strong className="text-foreground">Vercel:</strong> hosting the website and the app, and counting visits to pages (see Cookies below).</li>
           <li><strong className="text-foreground">Resend:</strong> delivering emails.</li>
+          {GOOGLE_AUTH_ENABLED && (
+            <li><strong className="text-foreground">Google (Sign in with Google):</strong> letting contractors sign in with their Google account, only if they choose to.</li>
+          )}
           {GA_ID && (
             <li><strong className="text-foreground">Google (Analytics):</strong> counting visits to our public pages{GA_REQUIRES_CONSENT ? ", only if you accept analytics cookies" : ", unless you switch it off"}.</li>
           )}

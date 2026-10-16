@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AuthShell } from "@/components/auth-shell";
 import { DemoButtons } from "@/components/demo-buttons";
+import { GoogleSignIn } from "@/components/google-sign-in";
 import { LoginMethods } from "@/components/login-methods";
 
 export const metadata = { title: "Sign in", robots: { index: false, follow: true } };
@@ -38,6 +39,13 @@ export default async function LoginPage({
         </p>
       )}
 
+      {error === "google" && (
+        <p role="alert" className="mb-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
+          Google sign-in didn&apos;t finish. Please try again, or use your email.
+        </p>
+      )}
+
+      <GoogleSignIn label="Continue with Google" />
       <LoginMethods />
 
       <div className="mt-8 border-t border-line pt-6">

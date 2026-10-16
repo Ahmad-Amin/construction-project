@@ -98,6 +98,24 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
   redirect("/dashboard");
 }
 
+// "Continue with Google": sends the person to Google, which sends them back to /auth/callback to finish signing in.
+// Creating an account this way is only for contractors (the sign-in and sign-up pages); homeowners join through
+// their contractor's invite link.
+export async function signInWithGoogle(): Promise<void> {
+  const origin = await getOrigin();
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+      // Always let the person pick which Google account, instead of silently using whichever is signed in.
+      queryParams: { prompt: "select_account" },
+    },
+  });
+  if (error || !data.url) redirect("/login?error=google");
+  redirect(data.url);
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
