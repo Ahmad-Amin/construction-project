@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { CheckCircle2, CircleAlert, Eye, EyeOff } from "lucide-react";
 import type { FormState } from "@/app/login/actions";
+import { trackSignUp } from "@/lib/analytics";
 import { button, inputClass } from "@/lib/ui";
 
 type Field = {
@@ -72,6 +73,11 @@ export function AuthForm({
   autoWidthButton?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
+
+  // A brand-new account was just created: tell Google Analytics once, with nothing about the person.
+  useEffect(() => {
+    if (state.signedUp) trackSignUp("email");
+  }, [state]);
 
   return (
     <form action={formAction} className="space-y-4">

@@ -10,6 +10,8 @@ export type FormState = {
   error?: string;
   message?: string;
   values?: Record<string, string>;
+  // Set only when this submit really created a new account (for the sign_up analytics event).
+  signedUp?: boolean;
 };
 
 const text = (formData: FormData, key: string) =>
@@ -87,7 +89,11 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
 
   // With email confirmation on, there is no session yet.
   if (!data.session) {
-    return { message: "Almost there — check your email to confirm your account." };
+    // For an address that already has an account, Supabase also answers "success" (so nobody can use this form to
+    // find out who is registered), but the user it returns has no identities. Only a real new account is reported
+    // as a sign-up, so analytics never counts someone who was merely trying again.
+    const isNewAccount = (data.user?.identities?.length ?? 0) > 0;
+    return { message: "Almost there — check your email to confirm your account.", signedUp: isNewAccount };
   }
   redirect("/dashboard");
 }
