@@ -16,6 +16,8 @@ export type PlanInfo = {
   approxMonthlyPkr: number | null;
   // How many projects can be Active at once; null means no limit.
   activeProjects: number | null;
+  // How many staff accounts (site supervisors and so on) the owner can have, pending invitations included.
+  staff: number;
   // Automatic WhatsApp messages to the client, and the PDF project statement.
   whatsapp: boolean;
   statements: boolean;
@@ -30,6 +32,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     yearlyUsd: null,
     approxMonthlyPkr: null,
     activeProjects: 1,
+    staff: 0,
     whatsapp: false,
     statements: false,
   },
@@ -41,6 +44,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     yearlyUsd: 150,
     approxMonthlyPkr: 4000,
     activeProjects: 10,
+    staff: 3,
     whatsapp: true,
     statements: true,
   },
@@ -52,6 +56,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     yearlyUsd: 390,
     approxMonthlyPkr: 11000,
     activeProjects: null,
+    staff: 10,
     whatsapp: true,
     statements: true,
   },
@@ -71,6 +76,12 @@ export function effectivePlan(plan: string | null | undefined, until: string | n
 // True when a paid plan was set but has ended: worth telling the owner.
 export function planLapsed(plan: string | null | undefined, until: string | null | undefined, now = Date.now()): boolean {
   return (plan === "pro" || plan === "business") && !!until && new Date(until).getTime() <= now;
+}
+
+// "3 staff accounts", "No staff accounts".
+export function staffLimitText(plan: PlanId): string {
+  const n = PLANS[plan].staff;
+  return n === 0 ? "No staff accounts" : `${n} staff ${n === 1 ? "account" : "accounts"}`;
 }
 
 export const canSendWhatsApp = (plan: PlanId) => PLANS[plan].whatsapp;

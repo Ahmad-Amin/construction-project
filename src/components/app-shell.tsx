@@ -23,6 +23,7 @@ import {
   Receipt,
   Settings,
   ShieldCheck,
+  Users,
   X,
 } from "lucide-react";
 import { signOut } from "@/app/login/actions";
@@ -43,7 +44,7 @@ import { SIDEBAR_COOKIE } from "@/lib/sidebar";
 import { button } from "@/lib/ui";
 import type { ProjectStatus } from "@/lib/types";
 
-export type ShellProject = { id: string; name: string; status: ProjectStatus; awaiting: number; archived: boolean };
+export type ShellProject = { id: string; name: string; status: ProjectStatus; awaiting: number; archived: boolean; payments: boolean };
 
 export type ShellProps = {
   user: { name: string; email: string; role: Role };
@@ -169,7 +170,7 @@ function SidebarContent({
 
   const renderSections = (p: ShellProject) => (
     <>
-      {sections.map((s) => {
+      {sections.filter((s) => s.label !== "Payments" || p.payments).map((s) => {
         const active = s.exact ? pathname === s.href : pathname.startsWith(s.href);
         return (
           <li key={s.label}>
@@ -278,7 +279,14 @@ function SidebarContent({
     <div className="flex h-full flex-col">
       <div className={collapsed ? "flex flex-col items-center gap-3 px-2 pb-3 pt-4" : "px-4 pb-3 pt-4"}>
         <Logo href="/dashboard" compact={collapsed} />
-        <RoleTag role={user.role} iconOnly={collapsed} className={collapsed ? "" : "mt-3"} />
+        {/* Its own line, so it sits under the logo rather than beside it. */}
+        {collapsed ? (
+          <RoleTag role={user.role} iconOnly />
+        ) : (
+          <div className="mt-3">
+            <RoleTag role={user.role} />
+          </div>
+        )}
       </div>
 
       {company &&
@@ -338,6 +346,13 @@ function SidebarContent({
           >
             Notifications
           </Nav>
+          {isOwner && (
+            <div data-tour="team">
+              <Nav href="/dashboard/team" icon={Users} active={pathname.startsWith("/dashboard/team")} collapsed={collapsed} onNavigate={onNavigate}>
+                Team
+              </Nav>
+            </div>
+          )}
         </div>
 
         {collapsed ? (
@@ -420,6 +435,7 @@ function Breadcrumbs({ pathname, projects }: { pathname: string; projects: Shell
 
   if (pathname.startsWith("/dashboard/settings")) crumbs.push({ label: "Settings" });
   else if (pathname.startsWith("/dashboard/admin")) crumbs.push({ label: "Plans admin" });
+  else if (pathname.startsWith("/dashboard/team")) crumbs.push({ label: "Team" });
   else if (pathname === "/dashboard/projects/new") crumbs.push({ label: "New project" });
   else {
     const m = pathname.match(/^\/dashboard\/projects\/([0-9a-f-]{36})(?:\/([a-z]+))?(?:\/(.+))?/);

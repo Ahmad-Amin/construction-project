@@ -26,6 +26,12 @@ export async function GET(request: NextRequest) {
         queueNotificationDelivery();
       }
 
+      // A staff member who confirmed their email after using a team invitation link: join the team now.
+      const staffToken = data.user?.user_metadata?.staff_invite_token;
+      if (typeof staffToken === "string") {
+        await supabase.rpc("accept_staff_invite", { p_token: staffToken });
+      }
+
       // They asked for a password reset in this browser: take them to choose a new one.
       const store = await cookies();
       if (store.get("pw_reset")) {

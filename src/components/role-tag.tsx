@@ -3,8 +3,8 @@ import { Briefcase, HardHat, Home, Users } from "lucide-react";
 export type Role = "contractor" | "staff" | "homeowner";
 
 export const ROLE_LABEL: Record<Role, string> = {
-  contractor: "Contractor",
-  staff: "Site team",
+  contractor: "Owner",
+  staff: "Staff",
   homeowner: "Homeowner",
 };
 

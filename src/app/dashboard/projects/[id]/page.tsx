@@ -32,7 +32,7 @@ import { formatPhone } from "@/lib/phone";
 import { whatsappEnabled } from "@/lib/whatsapp-api";
 import { overallProgress } from "@/lib/project";
 import { canMakeStatements, canSendWhatsApp } from "@/lib/plans";
-import { getProjectBasic } from "@/lib/projects";
+import { canSeePayments, getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { fetchTimeline } from "@/lib/timeline";
 import { one, type ClientInfo, type Milestone } from "@/lib/types";
@@ -91,6 +91,8 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
   const isTeam = !!viewer?.company && viewer.company.id === project.company_id;
   const isOwner = isTeam && viewer?.company?.role === "owner";
   const side = viewerSide(isTeam, isOwner);
+  // Site staff see payment figures and the Payments page only where the owner allowed it.
+  const paymentsOk = await canSeePayments(id);
   const client = one(details?.client as ClientInfo | ClientInfo[] | null);
   const budget = one(details?.budget as Budget | Budget[] | null);
   const milestones = (details?.milestones ?? []) as Milestone[];
@@ -328,7 +330,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
         title="Money"
         action={
           <span className="flex items-center gap-4">
-            {side !== null || !isTeam ? (
+            {side !== null || !isTeam || paymentsOk ? (
               <Link href={`${base}/payments`} className={linkClass}>
                 Payments{waitingOnMe > 0 ? ` (${waitingOnMe})` : ""} <ArrowRight className="size-4" aria-hidden />
               </Link>
@@ -342,7 +344,7 @@ export default async function ProjectOverviewPage({ params }: { params: Promise<
         <MoneyBars
           currency={project.currency}
           budget={budget?.amount ?? null}
-          received={isTeam && !isOwner ? null : paymentTotals.confirmedTotal}
+          received={isTeam && !isOwner && !paymentsOk ? null : paymentTotals.confirmedTotal}
           spent={expenseTotals.total}
           receivedLabel={isTeam ? "Received from client" : "Paid so far"}
           spentLabel={isTeam ? "Spent" : "Expenses shared with you"}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function ProjectTabs({ projectId }: { projectId: string }) {
+export function ProjectTabs({ projectId, showPayments = true }: { projectId: string; showPayments?: boolean }) {
   const pathname = usePathname();
   const base = `/dashboard/projects/${projectId}`;
   const tabs = [
@@ -14,7 +14,7 @@ export function ProjectTabs({ projectId }: { projectId: string }) {
     { href: `${base}/expenses`, label: "Expenses" },
     { href: `${base}/payments`, label: "Payments" },
     { href: `${base}/documents`, label: "Documents" },
-  ];
+  ].filter((tab) => showPayments || tab.label !== "Payments");
 
   return (
     <nav aria-label="Project sections" data-tour="project-sections" className="-mx-4 mt-5 overflow-x-auto border-b border-line px-4 lg:hidden">

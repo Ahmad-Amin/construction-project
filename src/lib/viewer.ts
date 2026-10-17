@@ -25,7 +25,9 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
 
   const userId = claims.sub;
   const [membership, client, profile] = await Promise.all([
-    supabase.from("company_members").select("role, companies(id, name, logo_url, currency, timezone, plan, plan_until)").limit(1),
+    // Only this person's own membership: everyone in a company may read the company's whole member list, so without the
+    // filter a staff member could be handed the owner's row and be treated as the owner.
+    supabase.from("company_members").select("role, companies(id, name, logo_url, currency, timezone, plan, plan_until)").eq("user_id", userId).limit(1),
     supabase.from("clients").select("id").eq("user_id", userId).limit(1),
     supabase.from("profiles").select("name").eq("id", userId).maybeSingle(),
   ]);

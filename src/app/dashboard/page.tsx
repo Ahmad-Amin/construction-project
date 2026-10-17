@@ -222,14 +222,18 @@ export default async function DashboardPage({
                     ? "All your projects are archived"
                     : isOwner
                       ? "Your first project starts here"
-                      : "No projects yet"}
+                      : isCompany
+                        ? "No projects assigned to you yet"
+                        : "No projects yet"}
                 </h3>
                 <p className="mt-1 max-w-sm text-sm text-muted">
                   {archivedProjects.length > 0
                     ? "Start a new one, or open an archived project below to restore it."
                     : isOwner
                       ? "Add a project and your client, share one link, and they can follow progress, payments and site photos on their phone."
-                      : "Projects shared with you will appear here."}
+                      : isCompany
+                        ? "The company owner hasn't given you a project yet. Ask them to add you to one from the Team page."
+                        : "Projects shared with you will appear here."}
                 </p>
                 {newProjectButton && <div className="mt-6">{newProjectButton}</div>}
               </div>

@@ -9,7 +9,7 @@ import { ProjectTabs } from "@/components/project-tabs";
 import { StatusBadge } from "@/components/project-bits";
 import { formatDate, dayInZone } from "@/lib/format";
 import { canMakeStatements } from "@/lib/plans";
-import { getProjectBasic } from "@/lib/projects";
+import { canSeePayments, getProjectBasic } from "@/lib/projects";
 import { getViewer } from "@/lib/viewer";
 
 // Shared header and tabs for every screen of one project.
@@ -74,7 +74,7 @@ export default async function ProjectLayout({
       )}
       {project.archived_at && <ArchivedBanner projectId={id} canRestore={isOwner} />}
 
-      <ProjectTabs projectId={id} />
+      <ProjectTabs projectId={id} showPayments={await canSeePayments(id)} />
       <ProjectContent projectId={id}>{children}</ProjectContent>
       {sheet}
     </main>

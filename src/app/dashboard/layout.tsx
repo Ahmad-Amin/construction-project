@@ -30,7 +30,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Row-level security decides which projects come back: a company sees its own,
   // a homeowner only theirs. Payments waiting on this person show as badges.
   const supabase = await createClient();
-  const [projectsRes, pendingRes, unread, activeRes, toursRes] = await Promise.all([
+  const isStaff = !!viewer.company && viewer.company.role !== "owner";
+  const [projectsRes, pendingRes, unread, activeRes, toursRes, staffRes] = await Promise.all([
     supabase
       .from("projects")
       .select("id, name, status, archived_at")
@@ -45,7 +46,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
       ? supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "active").is("archived_at", null)
       : Promise.resolve({ count: 0 }),
     supabase.from("profiles").select("tours_seen").eq("id", viewer.userId).maybeSingle(),
+    // For site staff: which of their projects they may also see payments on (their own rows only).
+    isStaff
+      ? supabase.from("project_staff").select("project_id, can_see_payments")
+      : Promise.resolve({ data: [] as { project_id: string; can_see_payments: boolean }[] }),
   ]);
+  const paymentsOn = new Set(
+    ((staffRes.data ?? []) as { project_id: string; can_see_payments: boolean }[]).filter((r) => r.can_see_payments).map((r) => r.project_id),
+  );
   // The guided tours this person has already been shown. If that can't be read, assume all of them:
   // better to skip a tour than to show it again on every page.
   const toursSeen: string[] = toursRes.error ? ["dashboard", "project"] : ((toursRes.data?.tours_seen as string[] | null) ?? []);
@@ -61,6 +69,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       status: p.status,
       archived: !!p.archived_at,
       awaiting: awaiting.get(p.id) ?? 0,
+      // Staff see the Payments section only where the owner allowed it; everyone else always does.
+      payments: !isStaff || paymentsOn.has(p.id),
     }),
   );
 

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AlertTriangle, Banknote, CalendarClock, Clock, Plus } from "lucide-react";
 import { LinkPending } from "@/components/link-pending";
 import { PaymentCard } from "@/components/payment-card";
@@ -14,7 +14,7 @@ import {
 } from "@/lib/payments";
 import { getOrigin } from "@/lib/origin";
 import { fetchSchedule, type ScheduleItem } from "@/lib/payment-schedule";
-import { getProjectBasic } from "@/lib/projects";
+import { canSeePayments, getProjectBasic } from "@/lib/projects";
 import { SCHEDULE_COOKIE } from "@/lib/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/types";
@@ -31,6 +31,9 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const project = await getProjectBasic(id);
   if (!project) notFound();
+
+  // Site staff see payments only where the owner allowed it.
+  if (!(await canSeePayments(id))) redirect(`/dashboard/projects/${id}`);
 
   const viewer = await getViewer();
   const isTeam = !!viewer?.company && viewer.company.id === project.company_id;

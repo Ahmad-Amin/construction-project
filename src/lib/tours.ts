@@ -50,6 +50,12 @@ const TOURS: Record<TourId, TourStep[]> = {
       roles: ["homeowner"],
     },
     {
+      target: "team",
+      title: "Your team",
+      body: "Invite site supervisors here. You choose which projects each person can open, and whether they can also see payments.",
+      roles: ["contractor"],
+    },
+    {
       target: "bell",
       title: "Notifications",
       body: "When something happens on a project, like a payment, an update or a shared document, it shows up here. You can get an email too.",

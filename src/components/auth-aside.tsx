@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
-export type AuthVariant = "signin" | "signup" | "invite" | "reset" | "company";
+export type AuthVariant = "signin" | "signup" | "invite" | "team" | "reset" | "company";
 
 const copy: Record<AuthVariant, { headline: string; body: string; points: string[] }> = {
   signin: {
@@ -18,6 +18,11 @@ const copy: Record<AuthVariant, { headline: string; body: string; points: string
     headline: "Your contractor has set up a page for your project.",
     body: "See the progress, the photos and every payment in one place, whenever you like. No calling around.",
     points: ["You only see your own project", "Every payment is confirmed by both of you", "Nothing to install"],
+  },
+  team: {
+    headline: "You've been added to a contractor's team.",
+    body: "Post site updates and photos from your phone, on the projects the owner gave you. They see them straight away.",
+    points: ["You see only the projects you were given", "Photos and updates from any phone", "Nothing to install"],
   },
   company: {
     headline: "One name, and your first project is a minute away.",

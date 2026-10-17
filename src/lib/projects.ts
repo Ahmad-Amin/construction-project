@@ -4,6 +4,7 @@ import { effectivePlan, type PlanId } from "@/lib/plans";
 import { timeZoneOrDefault } from "@/lib/timezone";
 import { createClient } from "@/lib/supabase/server";
 import { one, type ProjectStatus } from "@/lib/types";
+import { getViewer } from "@/lib/viewer";
 
 export type ProjectBasic = {
   id: string;
@@ -45,4 +46,20 @@ export const getProjectBasic = cache(async (id: string): Promise<ProjectBasic | 
   };
   const company = one(row.company);
   return { ...row, company, currency: currencyOrDefault(company?.currency), timeZone: timeZoneOrDefault(company?.timezone), plan: effectivePlan(company?.plan, company?.plan_until) };
+});
+
+// Whether this person may see the project's payments. The owner and the project's homeowner always may; site staff only
+// when the owner switched it on for them on this project (the database enforces the same rule).
+export const canSeePayments = cache(async (projectId: string): Promise<boolean> => {
+  const viewer = await getViewer();
+  if (!viewer) return false;
+  if (!viewer.company || viewer.company.role === "owner") return true;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("project_staff")
+    .select("can_see_payments")
+    .eq("project_id", projectId)
+    .eq("user_id", viewer.userId)
+    .maybeSingle();
+  return data?.can_see_payments === true;
 });
