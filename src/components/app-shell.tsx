@@ -5,10 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   Archive,
+  ArrowLeft,
   Banknote,
   Bell,
   Camera,
   ChevronRight,
+  ChevronsUpDown,
   FolderOpen,
   History,
   Home,
@@ -21,6 +23,7 @@ import {
   PanelLeftOpen,
   Plus,
   Receipt,
+  Search,
   Settings,
   ShieldCheck,
   Users,
@@ -136,6 +139,155 @@ function Nav({
   );
 }
 
+// The sections of one project, in the order they appear in its menu.
+const PROJECT_SECTIONS = [
+  { slug: "", label: "Overview", icon: Home },
+  { slug: "timeline", label: "Timeline", icon: History },
+  { slug: "progress", label: "Progress", icon: ListChecks },
+  { slug: "updates", label: "Updates", icon: Camera },
+  { slug: "expenses", label: "Expenses", icon: Receipt },
+  { slug: "payments", label: "Payments", icon: Banknote },
+  { slug: "documents", label: "Documents", icon: FolderOpen },
+] as const;
+
+// Sections that exist on every project, so switching projects can keep you where you are (Payments to Payments).
+const SWITCHABLE = new Set(["timeline", "progress", "updates", "expenses", "payments", "invoices", "documents"]);
+
+// How many projects the list shows before "Show all".
+const SHORT_LIST = 6;
+
+function ProjectDot({ project }: { project: ShellProject }) {
+  return <span className={`size-2 shrink-0 rounded-full ${projectStatusStyle[project.archived ? "archived" : project.status].dot}`} aria-hidden />;
+}
+
+function AwaitingBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      title={`${count} payment${count === 1 ? "" : "s"} waiting for you`}
+      className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground"
+    >
+      {count}
+    </span>
+  );
+}
+
+const matches = (p: ShellProject, query: string) => p.name.toLowerCase().includes(query.trim().toLowerCase());
+
+// The current project's name, with a list to jump to another project (when there is more than one).
+function ProjectSwitcher({
+  current,
+  projects,
+  pathname,
+  onNavigate,
+}: {
+  current: ShellProject;
+  projects: ShellProject[];
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === pathname;
+  const [query, setQuery] = useState("");
+  const box = useRef<HTMLDivElement>(null);
+  const others = projects.length > 1;
+
+  useEffect(() => {
+    if (!open) return;
+    const onPress = (e: PointerEvent) => {
+      if (box.current && !box.current.contains(e.target as Node)) setOpenOn(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenOn(null);
+    };
+    document.addEventListener("pointerdown", onPress);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPress);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  // Stay on the same section of the other project when it has one; otherwise its overview.
+  const segment = pathname.split("/")[4] ?? "";
+  const hrefFor = (id: string) => `/dashboard/projects/${id}${SWITCHABLE.has(segment) ? `/${segment}` : ""}`;
+  const live = projects.filter((p) => !p.archived && matches(p, query));
+  const archived = projects.filter((p) => p.archived && matches(p, query));
+
+  const title = (
+    <>
+      <ProjectDot project={current} />
+      <span className="min-w-0 flex-1 truncate text-left">{current.name}</span>
+    </>
+  );
+
+  if (!others) {
+    return <div className="flex items-center gap-2.5 rounded-xl border border-line bg-surface-2/60 px-3 py-2.5 text-sm font-semibold">{title}</div>;
+  }
+
+  const item = (p: ShellProject) => (
+    <li key={p.id}>
+      <Link
+        href={hrefFor(p.id)}
+        onClick={() => {
+          setOpenOn(null);
+          setQuery("");
+          onNavigate?.();
+        }}
+        aria-current={p.id === current.id ? "page" : undefined}
+        className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors ${
+          p.id === current.id ? "bg-primary-soft font-semibold text-foreground" : "text-muted hover:bg-surface-2 hover:text-foreground"
+        }`}
+      >
+        <ProjectDot project={p} />
+        <span className="min-w-0 flex-1 truncate">{p.name}</span>
+        <AwaitingBadge count={p.awaiting} />
+      </Link>
+    </li>
+  );
+
+  return (
+    <div ref={box} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpenOn(open ? null : pathname)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        title="Switch project"
+        className="flex w-full items-center gap-2.5 rounded-xl border border-line bg-surface-2/60 px-3 py-2.5 text-sm font-semibold transition-colors hover:bg-surface-2"
+      >
+        {title}
+        <ChevronsUpDown className="size-4 shrink-0 text-muted" aria-hidden />
+      </button>
+      {open && (
+        <div className="absolute inset-x-0 top-full z-30 mt-1.5 rounded-xl border border-line bg-surface p-1.5 shadow-xl shadow-black/20">
+          {projects.length > SHORT_LIST && (
+            <label className="relative mb-1.5 block">
+              <span className="sr-only">Find a project</span>
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted" aria-hidden />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Find a project"
+                className="w-full rounded-lg border border-line bg-surface-2/60 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary"
+              />
+            </label>
+          )}
+          <ul className="max-h-72 space-y-0.5 overflow-y-auto">
+            {live.map(item)}
+            {archived.length > 0 && (
+              <li className="px-2.5 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">Archived</li>
+            )}
+            {archived.map(item)}
+            {live.length + archived.length === 0 && <li className="px-2.5 py-2 text-sm text-muted">No project matches.</li>}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SidebarContent({
   props,
   pathname,
@@ -150,148 +302,184 @@ function SidebarContent({
 }) {
   const { user, company, plan, projects, isOwner, isPlatformAdmin } = props;
   const [showArchived, setShowArchived] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [query, setQuery] = useState("");
+
+  // Inside a project the sidebar becomes that project's menu; everywhere else it is the main menu.
   const match = pathname.match(/^\/dashboard\/projects\/([0-9a-f-]{36})/);
   const currentId = match?.[1] ?? null;
+  const current: ShellProject | null = currentId
+    ? (projects.find((p) => p.id === currentId) ?? { id: currentId, name: "This project", status: "active", awaiting: 0, archived: false, payments: true })
+    : null;
   const base = currentId ? `/dashboard/projects/${currentId}` : "";
+  // A homeowner with a single project has nowhere else to go: no "All projects", no switcher.
+  const soloHomeowner = !company && projects.length <= 1;
 
-  const sections = [
-    { href: base, label: "Overview", icon: Home, exact: true },
-    { href: `${base}/timeline`, label: "Timeline", icon: History },
-    { href: `${base}/progress`, label: "Progress", icon: ListChecks },
-    { href: `${base}/updates`, label: "Updates", icon: Camera },
-    { href: `${base}/expenses`, label: "Expenses", icon: Receipt },
-    { href: `${base}/payments`, label: "Payments", icon: Banknote },
-    { href: `${base}/documents`, label: "Documents", icon: FolderOpen },
-  ];
-
-  const live = projects.filter((p) => !p.archived);
-  const archived = projects.filter((p) => p.archived);
-  // Archived projects stay tucked away, but open up when you are looking at one.
-  const archivedOpen = showArchived || archived.some((p) => p.id === currentId);
-
-  const renderSections = (p: ShellProject) => (
-    <>
-      {sections.filter((s) => s.label !== "Payments" || p.payments).map((s) => {
-        // The Invoices tab lives inside Payments.
-        const active = s.exact
-          ? pathname === s.href
-          : pathname.startsWith(s.href) || (s.label === "Payments" && pathname.startsWith(`${base}/invoices`));
-        return (
-          <li key={s.label}>
-            <Nav
-              href={s.href}
-              icon={s.icon}
-              active={active}
-              indent
-              collapsed={collapsed}
-              onNavigate={onNavigate}
-              badge={s.label === "Payments" ? p.awaiting : undefined}
-            >
-              {s.label}
-            </Nav>
-          </li>
-        );
-      })}
-      {isOwner && (
-        <li>
-          <Nav
-            href={`${base}/edit`}
-            icon={Pencil}
-            active={pathname.startsWith(`${base}/edit`)}
-            indent
-            collapsed={collapsed}
-            onNavigate={onNavigate}
-          >
-            Edit project
-          </Nav>
-        </li>
+  const header = (
+    <div className={collapsed ? "flex flex-col items-center gap-3 px-2 pb-3 pt-4" : "px-4 pb-3 pt-4"}>
+      <Logo href="/dashboard" compact={collapsed} />
+      {/* Its own line, so it sits under the logo rather than beside it. */}
+      {collapsed ? (
+        <RoleTag role={user.role} iconOnly />
+      ) : (
+        <div className="mt-3">
+          <RoleTag role={user.role} />
+        </div>
       )}
-    </>
+    </div>
   );
 
-  const renderProject = (p: ShellProject) => {
-    const isCurrent = p.id === currentId;
+  const footer = (
+    <div className={`border-t border-line pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 ${collapsed ? "px-2" : "px-3"}`}>
+      <div data-tour="feedback">
+        <FeedbackButton collapsed={collapsed} onNavigate={onNavigate} />
+      </div>
+      {isPlatformAdmin && (
+        <Nav href="/dashboard/admin" icon={ShieldCheck} active={pathname.startsWith("/dashboard/admin")} collapsed={collapsed} onNavigate={onNavigate}>
+          Plans admin
+        </Nav>
+      )}
+      <div data-tour="settings">
+        <Nav href="/dashboard/settings" icon={Settings} active={pathname.startsWith("/dashboard/settings")} collapsed={collapsed} onNavigate={onNavigate}>
+          Settings
+        </Nav>
+      </div>
+      <div className={collapsed ? "mt-2 flex flex-col items-center gap-1 py-1" : "mt-2 flex items-center gap-3 rounded-xl px-3 py-2"}>
+        <span title={collapsed ? user.name || user.email : undefined}>
+          <Avatar name={user.name || user.email} size="sm" />
+        </span>
+        {!collapsed && (
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{user.name || "Your account"}</p>
+            <p className="truncate text-xs text-muted">{user.email}</p>
+          </div>
+        )}
+        <form action={signOut}>
+          <SubmitButton
+            ariaLabel="Sign out"
+            title="Sign out"
+            icon={<LogOut className="size-[18px]" aria-hidden />}
+            className="flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+          />
+        </form>
+      </div>
+    </div>
+  );
 
-    if (collapsed) {
-      return (
-        <li key={p.id}>
-          <Link
-            href={`/dashboard/projects/${p.id}`}
-            onClick={onNavigate}
-            title={p.name}
-            aria-label={p.name}
-            aria-current={isCurrent && pathname === `/dashboard/projects/${p.id}` ? "page" : undefined}
-            className={`relative flex h-10 items-center justify-center rounded-lg text-sm font-bold transition-colors ${
-              isCurrent ? "bg-surface-2 text-foreground" : "text-muted hover:bg-surface-2 hover:text-foreground"
-            }`}
-          >
-            {p.name.trim().charAt(0).toUpperCase() || "?"}
-            <span className={`absolute left-2 top-2 size-2 rounded-full ${projectStatusStyle[p.archived ? "archived" : p.status].dot}`} aria-hidden />
-            {p.awaiting > 0 && (
-              <span
-                title={`${p.awaiting} payment${p.awaiting === 1 ? "" : "s"} waiting for you`}
-                className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-primary ring-2 ring-surface"
-              />
-            )}
-          </Link>
-          {isCurrent && (
-            <ul data-tour="project-sections" className="mt-0.5 space-y-0.5 border-b border-line pb-1" aria-label={`${p.name} sections`}>
-              {renderSections(p)}
-            </ul>
-          )}
-        </li>
-      );
-    }
-
+  // ------------------------------------------------------------------ inside a project
+  if (current) {
+    const sections = [
+      ...PROJECT_SECTIONS.filter((s) => s.slug !== "payments" || current.payments),
+      ...(isOwner ? [{ slug: "edit", label: "Edit project", icon: Pencil }] : []),
+    ];
     return (
+      <div className="flex h-full flex-col">
+        {header}
+        <div className={collapsed ? "flex flex-col items-center gap-2 px-2 pb-3" : "space-y-2 px-3 pb-3"}>
+          {!soloHomeowner &&
+            (collapsed ? (
+              <Link
+                href="/dashboard"
+                onClick={onNavigate}
+                title="All projects"
+                aria-label="All projects"
+                className="flex size-10 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+              >
+                <ArrowLeft className="size-[18px]" aria-hidden />
+              </Link>
+            ) : (
+              <Link
+                href="/dashboard"
+                onClick={onNavigate}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+              >
+                <ArrowLeft className="size-4" aria-hidden /> All projects
+                <LinkPending />
+              </Link>
+            ))}
+          {collapsed ? (
+            <span
+              title={current.name}
+              className="relative flex size-10 items-center justify-center rounded-lg bg-surface-2 text-sm font-bold"
+            >
+              {current.name.trim().charAt(0).toUpperCase() || "?"}
+              <span className={`absolute left-1.5 top-1.5 size-2 rounded-full ${projectStatusStyle[current.archived ? "archived" : current.status].dot}`} aria-hidden />
+            </span>
+          ) : (
+            <ProjectSwitcher current={current} projects={projects} pathname={pathname} onNavigate={onNavigate} />
+          )}
+        </div>
+
+        <nav className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-3 ${collapsed ? "px-2" : "px-3"}`} aria-label={`${current.name} sections`}>
+          <ul data-tour="project-sections" className="space-y-0.5">
+            {sections.map((s) => {
+              const href = s.slug ? `${base}/${s.slug}` : base;
+              // The Invoices tab lives inside Payments.
+              const active = s.slug
+                ? pathname.startsWith(href) || (s.slug === "payments" && pathname.startsWith(`${base}/invoices`))
+                : pathname === base;
+              return (
+                <li key={s.label}>
+                  <Nav
+                    href={href}
+                    icon={s.icon}
+                    active={active}
+                    collapsed={collapsed}
+                    onNavigate={onNavigate}
+                    badge={s.slug === "payments" ? current.awaiting : undefined}
+                  >
+                    {s.label}
+                  </Nav>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+        {footer}
+      </div>
+    );
+  }
+
+  // ------------------------------------------------------------------ everywhere else
+  const live = projects.filter((p) => !p.archived);
+  const archived = projects.filter((p) => p.archived);
+  const searching = query.trim() !== "";
+  const found = searching ? live.filter((p) => matches(p, query)) : live;
+  const shown = searching || showAll || collapsed ? found : found.slice(0, SHORT_LIST);
+
+  const projectLink = (p: ShellProject) =>
+    collapsed ? (
       <li key={p.id}>
         <Link
           href={`/dashboard/projects/${p.id}`}
           onClick={onNavigate}
-          aria-current={isCurrent && pathname === `/dashboard/projects/${p.id}` ? "page" : undefined}
-          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            isCurrent ? "text-foreground" : "text-muted hover:bg-surface-2 hover:text-foreground"
-          }`}
+          title={p.name}
+          aria-label={p.name}
+          className="relative flex h-10 items-center justify-center rounded-lg text-sm font-bold text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
         >
-          <span className={`size-2 shrink-0 rounded-full ${projectStatusStyle[p.archived ? "archived" : p.status].dot}`} aria-hidden />
+          {p.name.trim().charAt(0).toUpperCase() || "?"}
+          <span className={`absolute left-2 top-2 size-2 rounded-full ${projectStatusStyle[p.archived ? "archived" : p.status].dot}`} aria-hidden />
+          {p.awaiting > 0 && <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-primary ring-2 ring-surface" />}
+        </Link>
+      </li>
+    ) : (
+      <li key={p.id}>
+        <Link
+          href={`/dashboard/projects/${p.id}`}
+          onClick={onNavigate}
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+        >
+          <ProjectDot project={p} />
           <span className="min-w-0 flex-1 truncate">{p.name}</span>
           <LinkPending />
-          {p.awaiting > 0 && (
-            <span
-              title={`${p.awaiting} payment${p.awaiting === 1 ? "" : "s"} waiting for you`}
-              className="flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground"
-            >
-              {p.awaiting}
-            </span>
-          )}
-          <ChevronRight
-            className={`size-4 shrink-0 transition-transform ${isCurrent ? "rotate-90" : ""}`}
-            aria-hidden
-          />
+          <AwaitingBadge count={p.awaiting} />
         </Link>
-
-        {isCurrent && (
-          <ul data-tour="project-sections" className="ml-[1.1rem] mt-0.5 space-y-0.5 border-l border-line pl-2.5" aria-label={`${p.name} sections`}>
-            {renderSections(p)}
-          </ul>
-        )}
       </li>
     );
-  };
 
   return (
     <div className="flex h-full flex-col">
-      <div className={collapsed ? "flex flex-col items-center gap-3 px-2 pb-3 pt-4" : "px-4 pb-3 pt-4"}>
-        <Logo href="/dashboard" compact={collapsed} />
-        {/* Its own line, so it sits under the logo rather than beside it. */}
-        {collapsed ? (
-          <RoleTag role={user.role} iconOnly />
-        ) : (
-          <div className="mt-3">
-            <RoleTag role={user.role} />
-          </div>
-        )}
-      </div>
+      {header}
 
       {company &&
         (collapsed ? (
@@ -362,18 +550,42 @@ function SidebarContent({
         {collapsed ? (
           <div className="my-4 border-t border-line" />
         ) : (
-          <p className="mb-1.5 mt-6 px-3 text-xs font-semibold uppercase tracking-wide text-muted">
+          <p className="mb-1.5 mt-6 flex items-center justify-between px-3 text-xs font-semibold uppercase tracking-wide text-muted">
             {company ? "Projects" : "Your projects"}
+            {live.length > 0 && <span className="font-medium tabular-nums">{live.length}</span>}
           </p>
+        )}
+
+        {!collapsed && live.length > SHORT_LIST && (
+          <label className="relative mx-0.5 mb-1.5 block">
+            <span className="sr-only">Find a project</span>
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted" aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Find a project"
+              className="w-full rounded-lg border border-line bg-surface-2/60 py-1.5 pl-8 pr-2 text-sm outline-none focus:border-primary [&::-webkit-search-cancel-button]:hidden"
+            />
+          </label>
         )}
 
         {projects.length === 0 ? (
           !collapsed && <p className="px-3 py-2 text-sm text-muted">No projects yet.</p>
         ) : (
           <ul className="space-y-0.5">
-            {live.map(renderProject)}
-            {collapsed && archived.filter((p) => p.id === currentId).map(renderProject)}
+            {shown.map(projectLink)}
+            {!collapsed && searching && found.length === 0 && <li className="px-3 py-2 text-sm text-muted">No project matches.</li>}
           </ul>
+        )}
+        {!collapsed && !searching && live.length > SHORT_LIST && (
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="mt-1 w-full rounded-lg px-3 py-1.5 text-left text-sm font-medium text-data-accent transition-colors hover:bg-surface-2"
+          >
+            {showAll ? "Show fewer" : `Show all ${live.length}`}
+          </button>
         )}
 
         {!collapsed && archived.length > 0 && (
@@ -381,52 +593,19 @@ function SidebarContent({
             <button
               type="button"
               onClick={() => setShowArchived((v) => !v)}
-              aria-expanded={archivedOpen}
+              aria-expanded={showArchived}
               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted hover:bg-surface-2"
             >
               <Archive className="size-3.5" aria-hidden />
               Archived ({archived.length})
-              <ChevronRight className={`ml-auto size-3.5 transition-transform ${archivedOpen ? "rotate-90" : ""}`} aria-hidden />
+              <ChevronRight className={`ml-auto size-3.5 transition-transform ${showArchived ? "rotate-90" : ""}`} aria-hidden />
             </button>
-            {archivedOpen && <ul className="mt-0.5 space-y-0.5">{archived.map(renderProject)}</ul>}
+            {showArchived && <ul className="mt-0.5 space-y-0.5">{archived.map(projectLink)}</ul>}
           </div>
         )}
       </nav>
 
-      <div className={`border-t border-line pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 ${collapsed ? "px-2" : "px-3"}`}>
-        <div data-tour="feedback">
-          <FeedbackButton collapsed={collapsed} onNavigate={onNavigate} />
-        </div>
-        {isPlatformAdmin && (
-          <Nav href="/dashboard/admin" icon={ShieldCheck} active={pathname.startsWith("/dashboard/admin")} collapsed={collapsed} onNavigate={onNavigate}>
-            Plans admin
-          </Nav>
-        )}
-        <div data-tour="settings">
-          <Nav href="/dashboard/settings" icon={Settings} active={pathname.startsWith("/dashboard/settings")} collapsed={collapsed} onNavigate={onNavigate}>
-            Settings
-          </Nav>
-        </div>
-        <div className={collapsed ? "mt-2 flex flex-col items-center gap-1 py-1" : "mt-2 flex items-center gap-3 rounded-xl px-3 py-2"}>
-          <span title={collapsed ? user.name || user.email : undefined}>
-            <Avatar name={user.name || user.email} size="sm" />
-          </span>
-          {!collapsed && (
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{user.name || "Your account"}</p>
-              <p className="truncate text-xs text-muted">{user.email}</p>
-            </div>
-          )}
-          <form action={signOut}>
-            <SubmitButton
-              ariaLabel="Sign out"
-              title="Sign out"
-              icon={<LogOut className="size-[18px]" aria-hidden />}
-              className="flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
-            />
-          </form>
-        </div>
-      </div>
+      {footer}
     </div>
   );
 }
