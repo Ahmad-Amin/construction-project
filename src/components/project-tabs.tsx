@@ -21,7 +21,10 @@ export function ProjectTabs({ projectId, showPayments = true }: { projectId: str
       <ul className="flex gap-1">
         {tabs.map((t) => {
           // Sub-pages (like /updates/new) keep their section's tab lit.
-          const active = t.href === base ? pathname === base : pathname.startsWith(t.href);
+          const active =
+            t.href === base
+              ? pathname === base
+              : pathname.startsWith(t.href) || (t.label === "Payments" && pathname.startsWith(`${base}/invoices`));
           return (
             <li key={t.href}>
               <Link

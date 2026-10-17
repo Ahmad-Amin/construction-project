@@ -57,8 +57,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-4xl space-y-5">
-      <Link href={`/dashboard/projects/${id}/payments#invoices`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground">
-        <ArrowLeft className="size-4" aria-hidden /> Payments and invoices
+      <Link href={`/dashboard/projects/${id}/invoices`} className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground">
+        <ArrowLeft className="size-4" aria-hidden /> All invoices
       </Link>
       <p className={`rounded-xl px-4 py-3 text-sm font-medium ${banner.tone}`}>{banner.text}</p>
       <InvoiceActions

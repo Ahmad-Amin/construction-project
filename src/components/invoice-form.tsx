@@ -279,7 +279,7 @@ export function InvoiceForm({
       )}
 
       <div className="flex justify-end gap-2">
-        <Link href={editing ? `/dashboard/projects/${projectId}/invoices/${invoiceId}` : `/dashboard/projects/${projectId}/payments`} className={button("secondary")}>
+        <Link href={editing ? `/dashboard/projects/${projectId}/invoices/${invoiceId}` : `/dashboard/projects/${projectId}/invoices`} className={button("secondary")}>
           Cancel
         </Link>
         <button type="submit" disabled={pending} className={button("primary")}>

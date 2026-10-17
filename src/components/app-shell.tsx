@@ -172,7 +172,10 @@ function SidebarContent({
   const renderSections = (p: ShellProject) => (
     <>
       {sections.filter((s) => s.label !== "Payments" || p.payments).map((s) => {
-        const active = s.exact ? pathname === s.href : pathname.startsWith(s.href);
+        // The Invoices tab lives inside Payments.
+        const active = s.exact
+          ? pathname === s.href
+          : pathname.startsWith(s.href) || (s.label === "Payments" && pathname.startsWith(`${base}/invoices`));
         return (
           <li key={s.label}>
             <Nav

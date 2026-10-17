@@ -22,9 +22,8 @@ export function InvoiceList({
   isOwner: boolean;
   today: string;
 }) {
-  if (!isOwner && invoices.length === 0) return null;
   return (
-    <section id="invoices" aria-labelledby="invoices-title" className="mb-8 mt-8 scroll-mt-24">
+    <section id="invoices" aria-labelledby="invoices-title">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 id="invoices-title" className="font-semibold">
           Invoices
@@ -42,7 +41,9 @@ export function InvoiceList({
       {invoices.length === 0 ? (
         <p className="flex items-start gap-3 rounded-2xl border border-dashed border-line bg-surface px-4 py-4 text-sm text-muted">
           <Receipt className="mt-0.5 size-4 shrink-0" aria-hidden />
-          Create an invoice with your logo and payment details, and send it to your client. They get an email and can download it.
+          {isOwner
+            ? "Create an invoice with your logo and payment details, and send it to your client. They get an email and can download it."
+            : "No invoices yet. When your contractor sends you one, you get an email and it appears here."}
         </p>
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">

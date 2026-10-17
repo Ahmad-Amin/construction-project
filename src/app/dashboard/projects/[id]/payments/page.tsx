@@ -1,14 +1,13 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { AlertTriangle, Banknote, CalendarClock, Clock, Plus } from "lucide-react";
+import { Banknote, CalendarClock, Clock, Plus } from "lucide-react";
 import { LinkPending } from "@/components/link-pending";
 import { PaymentCard } from "@/components/payment-card";
-import { InvoiceList } from "@/components/invoice-list";
+import { MoneyHeader } from "@/components/money-header";
 import { PaymentSchedule } from "@/components/payment-schedule";
-import { formatDate, formatMoney, todayIn } from "@/lib/format";
-import { fetchInvoices } from "@/lib/invoices";
-import { canMakeInvoices } from "@/lib/plans";
+import { formatDate, formatMoney } from "@/lib/format";
+import { fetchInvoices, invoiceSummary } from "@/lib/invoices";
 import {
   awaitingMyResponse,
   fetchPayments,
@@ -99,6 +98,15 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
+      <MoneyHeader
+        projectId={id}
+        active="payments"
+        currency={currency}
+        side={side}
+        totals={totals}
+        invoiced={isOwner || !isTeam ? invoiceSummary(invoices) : null}
+      />
+
       {waitingOnMe > 0 && (
         <p
           role="status"
@@ -123,42 +131,10 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
         </p>
       )}
 
-      <section data-tour="total" className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
-        <p className="text-sm text-muted">{side === "client" ? "Total paid (confirmed)" : "Total received (confirmed)"}</p>
-        <p className="mt-1 text-3xl font-bold tabular-nums text-success">{formatMoney(totals.confirmedTotal, currency)}</p>
-        <p className="mt-1 text-sm text-muted">
-          {totals.confirmedCount} confirmed {totals.confirmedCount === 1 ? "payment" : "payments"}
-        </p>
-
-        {(totals.pendingCount > 0 || totals.disputedCount > 0) && (
-          <ul className="mt-4 space-y-1.5 border-t border-line pt-4 text-sm">
-            {totals.pendingCount > 0 && (
-              <li className="flex items-center gap-2 text-primary-hover">
-                <Clock className="size-4 shrink-0" aria-hidden />
-                {formatMoney(totals.pendingTotal, currency)} awaiting confirmation ({totals.pendingCount})
-              </li>
-            )}
-            {totals.disputedCount > 0 && (
-              <li className="flex items-center gap-2 text-danger">
-                <AlertTriangle className="size-4 shrink-0" aria-hidden />
-                {totals.disputedCount} disputed, not counted in the total
-              </li>
-            )}
-          </ul>
-        )}
-      </section>
-
-      <div data-tour="schedule" className="mt-6">
+      <div data-tour="schedule">
         <PaymentSchedule items={schedule} projectId={id} currency={currency} side={side} manualHref={requestFor} initialHidden={scheduleHidden} />
       </div>
 
-      <InvoiceList
-        projectId={id}
-        invoices={invoices}
-        isOwner={isOwner}
-        canCreate={isOwner && canMakeInvoices(project.plan)}
-        today={todayIn(project.timeZone)}
-      />
 
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="font-semibold">Payments</h2>

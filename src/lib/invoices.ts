@@ -84,6 +84,16 @@ export async function fetchInvoices(supabase: SupabaseClient, projectId: string)
   }));
 }
 
+// For the money summary: what was invoiced (sent invoices; cancelled ones don't count) and how many drafts are waiting.
+export function invoiceSummary(invoices: InvoiceListItem[]) {
+  const sent = invoices.filter((i) => i.status === "sent");
+  return {
+    total: sent.reduce((sum, i) => sum + i.total, 0),
+    count: sent.length,
+    drafts: invoices.filter((i) => i.status === "draft").length,
+  };
+}
+
 export type InvoiceView = {
   id: string;
   projectId: string;

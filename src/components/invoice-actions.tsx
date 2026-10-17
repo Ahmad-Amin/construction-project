@@ -86,7 +86,7 @@ export function InvoiceActions({
               disabled={pending}
               onClick={async () => {
                 if (await confirm({ title: "Delete this draft?", message: "This can't be undone.", confirmLabel: "Delete draft", tone: "danger" })) {
-                  run(() => deleteInvoiceDraft(projectId, invoiceId), () => "Draft deleted", () => router.push(`/dashboard/projects/${projectId}/payments`));
+                  run(() => deleteInvoiceDraft(projectId, invoiceId), () => "Draft deleted", () => router.push(`/dashboard/projects/${projectId}/invoices`));
                 }
               }}
               className={`${button("secondary")} text-danger`}
