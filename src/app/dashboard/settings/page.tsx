@@ -195,18 +195,6 @@ export default async function SettingsPage({
           </SettingsRows>
         </SettingsSection>
 
-        {isOwner && (
-          <SettingsSection
-            id="client-updates"
-            icon={CalendarDays}
-            title="Client updates"
-            description="Keep your clients informed without lifting a finger. Off until you turn it on."
-          >
-            <SettingsRows>
-              <CompanyWeeklySummaryToggle initial={companyRow?.weekly_summary ?? false} />
-            </SettingsRows>
-          </SettingsSection>
-        )}
 
         <SettingsSection
           id="appearance"
@@ -300,6 +288,19 @@ export default async function SettingsPage({
                 </div>
               </div>
             </div>
+          </SettingsSection>
+        )}
+
+        {isOwner && (
+          <SettingsSection
+            id="client-updates"
+            icon={CalendarDays}
+            title="Client updates"
+            description="Keep your clients informed without lifting a finger. Off until you turn it on."
+          >
+            <SettingsRows>
+              <CompanyWeeklySummaryToggle initial={companyRow?.weekly_summary ?? false} />
+            </SettingsRows>
           </SettingsSection>
         )}
 

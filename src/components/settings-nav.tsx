@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell, Building2, CalendarDays, Database, Palette, ShieldCheck, Sparkles, UserRound, type LucideIcon, Receipt } from "lucide-react";
 
 // The icon for each section, looked up by its id here (icons are components, which a server page
@@ -24,27 +24,54 @@ export type SettingsNavGroup = { label: string; items: SettingsNavItem[] };
 // are reading is highlighted as you scroll, and tapping one scrolls straight to it.
 export function SettingsNav({ groups }: { groups: SettingsNavGroup[] }) {
   const [active, setActive] = useState<string | null>(null);
+  // A section picked from this list stays highlighted until the person scrolls on their own: near the bottom of the
+  // page a short section can't reach the top, and the scroll position alone would point at its neighbour.
+  const picked = useRef<string | null>(null);
 
   useEffect(() => {
     const ids = groups.flatMap((g) => g.items.map((i) => i.id));
-    const sections = ids.map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e);
-    const visible = new Set<string>();
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) visible.add(entry.target.id);
-          else visible.delete(entry.target.id);
-        }
-        // The first visible section, in page order, is the current one.
-        setActive(ids.find((id) => visible.has(id)) ?? null);
-      },
-      { rootMargin: "-15% 0px -65% 0px", threshold: 0 },
-    );
-    sections.forEach((s) => observer.observe(s));
-    return () => observer.disconnect();
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      if (picked.current) return;
+      const sections = ids.map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e);
+      if (sections.length === 0) return;
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      // At the very bottom, the last section is the one being read (it may be too short to reach the top). Otherwise
+      // it's the last section whose top has passed the upper third of the screen.
+      let current = sections[0].id;
+      if (atBottom) current = sections[sections.length - 1].id;
+      else {
+        const line = window.innerHeight * 0.3;
+        for (const section of sections) if (section.getBoundingClientRect().top <= line) current = section.id;
+      }
+      setActive(current);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    // Scrolling by hand (wheel, touch, keys) hands the highlight back to the scroll position.
+    const release = () => {
+      if (picked.current) {
+        picked.current = null;
+        schedule();
+      }
+    };
+    schedule();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    const manual = ["wheel", "touchstart", "keydown"] as const;
+    manual.forEach((ev) => window.addEventListener(ev, release, { passive: true }));
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      manual.forEach((ev) => window.removeEventListener(ev, release));
+    };
   }, [groups]);
 
   function go(id: string) {
+    picked.current = id;
     setActive(id);
     document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     history.replaceState(null, "", `#${id}`);
