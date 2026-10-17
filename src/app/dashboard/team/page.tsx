@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowRight, Sparkles, Users } from "lucide-react";
 import { ProgressBar } from "@/components/project-bits";
 import { TeamManager } from "@/components/team-manager";
-import { PLANS, staffLimitText } from "@/lib/plans";
+import { PLANS, canMakeInvoices, staffLimitText } from "@/lib/plans";
 import { fetchTeam, staffPlacesUsed } from "@/lib/team";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
@@ -11,8 +11,9 @@ import { getViewer } from "@/lib/viewer";
 
 export const metadata = { title: "Team" };
 
-// The owner's staff: who is on the team, which projects each can open, and whether they see payments. Only the owner
-// can open this page (the database refuses everyone else too).
+// The owner's staff: who is on the team, which projects each can open, what they see there (payments, budget, client
+// details) and what they can do (view only, invoices, paused). Only the owner can open this page (the database refuses
+// everyone else too).
 export default async function TeamPage() {
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
@@ -34,7 +35,8 @@ export default async function TeamPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Team</h1>
           <p className="mt-1 max-w-2xl text-muted">
-            Invite your site supervisors. They post updates and photos on the projects you give them, and you decide whether they can also see payments.
+            Invite your site supervisors. They post updates and photos on the projects you give them, and you decide what else
+            they can see and do.
           </p>
         </div>
       </div>
@@ -80,7 +82,7 @@ export default async function TeamPage() {
         )}
       </section>
 
-      <TeamManager team={team} companyName={company.name} timeZone={company.timeZone} canInvite={!full} />
+      <TeamManager team={team} companyName={company.name} timeZone={company.timeZone} canInvite={!full} invoices={canMakeInvoices(company.plan)} />
     </main>
   );
 }

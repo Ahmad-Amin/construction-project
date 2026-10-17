@@ -3,6 +3,7 @@ import { FormFrame, FormHeading } from "@/components/form-frame";
 import { PaymentForm } from "@/components/payment-form";
 import { ScheduleForm } from "@/components/schedule-form";
 import { formatMoney, todayIn } from "@/lib/format";
+import { canPayInvoice, fetchInvoices, invoiceOptions } from "@/lib/invoices";
 import { fetchSchedule, fetchStages } from "@/lib/payment-schedule";
 import { PAYMENT_COLUMNS, toPaymentItem, viewerSide, withReceiptUrls } from "@/lib/payments";
 import { getProjectBasic } from "@/lib/projects";
@@ -21,7 +22,12 @@ import {
 // its own width.
 type ViewProps = { projectId: string; sheet?: boolean };
 
-export async function NewPaymentView({ projectId: id, forItem, sheet }: ViewProps & { forItem?: string }) {
+export async function NewPaymentView({
+  projectId: id,
+  forItem,
+  forInvoice,
+  sheet,
+}: ViewProps & { forItem?: string; forInvoice?: string }) {
   const project = await getProjectBasic(id);
   if (!project) notFound();
 
@@ -34,10 +40,13 @@ export async function NewPaymentView({ projectId: id, forItem, sheet }: ViewProp
 
   const today = todayIn(project.timeZone);
 
-  // Instalments still waiting for money. "Record payment" on one of them arrives with it picked
-  // and the amount filled in.
-  const open = (await fetchSchedule(await createClient(), id)).filter((i) => i.left > 0);
-  const chosen = open.find((i) => i.id === forItem);
+  // Instalments still waiting for money, and sent invoices still to be paid. "Record payment" on one of them arrives
+  // with it picked and the amount filled in (an invoice also picks its instalment, when it has one).
+  const supabase = await createClient();
+  const [schedule, invoices] = await Promise.all([fetchSchedule(supabase, id), fetchInvoices(supabase, id)]);
+  const open = schedule.filter((i) => i.left > 0);
+  const invoice = invoices.find((i) => i.id === forInvoice && canPayInvoice(i));
+  const chosen = open.find((i) => i.id === (forItem ?? invoice?.scheduleItemId));
 
   return (
     <FormFrame sheet={sheet}>
@@ -52,12 +61,15 @@ export async function NewPaymentView({ projectId: id, forItem, sheet }: ViewProp
         today={today}
         action={createPayment.bind(null, id)}
         scheduleOptions={open.map((i) => ({ id: i.id, label: `${i.title} · ${formatMoney(i.left, project.currency)} to go` }))}
+        invoiceOptions={invoiceOptions(invoices)}
+        fromInvoice={!!invoice}
         initial={{
-          amount: chosen ? String(chosen.left) : "",
+          amount: invoice ? String(invoice.balance) : chosen ? String(chosen.left) : "",
           payment_date: today,
           reference: "",
           note: "",
           schedule_item_id: chosen?.id ?? "",
+          invoice_id: invoice?.id ?? "",
         }}
       />
     </FormFrame>
@@ -89,8 +101,10 @@ export async function EditPaymentView({ projectId: id, paymentId, sheet }: ViewP
     redirect(`/dashboard/projects/${id}/payments`);
   }
 
-  // The instalments this payment could settle: ones with money still to come, and the one it is on now.
-  const options = (await fetchSchedule(supabase, id)).filter((i) => i.left > 0 || i.id === payment.scheduleItemId);
+  // The instalments this payment could settle: ones with money still to come, and the one it is on now. The same for
+  // invoices.
+  const [schedule, invoices] = await Promise.all([fetchSchedule(supabase, id), fetchInvoices(supabase, id)]);
+  const options = schedule.filter((i) => i.left > 0 || i.id === payment.scheduleItemId);
 
   return (
     <FormFrame sheet={sheet}>
@@ -116,8 +130,10 @@ export async function EditPaymentView({ projectId: id, paymentId, sheet }: ViewP
           reference: payment.reference,
           note: payment.note,
           schedule_item_id: payment.scheduleItemId ?? "",
+          invoice_id: payment.invoiceId ?? "",
         }}
         scheduleOptions={options.map((i) => ({ id: i.id, label: `${i.title} · ${formatMoney(i.amount, project.currency)}` }))}
+        invoiceOptions={invoiceOptions(invoices, payment.invoiceId)}
       />
     </FormFrame>
   );

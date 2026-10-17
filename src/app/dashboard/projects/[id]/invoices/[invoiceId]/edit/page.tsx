@@ -3,9 +3,8 @@ import { InvoiceForm } from "@/components/invoice-form";
 import { todayIn } from "@/lib/format";
 import { fetchInvoiceView } from "@/lib/invoices";
 import { fetchSchedule } from "@/lib/payment-schedule";
-import { getProjectBasic } from "@/lib/projects";
+import { getProjectAccess, getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
-import { getViewer } from "@/lib/viewer";
 
 export const metadata = { title: "Edit invoice" };
 
@@ -13,8 +12,8 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ id
   const { id, invoiceId } = await params;
   const project = await getProjectBasic(id);
   if (!project) notFound();
-  const viewer = await getViewer();
-  if (viewer?.company?.id !== project.company_id || viewer.company.role !== "owner") redirect(`/dashboard/projects/${id}/payments`);
+  const access = await getProjectAccess(id);
+  if (!access.isTeam || !access.invoices) redirect(`/dashboard/projects/${id}/payments`);
 
   const supabase = await createClient();
   const [invoice, schedule] = await Promise.all([fetchInvoiceView(supabase, id, invoiceId), fetchSchedule(supabase, id)]);

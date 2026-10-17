@@ -4,9 +4,8 @@ import { InvoiceUpgrade } from "@/components/invoice-upgrade";
 import { todayIn } from "@/lib/format";
 import { fetchSchedule } from "@/lib/payment-schedule";
 import { canMakeInvoices } from "@/lib/plans";
-import { getProjectBasic } from "@/lib/projects";
+import { getProjectAccess, getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
-import { getViewer } from "@/lib/viewer";
 
 export const metadata = { title: "New invoice" };
 
@@ -21,9 +20,9 @@ export default async function NewInvoicePage({ params }: { params: Promise<{ id:
   const project = await getProjectBasic(id);
   if (!project) notFound();
 
-  // Only the company owner creates invoices (the database checks this too).
-  const viewer = await getViewer();
-  if (viewer?.company?.id !== project.company_id || viewer.company.role !== "owner") redirect(`/dashboard/projects/${id}/payments`);
+  // The owner, and staff the owner allowed to invoice on this project (the database checks this too).
+  const access = await getProjectAccess(id);
+  if (!access.isTeam || !access.invoices) redirect(`/dashboard/projects/${id}/payments`);
   if (!canMakeInvoices(project.plan)) return <InvoiceUpgrade />;
 
   const supabase = await createClient();

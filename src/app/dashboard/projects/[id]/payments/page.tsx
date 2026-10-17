@@ -7,7 +7,7 @@ import { PaymentCard } from "@/components/payment-card";
 import { MoneyHeader } from "@/components/money-header";
 import { PaymentSchedule } from "@/components/payment-schedule";
 import { formatDate, formatMoney } from "@/lib/format";
-import { fetchInvoices, invoiceSummary } from "@/lib/invoices";
+import { fetchInvoices, invoiceNumber, invoiceSummary } from "@/lib/invoices";
 import {
   awaitingMyResponse,
   fetchPayments,
@@ -16,7 +16,7 @@ import {
 } from "@/lib/payments";
 import { getOrigin } from "@/lib/origin";
 import { fetchSchedule, type ScheduleItem } from "@/lib/payment-schedule";
-import { canSeePayments, getProjectBasic } from "@/lib/projects";
+import { getProjectAccess, getProjectBasic } from "@/lib/projects";
 import { SCHEDULE_COOKIE } from "@/lib/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/types";
@@ -34,21 +34,23 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
   const project = await getProjectBasic(id);
   if (!project) notFound();
 
-  // Site staff see payments only where the owner allowed it.
-  if (!(await canSeePayments(id))) redirect(`/dashboard/projects/${id}`);
+  // Site staff see payments only where the owner allowed it, and invoices only where they may invoice.
+  const access = await getProjectAccess(id);
+  if (!access.payments) redirect(`/dashboard/projects/${id}`);
 
   const viewer = await getViewer();
-  const isTeam = !!viewer?.company && viewer.company.id === project.company_id;
-  const isOwner = isTeam && viewer?.company?.role === "owner";
+  const isTeam = access.isTeam;
+  const isOwner = access.isOwner;
   const side = viewerSide(isTeam, isOwner);
+  const seesInvoices = !isTeam || access.invoices;
 
   const supabase = await createClient();
   const [payments, totals, schedule, invoices] = await Promise.all([
     fetchPayments(supabase, id, PAGE_SIZE),
     fetchPaymentTotals(supabase, id),
     fetchSchedule(supabase, id),
-    // The owner's invoices, or the ones sent to this homeowner. Staff don't see invoices.
-    isOwner || !isTeam ? fetchInvoices(supabase, id) : Promise.resolve([]),
+    // The company's invoices, or the ones sent to this homeowner. Most staff don't see invoices.
+    seesInvoices ? fetchInvoices(supabase, id) : Promise.resolve([]),
   ]);
   const scheduleHidden = (await cookies()).get(SCHEDULE_COOKIE)?.value === "hidden";
   const dueNow = schedule.filter((i) => i.status === "due");
@@ -94,6 +96,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
       }),
     );
   const scheduleTitles = new Map(schedule.map((i) => [i.id, i.title]));
+  const invoiceNumbers = new Map(invoices.map((i) => [i.id, invoiceNumber(i.number)]));
   const total = totals.confirmedCount + totals.pendingCount + totals.disputedCount;
 
   return (
@@ -104,7 +107,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
         currency={currency}
         side={side}
         totals={totals}
-        invoiced={isOwner || !isTeam ? invoiceSummary(invoices) : null}
+        invoiced={seesInvoices ? invoiceSummary(invoices) : null}
       />
 
       {waitingOnMe > 0 && (
@@ -163,7 +166,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
       ) : (
         <div data-tour="list" className="space-y-3">
           {payments.map((p) => (
-            <PaymentCard key={p.id} payment={p} projectId={id} currency={currency} timeZone={project.timeZone} viewerId={viewer?.userId} side={side} nudgeHref={nudgeFor(p)} sendReminders={whatsappEnabled()} forLabel={p.scheduleItemId ? (scheduleTitles.get(p.scheduleItemId) ?? null) : null} />
+            <PaymentCard key={p.id} payment={p} projectId={id} currency={currency} timeZone={project.timeZone} viewerId={viewer?.userId} side={side} nudgeHref={nudgeFor(p)} sendReminders={whatsappEnabled()} forLabel={p.scheduleItemId ? (scheduleTitles.get(p.scheduleItemId) ?? null) : null} invoiceLabel={p.invoiceId ? (invoiceNumbers.get(p.invoiceId) ?? null) : null} />
           ))}
           {total > PAGE_SIZE && (
             <p className="text-center text-sm text-muted">Showing the latest {PAGE_SIZE} payments.</p>

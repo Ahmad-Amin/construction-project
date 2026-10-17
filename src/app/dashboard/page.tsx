@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { Archive, BellRing, Banknote, ChevronDown, Hammer, Plus, Receipt, Trash2 } from "lucide-react";
+import { Archive, BellRing, Banknote, ChevronDown, Hammer, PauseCircle, Plus, Receipt, Trash2 } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { AuthForm } from "@/components/auth-form";
 import { AuthShell } from "@/components/auth-shell";
@@ -90,6 +90,24 @@ export default async function DashboardPage({
           ]}
         />
       </AuthShell>
+    );
+  }
+
+  // A staff member the owner paused: the database shows them nothing, so say why.
+  if (viewer.company?.staff?.paused) {
+    return (
+      <main className="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="mx-auto mt-6 flex max-w-lg flex-col items-center rounded-2xl border border-line bg-surface px-6 py-12 text-center">
+          <span className="flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
+            <PauseCircle className="size-6" aria-hidden />
+          </span>
+          <h1 className="mt-4 text-lg font-semibold">Your access is paused</h1>
+          <p className="mt-1 text-sm text-muted">
+            The owner of {viewer.company.name} has paused your account, so you can&apos;t open their projects for now. Ask them
+            to resume it from their Team page.
+          </p>
+        </div>
+      </main>
     );
   }
 

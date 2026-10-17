@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, CalendarClock, CheckCircle2, Clock, Paperclip, Pencil } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, Clock, Paperclip, Pencil, Receipt } from "lucide-react";
 import { LinkPending } from "@/components/link-pending";
 import { DeletePaymentButton, PaymentResponse } from "@/components/payment-controls";
 import { PaymentReminderButton } from "@/components/payment-reminder-button";
@@ -31,6 +31,7 @@ export function PaymentCard({
   nudgeHref,
   sendReminders = false,
   forLabel = null,
+  invoiceLabel = null,
 }: {
   payment: PaymentItem;
   projectId: string;
@@ -45,6 +46,8 @@ export function PaymentCard({
   sendReminders?: boolean;
   // The scheduled instalment this payment settles, when it says so.
   forLabel?: string | null;
+  // The invoice it is for ("INV-0003"), when it says so and this person can see invoices.
+  invoiceLabel?: string | null;
 }) {
   const isRecorder = p.createdBy === viewerId;
   const otherSide: PaymentSide = p.side === "contractor" ? "client" : "contractor";
@@ -85,6 +88,14 @@ export function PaymentCard({
               <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium">
                 <CalendarClock className="size-3.5 text-muted" aria-hidden /> {forLabel}
               </span>
+            )}
+            {invoiceLabel && p.invoiceId && (
+              <Link
+                href={`/dashboard/projects/${projectId}/invoices/${p.invoiceId}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium tabular-nums transition-colors hover:bg-line"
+              >
+                <Receipt className="size-3.5 text-muted" aria-hidden /> {invoiceLabel}
+              </Link>
             )}
           </div>
 

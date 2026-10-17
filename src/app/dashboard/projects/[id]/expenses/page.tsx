@@ -8,7 +8,7 @@ import { ExpenseFilterBar } from "@/components/expense-filter-bar";
 import { fetchExpenseOverview } from "@/lib/expenses";
 import { filtersToQuery, hasActiveFilters, parseExpenseFilters } from "@/lib/expense-filters";
 import { formatMoney, todayIn } from "@/lib/format";
-import { getProjectBasic } from "@/lib/projects";
+import { getProjectAccess, getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
@@ -32,6 +32,8 @@ export default async function ExpensesPage({
   const viewer = await getViewer();
   const isTeam = !!viewer?.company && viewer.company.id === project.company_id;
   const isOwner = isTeam && viewer?.company?.role === "owner";
+  // View-only staff can look but not add or change.
+  const canAdd = isTeam && (await getProjectAccess(id)).canWrite;
 
   const filters = parseExpenseFilters(await searchParams, isTeam);
   const filtered = hasActiveFilters(filters);
@@ -79,7 +81,7 @@ export default async function ExpensesPage({
             <span className="ml-2 text-sm font-normal text-muted">{overview.matching} shown</span>
           )}
         </h2>
-        {isTeam && (
+        {canAdd && (
           <Link href={`${base}/new`} data-tour="add" className={button("primary", "sm")}>
             <Plus className="size-4" aria-hidden /> Add expense
             <LinkPending className="size-4" />
@@ -96,7 +98,7 @@ export default async function ExpensesPage({
           <p className="mt-1 max-w-xs text-sm text-muted">
             {filtered
               ? "Try a wider date range, or clear the filters."
-              : isTeam
+              : canAdd
                 ? "Record what you spend and attach the receipt. Only what you choose to share is shown to your client."
                 : "Expenses your contractor shares with you will appear here."}
           </p>
@@ -116,7 +118,7 @@ export default async function ExpensesPage({
               currency={currency}
               isTeam={isTeam}
               isOwner={isOwner}
-              canEdit={isOwner || (isTeam && e.createdBy === viewer?.userId)}
+              canEdit={isOwner || (canAdd && e.createdBy === viewer?.userId)}
             />
           ))}
           {overview.matching > PAGE_SIZE && (

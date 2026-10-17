@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { AlertTriangle, Banknote, Clock, Receipt } from "lucide-react";
+import { AlertTriangle, Banknote, CheckCircle2, Clock, Receipt } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import type { PaymentSide } from "@/lib/payments";
 
 type Totals = { confirmedTotal: number; confirmedCount: number; pendingTotal: number; pendingCount: number; disputedCount: number };
 
 // The top of a project's Payments section, the same on both tabs: what has been received (confirmed payments) next to
-// what has been invoiced, then the Payments / Invoices switch. "Outstanding" (invoiced minus paid) comes with paid
-// tracking: until payments point at invoices, that difference would be wrong whenever a payment wasn't for an invoice.
+// what has been invoiced and how much of that is still to be paid, then the Payments / Invoices switch. "Outstanding"
+// counts only payments that say which invoice they are for, so a payment that isn't for an invoice never hides one.
 export function MoneyHeader({
   projectId,
   active,
@@ -22,8 +22,8 @@ export function MoneyHeader({
   // Who is looking: the contractor's owner, the homeowner, or null for site staff.
   side: PaymentSide | null;
   totals: Totals;
-  // The invoices this person can see (sent ones), or null when they can't see invoices at all (site staff).
-  invoiced: { total: number; count: number; drafts: number } | null;
+  // The invoices this person can see (sent ones), or null when they can't see invoices at all (most site staff).
+  invoiced: { total: number; outstanding: number; count: number; drafts: number } | null;
 }) {
   const base = `/dashboard/projects/${projectId}`;
   const isClient = side === "client";
@@ -73,6 +73,16 @@ export function MoneyHeader({
                 <p className="mt-1 text-sm text-muted">
                   {invoiced.count} {invoiced.count === 1 ? "invoice" : "invoices"} sent
                   {invoiced.drafts > 0 && ` · ${invoiced.drafts} ${invoiced.drafts === 1 ? "draft" : "drafts"}`}
+                </p>
+                <p className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 border-t border-line pt-4 text-sm">
+                  <span className="text-muted">{isClient ? "Still to pay" : "Outstanding"}</span>
+                  {invoiced.outstanding > 0 ? (
+                    <span className="font-semibold tabular-nums text-primary-hover">{formatMoney(invoiced.outstanding, currency)}</span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 font-medium text-success">
+                      <CheckCircle2 className="size-4" aria-hidden /> All paid
+                    </span>
+                  )}
                 </p>
               </>
             ) : (

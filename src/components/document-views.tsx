@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { DocumentForm } from "@/components/document-form";
 import { FormFrame, FormHeading } from "@/components/form-frame";
 import { DOCUMENT_COLUMNS, toDocumentItem } from "@/lib/documents";
-import { getProjectBasic } from "@/lib/projects";
+import { getProjectAccess, getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
 
@@ -16,6 +16,8 @@ export async function NewDocumentView({ projectId: id, sheet }: ViewProps) {
   // The contractor's team and the project's homeowner can add documents. Row-level security stops anyone else.
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
+  // View-only staff can't add anything.
+  if (!(await getProjectAccess(id)).canWrite) redirect(`/dashboard/projects/${id}/documents`);
   const isTeam = !!viewer.company && viewer.company.id === project.company_id;
   const isOwner = isTeam && viewer.company?.role === "owner";
 
@@ -38,6 +40,7 @@ export async function EditDocumentView({ projectId: id, documentId, sheet }: Vie
 
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
+  if (!(await getProjectAccess(id)).canWrite) redirect(`/dashboard/projects/${id}/documents`);
   const isTeam = !!viewer.company && viewer.company.id === project.company_id;
 
   const supabase = await createClient();

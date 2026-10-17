@@ -6,7 +6,7 @@ import { UpdateCard } from "@/components/update-card";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { getOrigin } from "@/lib/origin";
 import { overallProgress } from "@/lib/project";
-import { getProjectBasic } from "@/lib/projects";
+import { getProjectAccess, getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
 import { one } from "@/lib/types";
@@ -33,6 +33,8 @@ export default async function UpdatesPage({
   const viewer = await getViewer();
   const isTeam = !!viewer?.company && viewer.company.id === project.company_id;
   const isOwner = isTeam && viewer?.company?.role === "owner";
+  // View-only staff can look but not post.
+  const canPost = isTeam && (await getProjectAccess(id)).canWrite;
 
   const supabase = await createClient();
   const updates = await fetchUpdates(supabase, id, PAGE_SIZE);
@@ -86,7 +88,7 @@ export default async function UpdatesPage({
 
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="font-semibold">Site updates</h2>
-        {isTeam && (
+        {canPost && (
           <Link href={`/dashboard/projects/${id}/updates/new`} data-tour="add" className={button("primary", "sm")}>
             <Plus className="size-4" aria-hidden /> Add update
             <LinkPending className="size-4" />
@@ -101,7 +103,7 @@ export default async function UpdatesPage({
           </span>
           <h3 className="mt-4 font-semibold">No updates yet</h3>
           <p className="mt-1 max-w-xs text-sm text-muted">
-            {isTeam
+            {canPost
               ? "Post a note and photos from site. Your client sees it straight away."
               : "Progress updates and photos from site will appear here."}
           </p>
@@ -114,7 +116,7 @@ export default async function UpdatesPage({
               update={u}
               projectId={id}
               timeZone={project.timeZone}
-              canDelete={isOwner || (isTeam && u.authorId === viewer?.userId)}
+              canDelete={isOwner || (canPost && u.authorId === viewer?.userId)}
               shareHref={shareFor(u)}
             />
           ))}

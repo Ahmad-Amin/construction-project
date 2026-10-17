@@ -35,6 +35,7 @@ type PaymentFields = {
   note: string;
   receipt_path: string | null;
   schedule_item_id: string | null;
+  invoice_id: string | null;
 };
 
 function readPayment(
@@ -54,10 +55,14 @@ function readPayment(
   }
   const forItem = text(formData, "schedule_item_id");
   if (forItem && !UUID.test(forItem)) return { ok: false, error: GENERIC };
+  // The invoice it pays; the database checks it is a sent invoice of this project.
+  const forInvoice = text(formData, "invoice_id");
+  if (forInvoice && !UUID.test(forInvoice)) return { ok: false, error: GENERIC };
   return {
     ok: true,
     value: {
       schedule_item_id: forItem || null,
+      invoice_id: forInvoice || null,
       amount: amount.value,
       payment_date: date,
       reference: text(formData, "reference"),
@@ -95,7 +100,14 @@ export async function createPayment(
   refresh(projectId);
   queueNotificationDelivery();
   await flash("Payment recorded. The other side has been asked to confirm it.");
-  redirect(`/dashboard/projects/${projectId}/payments`);
+  redirect(backTo(projectId, formData, parsed.value.invoice_id));
+}
+
+// Back where the form was opened from: the invoice's page when it was opened there, otherwise Payments. Only a path we
+// build ourselves, never one taken from the request.
+function backTo(projectId: string, formData: FormData, invoiceId: string | null) {
+  const base = `/dashboard/projects/${projectId}`;
+  return text(formData, "back") === "invoice" && invoiceId ? `${base}/invoices/${invoiceId}` : `${base}/payments`;
 }
 
 export async function updatePayment(

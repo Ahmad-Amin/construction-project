@@ -27,6 +27,8 @@ export type PaymentItem = {
   receiptUrl: string | null;
   // The scheduled instalment this payment settles, when it says so.
   scheduleItemId: string | null;
+  // The invoice this payment is for, when it says so.
+  invoiceId: string | null;
 };
 
 type Row = {
@@ -45,10 +47,11 @@ type Row = {
   dispute_reason: string | null;
   receipt_path: string | null;
   schedule_item_id: string | null;
+  invoice_id: string | null;
 };
 
 export const PAYMENT_COLUMNS =
-  "id, amount, payment_date, reference, note, side, status, created_by, created_by_name, edited, responded_by_name, responded_at, dispute_reason, receipt_path, schedule_item_id";
+  "id, amount, payment_date, reference, note, side, status, created_by, created_by_name, edited, responded_by_name, responded_at, dispute_reason, receipt_path, schedule_item_id, invoice_id";
 
 export function toPaymentItem(r: Row): PaymentItem {
   return {
@@ -68,6 +71,7 @@ export function toPaymentItem(r: Row): PaymentItem {
     receiptPath: r.receipt_path,
     receiptUrl: null,
     scheduleItemId: r.schedule_item_id,
+    invoiceId: r.invoice_id,
   };
 }
 

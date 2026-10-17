@@ -12,13 +12,13 @@ import { invoiceNumber, type InvoiceStatus } from "@/lib/invoices";
 import { button } from "@/lib/ui";
 import { useAsk, useConfirm } from "@/components/confirm-dialog";
 
-// What can be done with an invoice from its page. The owner: send, edit or delete a draft; download, share or cancel a
-// sent one. The homeowner: download it.
+// What can be done with an invoice from its page. The owner (and staff allowed to invoice): send, edit or delete a
+// draft; download, share or cancel a sent one. The homeowner: download it.
 export function InvoiceActions({
   projectId,
   invoiceId,
   status,
-  isOwner,
+  canManage,
   clientName,
   clientJoined,
   whatsappHref,
@@ -26,7 +26,7 @@ export function InvoiceActions({
   projectId: string;
   invoiceId: string;
   status: InvoiceStatus;
-  isOwner: boolean;
+  canManage: boolean;
   clientName: string;
   clientJoined: boolean;
   whatsappHref: string | null;
@@ -53,7 +53,7 @@ export function InvoiceActions({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
-        {isOwner && status === "draft" && (
+        {canManage && status === "draft" && (
           <>
             <button
               type="button"
@@ -97,12 +97,12 @@ export function InvoiceActions({
         )}
 
         {status !== "draft" && (
-          <a href={`${pdf}?download=1`} className={button(isOwner ? "secondary" : "primary")}>
+          <a href={`${pdf}?download=1`} className={button(canManage ? "secondary" : "primary")}>
             <Download className="size-4" aria-hidden /> Download PDF
           </a>
         )}
-        {isOwner && status === "sent" && whatsappHref && <WhatsAppButton href={whatsappHref}>Share on WhatsApp</WhatsAppButton>}
-        {isOwner && status === "sent" && (
+        {canManage && status === "sent" && whatsappHref && <WhatsAppButton href={whatsappHref}>Share on WhatsApp</WhatsAppButton>}
+        {canManage && status === "sent" && (
           <button
             type="button"
             disabled={pending}
@@ -123,7 +123,7 @@ export function InvoiceActions({
           </button>
         )}
       </div>
-      {isOwner && status === "draft" && !clientJoined && (
+      {canManage && status === "draft" && !clientJoined && (
         <p className="rounded-lg bg-primary-soft px-3 py-2 text-sm text-primary-hover">
           {clientName || "Your client"} hasn&apos;t joined yet, so they won&apos;t get an email. The invoice will be waiting for them
           when they do, and you can also share it on WhatsApp once it&apos;s sent.

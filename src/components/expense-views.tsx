@@ -3,7 +3,7 @@ import { ExpenseForm } from "@/components/expense-form";
 import { FormFrame, FormHeading } from "@/components/form-frame";
 import { EXPENSE_COLUMNS, toExpenseItems } from "@/lib/expenses";
 import { todayIn } from "@/lib/format";
-import { getProjectBasic } from "@/lib/projects";
+import { getProjectAccess, getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
 
@@ -14,9 +14,9 @@ export async function NewExpenseView({ projectId: id, sheet }: ViewProps) {
   const project = await getProjectBasic(id);
   if (!project) notFound();
 
-  // Homeowners are read-only; only the company's team can record expenses.
+  // Homeowners and view-only staff can't record expenses; the rest of the company's team can.
   const viewer = await getViewer();
-  if (!viewer?.company || viewer.company.id !== project.company_id) {
+  if (!viewer?.company || viewer.company.id !== project.company_id || !(await getProjectAccess(id)).canWrite) {
     redirect(`/dashboard/projects/${id}/expenses`);
   }
   const today = todayIn(project.timeZone);
@@ -49,7 +49,7 @@ export async function EditExpenseView({ projectId: id, expenseId, sheet }: ViewP
   if (!project) notFound();
 
   const viewer = await getViewer();
-  if (!viewer?.company || viewer.company.id !== project.company_id) {
+  if (!viewer?.company || viewer.company.id !== project.company_id || !(await getProjectAccess(id)).canWrite) {
     redirect(`/dashboard/projects/${id}/expenses`);
   }
 

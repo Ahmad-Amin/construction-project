@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { MilestoneEditor, type EditorMode } from "@/components/milestone-editor";
 import { ProgressSummary } from "@/components/progress-summary";
 import { overallProgress } from "@/lib/project";
-import { getProjectBasic } from "@/lib/projects";
+import { getProjectAccess, getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import type { Milestone } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
@@ -26,7 +26,9 @@ export default async function ProgressPage({ params }: { params: Promise<{ id: s
   const percent = overallProgress(milestones);
 
   const isTeam = !!viewer?.company && viewer.company.id === project.company_id;
-  const mode: EditorMode = !isTeam ? "readonly" : viewer?.company?.role === "owner" ? "owner" : "staff";
+  // View-only staff see the milestones as the homeowner does.
+  const canWrite = (await getProjectAccess(id)).canWrite;
+  const mode: EditorMode = !isTeam || !canWrite ? "readonly" : viewer?.company?.role === "owner" ? "owner" : "staff";
 
   return (
     <div>

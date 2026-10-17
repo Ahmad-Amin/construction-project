@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getOrigin } from "@/lib/origin";
 import { createClient } from "@/lib/supabase/server";
+import type { StaffSettings } from "@/lib/team";
 
 export type TeamResult = { error?: string; link?: string };
 
@@ -15,11 +16,19 @@ const friendly = (error: { code?: string; message: string }) => (error.code === 
 const cleanIds = (list: unknown): string[] =>
   Array.isArray(list) ? [...new Set(list.filter((x): x is string => typeof x === "string" && UUID.test(x)))].slice(0, 200) : [];
 
-// Access is two lists: the projects a person can open, and, within those, the ones where they also see payments.
-function parseAccess(projectIds: unknown, paymentIds: unknown) {
+// Access is three lists: the projects a person can open; within those, the ones where they also see payments; and
+// within those, the ones where they can invoice.
+function parseAccess(projectIds: unknown, paymentIds: unknown, invoiceIds: unknown) {
   const projects = cleanIds(projectIds);
-  return { projects, payments: cleanIds(paymentIds).filter((id) => projects.includes(id)) };
+  const payments = cleanIds(paymentIds).filter((id) => projects.includes(id));
+  return { projects, payments, invoices: cleanIds(invoiceIds).filter((id) => payments.includes(id)) };
 }
+
+const parseSettings = (s: Partial<StaffSettings> | undefined): StaffSettings => ({
+  viewOnly: s?.viewOnly === true,
+  canSeeBudget: s?.canSeeBudget === true,
+  canSeeClient: s?.canSeeClient !== false,
+});
 
 const linkFor = async (token: string) => `${await getOrigin()}/invite/team/${token}`;
 const refresh = () => revalidatePath("/dashboard/team");
@@ -29,12 +38,15 @@ export async function inviteStaff(input: {
   email: string;
   projectIds: string[];
   paymentProjectIds: string[];
+  invoiceProjectIds: string[];
+  settings: StaffSettings;
 }): Promise<TeamResult> {
   const name = String(input?.name ?? "").trim();
   const email = String(input?.email ?? "").trim();
   if (!name) return { error: "Please enter the person's name." };
   if (!email) return { error: "Please enter their email address." };
-  const access = parseAccess(input.projectIds, input.paymentProjectIds);
+  const access = parseAccess(input.projectIds, input.paymentProjectIds, input.invoiceProjectIds);
+  const settings = parseSettings(input.settings);
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("invite_staff", {
@@ -42,6 +54,10 @@ export async function inviteStaff(input: {
     p_email: email,
     p_projects: access.projects,
     p_payment_projects: access.payments,
+    p_invoice_projects: access.invoices,
+    p_view_only: settings.viewOnly,
+    p_can_see_budget: settings.canSeeBudget,
+    p_can_see_client: settings.canSeeClient,
   });
   if (error || typeof data !== "string") return { error: error ? friendly(error) : GENERIC };
 
@@ -78,18 +94,52 @@ export async function revokeInvite(inviteId: string): Promise<TeamResult> {
   return {};
 }
 
-export async function saveStaffAccess(userId: string, projectIds: string[], paymentProjectIds: string[]): Promise<TeamResult> {
+// What a staff member can do: the person-wide settings, then the projects.
+export async function saveStaff(
+  userId: string,
+  settingsInput: StaffSettings,
+  projectIds: string[],
+  paymentProjectIds: string[],
+  invoiceProjectIds: string[],
+): Promise<TeamResult> {
   if (!UUID.test(userId)) return { error: GENERIC };
-  const access = parseAccess(projectIds, paymentProjectIds);
+  const access = parseAccess(projectIds, paymentProjectIds, invoiceProjectIds);
+  const settings = parseSettings(settingsInput);
   const supabase = await createClient();
+  const { error: settingsError } = await supabase.rpc("set_staff_settings", {
+    p_user: userId,
+    p_view_only: settings.viewOnly,
+    p_can_see_budget: settings.canSeeBudget,
+    p_can_see_client: settings.canSeeClient,
+    p_paused: null,
+  });
+  if (settingsError) return { error: friendly(settingsError) };
   const { error } = await supabase.rpc("set_staff_access", {
     p_user: userId,
     p_projects: access.projects,
     p_payment_projects: access.payments,
+    p_invoice_projects: access.invoices,
   });
   if (error) return { error: friendly(error) };
   refresh();
   // What staff see in their sidebar and project pages depends on this.
+  revalidatePath("/dashboard", "layout");
+  return {};
+}
+
+// Pause: they see and do nothing until resumed. Nothing of theirs is removed.
+export async function setStaffPaused(userId: string, paused: boolean): Promise<TeamResult> {
+  if (!UUID.test(userId) || typeof paused !== "boolean") return { error: GENERIC };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_staff_settings", {
+    p_user: userId,
+    p_view_only: null,
+    p_can_see_budget: null,
+    p_can_see_client: null,
+    p_paused: paused,
+  });
+  if (error) return { error: friendly(error) };
+  refresh();
   revalidatePath("/dashboard", "layout");
   return {};
 }

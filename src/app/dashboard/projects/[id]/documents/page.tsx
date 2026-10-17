@@ -5,7 +5,7 @@ import { DocumentCard } from "@/components/document-card";
 import { DocumentFilterBar, type DocumentFilter } from "@/components/document-filter-bar";
 import { LinkPending } from "@/components/link-pending";
 import { DOCUMENT_CATEGORIES, fetchDocuments } from "@/lib/documents";
-import { getProjectBasic } from "@/lib/projects";
+import { getProjectAccess, getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
@@ -26,6 +26,8 @@ export default async function DocumentsPage({
   const viewer = await getViewer();
   const isTeam = !!viewer?.company && viewer.company.id === project.company_id;
   const isOwner = isTeam && viewer?.company?.role === "owner";
+  // Everyone here can add documents (the homeowner too), except view-only staff.
+  const canAdd = (await getProjectAccess(id)).canWrite;
 
   const documents = await fetchDocuments(await createClient(), id);
   const viewerIsClient = !isTeam;
@@ -55,10 +57,12 @@ export default async function DocumentsPage({
             </span>
           )}
         </h2>
-        <Link href={`/dashboard/projects/${id}/documents/new`} data-tour="add" className={button("primary", "sm")}>
-          <Plus className="size-4" aria-hidden /> Add document
-          <LinkPending className="size-4" />
-        </Link>
+        {canAdd && (
+          <Link href={`/dashboard/projects/${id}/documents/new`} data-tour="add" className={button("primary", "sm")}>
+            <Plus className="size-4" aria-hidden /> Add document
+            <LinkPending className="size-4" />
+          </Link>
+        )}
       </div>
 
       {documents.length === 0 ? (
@@ -90,7 +94,7 @@ export default async function DocumentsPage({
                 timeZone={project.timeZone}
                 isTeam={isTeam}
                 isOwner={isOwner}
-                canEdit={!d.fromClient && (isOwner || (isTeam && d.createdBy === viewer?.userId))}
+                canEdit={!d.fromClient && (isOwner || (isTeam && canAdd && d.createdBy === viewer?.userId))}
                 viewerIsClient={viewerIsClient}
               />
             ))}

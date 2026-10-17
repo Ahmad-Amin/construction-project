@@ -1,39 +1,64 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Banknote, Check, Copy, FolderLock, Link2, MessageCircle, Pencil, RefreshCw, Trash2, UserPlus, X } from "lucide-react";
+import {
+  Banknote,
+  Check,
+  Copy,
+  EyeOff,
+  FolderLock,
+  Link2,
+  MessageCircle,
+  PauseCircle,
+  Pencil,
+  PlayCircle,
+  Receipt,
+  RefreshCw,
+  Trash2,
+  UserPlus,
+  X,
+} from "lucide-react";
 import {
   getInviteLink,
   inviteStaff,
   removeStaff,
   resendInvite,
   revokeInvite,
-  saveStaffAccess,
+  saveStaff,
+  setStaffPaused,
   type TeamResult,
 } from "@/app/dashboard/team/actions";
 import { Avatar } from "@/components/avatar";
 import { Spinner } from "@/components/spinner";
 import { useToast } from "@/components/toast";
 import { dayInZone, formatDate } from "@/lib/format";
-import type { ProjectAccess, Team, TeamInvite, TeamMember, TeamProject } from "@/lib/team";
+import type { ProjectAccess, StaffSettings, Team, TeamInvite, TeamMember, TeamProject } from "@/lib/team";
 import { button, inputClass } from "@/lib/ui";
 import { useConfirm } from "@/components/confirm-dialog";
 
 // ---------------------------------------------------------------------------
-// Access: which projects a person can open, and on which of them they also see payments.
+// Access: which projects a person can open, on which of them they also see payments, and on which they can invoice.
 // ---------------------------------------------------------------------------
-type Access = Record<string, { on: boolean; pay: boolean }>;
+type Row = { on: boolean; pay: boolean; invoice: boolean };
+type Access = Record<string, Row>;
 
 const accessFrom = (projects: TeamProject[], given: ProjectAccess[]): Access =>
   Object.fromEntries(
     projects.map((p) => {
       const found = given.find((g) => g.id === p.id);
-      return [p.id, { on: !!found, pay: !!found?.pay }];
+      return [p.id, { on: !!found, pay: !!found?.pay, invoice: !!found?.invoice }];
     }),
   );
 
 const projectIds = (access: Access) => Object.keys(access).filter((id) => access[id].on);
 const paymentIds = (access: Access) => Object.keys(access).filter((id) => access[id].on && access[id].pay);
+const invoiceIds = (access: Access) => Object.keys(access).filter((id) => access[id].on && access[id].pay && access[id].invoice);
+
+// Invoicing needs the client's details (they are on the invoice) and someone who isn't view-only.
+const invoiceBlock = (s: StaffSettings) =>
+  s.viewOnly ? "View-only staff can't send invoices." : !s.canSeeClient ? "Invoices need the client's details switched on." : null;
+
+const NEW_STAFF: StaffSettings = { viewOnly: false, canSeeBudget: false, canSeeClient: true };
 
 function Switch({ checked, onChange, disabled, label }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; label: string }) {
   return (
@@ -51,7 +76,21 @@ function Switch({ checked, onChange, disabled, label }: { checked: boolean; onCh
   );
 }
 
-function AccessPicker({ projects, value, onChange }: { projects: TeamProject[]; value: Access; onChange: (next: Access) => void }) {
+function AccessPicker({
+  projects,
+  value,
+  onChange,
+  invoices,
+  invoicesBlocked,
+}: {
+  projects: TeamProject[];
+  value: Access;
+  onChange: (next: Access) => void;
+  // The plan includes invoices: show the column.
+  invoices: boolean;
+  // Why invoices can't be switched on for this person right now (null when they can).
+  invoicesBlocked: string | null;
+}) {
   if (projects.length === 0) {
     return (
       <p className="rounded-xl bg-surface-2 px-4 py-3 text-sm text-muted">
@@ -60,33 +99,50 @@ function AccessPicker({ projects, value, onChange }: { projects: TeamProject[]; 
     );
   }
   const allOn = projects.every((p) => value[p.id]?.on);
-  const set = (id: string, patch: Partial<{ on: boolean; pay: boolean }>) =>
-    onChange({ ...value, [id]: { ...value[id], ...patch, ...(patch.on === false ? { pay: false } : {}) } });
+  const set = (id: string, patch: Partial<Row>) => {
+    const next = { ...value[id], ...patch };
+    // Switching something off switches off what depends on it.
+    if (!next.on) next.pay = false;
+    if (!next.pay) next.invoice = false;
+    onChange({ ...value, [id]: next });
+  };
+  const cell = "flex w-[4.5rem] shrink-0 justify-center sm:w-24";
 
   return (
-    <fieldset>
+    <fieldset className="min-w-0">
       <div className="mb-2 flex items-end justify-between gap-3">
         <legend className="text-sm font-medium">Projects they can open</legend>
         <button
           type="button"
-          onClick={() => onChange(Object.fromEntries(projects.map((p) => [p.id, { on: !allOn, pay: allOn ? false : (value[p.id]?.pay ?? false) }])))}
+          onClick={() =>
+            onChange(
+              Object.fromEntries(
+                projects.map((p) => [p.id, allOn ? { on: false, pay: false, invoice: false } : { ...(value[p.id] ?? { pay: false, invoice: false }), on: true }]),
+              ),
+            )
+          }
           className="text-xs font-semibold text-data-accent hover:underline"
         >
           {allOn ? "Clear all" : "Select all"}
         </button>
       </div>
       <div className="overflow-hidden rounded-xl border border-line">
-        <div className="flex items-center justify-between gap-3 border-b border-line bg-surface-2/60 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted">
-          <span>Project</span>
-          <span className="flex items-center gap-1.5">
-            <Banknote className="size-3.5" aria-hidden /> Can see payments
+        <div className="flex items-center gap-2 border-b border-line bg-surface-2/60 px-4 py-2 text-xs font-semibold text-muted sm:uppercase sm:tracking-wide">
+          <span className="flex-1">Project</span>
+          <span className={`${cell} items-center gap-1`}>
+            <Banknote className="hidden size-3.5 sm:block" aria-hidden /> Payments
           </span>
+          {invoices && (
+            <span className={`${cell} items-center gap-1`}>
+              <Receipt className="hidden size-3.5 sm:block" aria-hidden /> Invoices
+            </span>
+          )}
         </div>
         <ul className="max-h-72 divide-y divide-line overflow-y-auto">
           {projects.map((p) => {
-            const v = value[p.id] ?? { on: false, pay: false };
+            const v = value[p.id] ?? { on: false, pay: false, invoice: false };
             return (
-              <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <li key={p.id} className="flex items-center gap-2 px-4 py-2.5">
                 <label className="flex min-w-0 flex-1 items-center gap-3">
                   <input
                     type="checkbox"
@@ -95,9 +151,21 @@ function AccessPicker({ projects, value, onChange }: { projects: TeamProject[]; 
                     className="size-4 shrink-0 accent-primary"
                   />
                   <span className="min-w-0 truncate text-sm font-medium">{p.name}</span>
-                  {p.archived && <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted">Archived</span>}
+                  {p.archived && <span className="hidden rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted sm:inline">Archived</span>}
                 </label>
-                <Switch checked={v.pay} disabled={!v.on} onChange={(pay) => set(p.id, { pay })} label={`Can see payments on ${p.name}`} />
+                <span className={cell}>
+                  <Switch checked={v.pay} disabled={!v.on} onChange={(pay) => set(p.id, { pay })} label={`Can see payments on ${p.name}`} />
+                </span>
+                {invoices && (
+                  <span className={cell}>
+                    <Switch
+                      checked={v.invoice && !invoicesBlocked}
+                      disabled={!v.pay || !!invoicesBlocked}
+                      onChange={(invoice) => set(p.id, { invoice })}
+                      label={`Can create and send invoices on ${p.name}`}
+                    />
+                  </span>
+                )}
               </li>
             );
           })}
@@ -105,8 +173,60 @@ function AccessPicker({ projects, value, onChange }: { projects: TeamProject[]; 
       </div>
       <p className="mt-2 text-xs text-muted">
         They see updates, expenses, documents and progress on the projects they can open. Payments stay hidden unless you switch them on for that project.
+        {invoices && " Invoices lets them create and send invoices on that project, and needs payments on."}
       </p>
+      {invoices && invoicesBlocked && <p className="mt-1 text-xs font-medium text-primary-hover">{invoicesBlocked}</p>}
     </fieldset>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// What a person can do on every project they open.
+// ---------------------------------------------------------------------------
+function SettingsPicker({ value, onChange }: { value: StaffSettings; onChange: (next: StaffSettings) => void }) {
+  const rows: { key: keyof StaffSettings; title: string; text: string }[] = [
+    { key: "viewOnly", title: "View only", text: "They can look around, but can't post updates, add expenses or documents, or change progress." },
+    { key: "canSeeBudget", title: "Can see the budget", text: "The budget of the projects they can open." },
+    { key: "canSeeClient", title: "Can see the client's details", text: "The client's name, phone number and email. Invoices need this." },
+  ];
+  return (
+    <fieldset className="min-w-0">
+      <legend className="mb-2 text-sm font-medium">What they can do</legend>
+      <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line">
+        {rows.map((r) => (
+          <li key={r.key} className="flex items-center justify-between gap-4 px-4 py-3">
+            <span className="min-w-0">
+              <span className="block text-sm font-medium">{r.title}</span>
+              <span className="block text-xs text-muted">{r.text}</span>
+            </span>
+            <Switch checked={value[r.key]} onChange={(on) => onChange({ ...value, [r.key]: on })} label={r.title} />
+          </li>
+        ))}
+      </ul>
+    </fieldset>
+  );
+}
+
+// The limits on a person, as small tags (nothing when they have the full set).
+function SettingTags({ settings, paused }: { settings: StaffSettings; paused?: boolean }) {
+  const tags = [
+    paused && "Paused",
+    settings.viewOnly && "View only",
+    !settings.canSeeBudget && "Budget hidden",
+    !settings.canSeeClient && "Client details hidden",
+  ].filter((t): t is string => !!t);
+  if (tags.length === 0) return null;
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {tags.map((t) => (
+        <li
+          key={t}
+          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${t === "Paused" ? "bg-primary-soft text-primary-hover" : "bg-surface-2 text-muted"}`}
+        >
+          {t === "Paused" ? <PauseCircle className="size-3" aria-hidden /> : <EyeOff className="size-3" aria-hidden />} {t}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -166,9 +286,20 @@ function ErrorLine({ message }: { message: string | null }) {
 // ---------------------------------------------------------------------------
 // Inviting someone
 // ---------------------------------------------------------------------------
-function InviteForm({ projects, companyName, onClose }: { projects: TeamProject[]; companyName: string; onClose: () => void }) {
+function InviteForm({
+  projects,
+  companyName,
+  invoices,
+  onClose,
+}: {
+  projects: TeamProject[];
+  companyName: string;
+  invoices: boolean;
+  onClose: () => void;
+}) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [settings, setSettings] = useState<StaffSettings>(NEW_STAFF);
   const [access, setAccess] = useState<Access>(() => accessFrom(projects, []));
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<{ link: string; name: string } | null>(null);
@@ -179,7 +310,14 @@ function InviteForm({ projects, companyName, onClose }: { projects: TeamProject[
     if (pending) return;
     setError(null);
     startTransition(async () => {
-      const result = await inviteStaff({ name, email, projectIds: projectIds(access), paymentProjectIds: paymentIds(access) });
+      const result = await inviteStaff({
+        name,
+        email,
+        settings,
+        projectIds: projectIds(access),
+        paymentProjectIds: paymentIds(access),
+        invoiceProjectIds: invoices && !invoiceBlock(settings) ? invoiceIds(access) : [],
+      });
       if (result.error || !result.link) return setError(result.error ?? "Something went wrong. Please try again.");
       setSent({ link: result.link, name: name.trim() });
     });
@@ -214,7 +352,8 @@ function InviteForm({ projects, companyName, onClose }: { projects: TeamProject[
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="off" placeholder="name@example.com" className={inputClass} />
         </label>
       </div>
-      <AccessPicker projects={projects} value={access} onChange={setAccess} />
+      <SettingsPicker value={settings} onChange={setSettings} />
+      <AccessPicker projects={projects} value={access} onChange={setAccess} invoices={invoices} invoicesBlocked={invoiceBlock(settings)} />
       <ErrorLine message={error} />
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onClose} className={button("secondary")}>
@@ -248,6 +387,7 @@ function ProjectChips({ projects, given }: { projects: TeamProject[]; given: Pro
           <li key={g.id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-2.5 py-1 text-xs font-medium">
             {p.name}
             {g.pay && <Banknote className="size-3.5 text-success" aria-label="can see payments" />}
+            {g.invoice && <Receipt className="size-3.5 text-data-accent" aria-label="can send invoices" />}
           </li>
         );
       })}
@@ -255,10 +395,21 @@ function ProjectChips({ projects, given }: { projects: TeamProject[]; given: Pro
   );
 }
 
-function MemberCard({ member, projects, timeZone }: { member: TeamMember; projects: TeamProject[]; timeZone: string }) {
+function MemberCard({
+  member,
+  projects,
+  timeZone,
+  invoices,
+}: {
+  member: TeamMember;
+  projects: TeamProject[];
+  timeZone: string;
+  invoices: boolean;
+}) {
   const confirm = useConfirm();
   const toast = useToast();
   const [editing, setEditing] = useState(false);
+  const [settings, setSettings] = useState<StaffSettings>(member.settings);
   const [access, setAccess] = useState<Access>(() => accessFrom(projects, member.projects));
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -273,7 +424,7 @@ function MemberCard({ member, projects, timeZone }: { member: TeamMember; projec
     });
 
   return (
-    <article className="rounded-2xl border border-line bg-surface p-5">
+    <article className={`rounded-2xl border bg-surface p-5 ${member.paused ? "border-primary/40" : "border-line"}`}>
       <div className="flex flex-wrap items-start gap-3">
         <Avatar name={member.name} size="md" />
         <div className="min-w-0 flex-1 basis-44">
@@ -286,12 +437,33 @@ function MemberCard({ member, projects, timeZone }: { member: TeamMember; projec
             <button
               type="button"
               onClick={() => {
+                setSettings(member.settings);
                 setAccess(accessFrom(projects, member.projects));
                 setEditing(true);
               }}
               className={button("secondary", "sm")}
             >
               <Pencil className="size-4" aria-hidden /> Edit access
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={async () => {
+                if (member.paused) return run(() => setStaffPaused(member.userId, false), `${member.name} can use BuildPeek again`);
+                if (
+                  await confirm({
+                    title: `Pause ${member.name}'s access?`,
+                    message: "They can't open any of your projects until you resume it. Nothing is deleted, and their access comes back as it was.",
+                    confirmLabel: "Pause access",
+                  })
+                ) {
+                  run(() => setStaffPaused(member.userId, true), `${member.name}'s access is paused`);
+                }
+              }}
+              className={button(member.paused ? "primary" : "secondary", "sm")}
+            >
+              {member.paused ? <PlayCircle className="size-4" aria-hidden /> : <PauseCircle className="size-4" aria-hidden />}
+              {member.paused ? "Resume" : "Pause"}
             </button>
             <button
               type="button"
@@ -313,7 +485,8 @@ function MemberCard({ member, projects, timeZone }: { member: TeamMember; projec
 
       {editing ? (
         <div className="mt-4 space-y-4 border-t border-line pt-4">
-          <AccessPicker projects={projects} value={access} onChange={setAccess} />
+          <SettingsPicker value={settings} onChange={setSettings} />
+          <AccessPicker projects={projects} value={access} onChange={setAccess} invoices={invoices} invoicesBlocked={invoiceBlock(settings)} />
           <ErrorLine message={error} />
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setEditing(false)} className={button("secondary", "sm")}>
@@ -322,7 +495,20 @@ function MemberCard({ member, projects, timeZone }: { member: TeamMember; projec
             <button
               type="button"
               disabled={pending}
-              onClick={() => run(() => saveStaffAccess(member.userId, projectIds(access), paymentIds(access)), "Access updated", () => setEditing(false))}
+              onClick={() =>
+                run(
+                  () =>
+                    saveStaff(
+                      member.userId,
+                      settings,
+                      projectIds(access),
+                      paymentIds(access),
+                      invoices && !invoiceBlock(settings) ? invoiceIds(access) : [],
+                    ),
+                  "Access updated",
+                  () => setEditing(false),
+                )
+              }
               className={button("primary", "sm")}
             >
               {pending ? "Saving…" : "Save access"}
@@ -330,7 +516,13 @@ function MemberCard({ member, projects, timeZone }: { member: TeamMember; projec
           </div>
         </div>
       ) : (
-        <div className="mt-4">
+        <div className="mt-4 space-y-3">
+          {member.paused && (
+            <p className="rounded-lg bg-primary-soft px-3 py-2 text-sm text-primary-hover">
+              Paused: they can&apos;t open any project until you resume their access.
+            </p>
+          )}
+          <SettingTags settings={member.settings} />
           <ProjectChips projects={projects} given={member.projects} />
           <ErrorLine message={error} />
         </div>
@@ -415,6 +607,7 @@ function InviteCard({ invite, projects, companyName, timeZone }: { invite: TeamI
         </div>
       </div>
       <div className="mt-4 space-y-3">
+        <SettingTags settings={invite.settings} />
         <ProjectChips projects={projects} given={invite.projects} />
         {link && <LinkBox link={link} name={invite.name} companyName={companyName} onClose={() => setLink(null)} />}
         <ErrorLine message={error} />
@@ -431,12 +624,15 @@ export function TeamManager({
   companyName,
   timeZone,
   canInvite,
+  invoices,
 }: {
   team: Team;
   companyName: string;
   timeZone: string;
   // Whether the plan has a free place (the database checks again).
   canInvite: boolean;
+  // Whether the plan includes invoices (then staff can be allowed to send them).
+  invoices: boolean;
 }) {
   const [inviting, setInviting] = useState(false);
   const empty = team.members.length === 0 && team.invites.length === 0;
@@ -444,7 +640,7 @@ export function TeamManager({
   return (
     <div className="space-y-6">
       {inviting ? (
-        <InviteForm projects={team.projects} companyName={companyName} onClose={() => setInviting(false)} />
+        <InviteForm projects={team.projects} companyName={companyName} invoices={invoices} onClose={() => setInviting(false)} />
       ) : (
         canInvite && (
           <button type="button" onClick={() => setInviting(true)} className={button("primary")}>
@@ -460,7 +656,8 @@ export function TeamManager({
           </span>
           <h3 className="mt-4 font-semibold">No staff yet</h3>
           <p className="mt-1 max-w-sm text-sm text-muted">
-            Invite a site supervisor to post updates and photos for you. You choose which projects they can open, and whether they see payments.
+            Invite a site supervisor to post updates and photos for you. You choose which projects they can open, whether they see
+            payments, and what else they can do.
           </p>
         </div>
       )}
@@ -472,7 +669,7 @@ export function TeamManager({
           </h2>
           <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-3 xl:grid-cols-2">
             {team.members.map((m) => (
-              <MemberCard key={m.userId} member={m} projects={team.projects} timeZone={timeZone} />
+              <MemberCard key={m.userId} member={m} projects={team.projects} timeZone={timeZone} invoices={invoices} />
             ))}
           </div>
         </section>

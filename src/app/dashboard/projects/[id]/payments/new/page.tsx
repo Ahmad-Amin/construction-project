@@ -7,9 +7,9 @@ export default async function NewPaymentPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ for?: string }>;
+  searchParams: Promise<{ for?: string; invoice?: string }>;
 }) {
   const { id } = await params;
-  const { for: forItem } = await searchParams;
-  return <NewPaymentView projectId={id} forItem={forItem} />;
+  const { for: forItem, invoice } = await searchParams;
+  return <NewPaymentView projectId={id} forItem={forItem} forInvoice={invoice} />;
 }

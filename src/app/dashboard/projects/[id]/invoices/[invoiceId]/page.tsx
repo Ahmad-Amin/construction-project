@@ -3,19 +3,20 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { InvoiceActions } from "@/components/invoice-actions";
 import { InvoicePaper } from "@/components/invoice-paper";
-import { dayInZone, formatDate, formatMoney } from "@/lib/format";
+import { InvoicePayments } from "@/components/invoice-payments";
+import { dayInZone, formatDate, formatMoney, todayIn } from "@/lib/format";
 import { fetchInvoiceView, invoiceNumber } from "@/lib/invoices";
 import { getOrigin } from "@/lib/origin";
-import { getProjectBasic } from "@/lib/projects";
+import { viewerSide } from "@/lib/payments";
+import { getProjectAccess, getProjectBasic } from "@/lib/projects";
 import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/types";
-import { getViewer } from "@/lib/viewer";
 import { whatsappHref } from "@/lib/whatsapp";
 
 export const metadata = { title: "Invoice" };
 
-// One invoice. The owner sees drafts and everything sent; the homeowner sees what was sent to them. Row-level security
-// makes anything else "not found".
+// One invoice. The owner (and staff allowed to invoice) see drafts and everything sent; the homeowner sees what was
+// sent to them. Row-level security makes anything else "not found".
 export default async function InvoicePage({ params }: { params: Promise<{ id: string; invoiceId: string }> }) {
   const { id, invoiceId } = await params;
   const project = await getProjectBasic(id);
@@ -25,12 +26,13 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const invoice = await fetchInvoiceView(supabase, id, invoiceId);
   if (!invoice) notFound();
 
-  const viewer = await getViewer();
-  const isOwner = viewer?.company?.id === project.company_id && viewer.company.role === "owner";
+  const access = await getProjectAccess(id);
+  const isOwner = access.isOwner;
+  const canManage = access.isTeam && access.invoices;
 
   let share: string | null = null;
   let clientJoined = true;
-  if (isOwner) {
+  if (canManage) {
     const { data } = await supabase.from("projects").select("client:clients(phone, user_id)").eq("id", id).maybeSingle();
     const client = one(data?.client as { phone: string | null; user_id: string | null } | { phone: string | null; user_id: string | null }[] | null);
     clientJoined = !!client?.user_id;
@@ -47,7 +49,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
   const banner =
     invoice.status === "draft"
-      ? { text: "Draft: only you can see it. Check it, then send it to your client.", tone: "bg-surface-2 text-foreground" }
+      ? { text: "Draft: your client can't see it yet. Check it, then send it to them.", tone: "bg-surface-2 text-foreground" }
       : invoice.status === "sent"
         ? { text: `Sent on ${invoice.sentAt ? formatDate(dayInZone(invoice.sentAt, project.timeZone)) : ""}.`, tone: "bg-success-soft text-success" }
         : {
@@ -65,11 +67,19 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         projectId={id}
         invoiceId={invoiceId}
         status={invoice.status}
-        isOwner={isOwner}
+        canManage={canManage}
         clientName={invoice.client.name}
         clientJoined={clientJoined}
         whatsappHref={share}
       />
+      {invoice.status !== "draft" && (
+        <InvoicePayments
+          invoice={invoice}
+          side={viewerSide(access.isTeam, isOwner)}
+          today={todayIn(project.timeZone)}
+          recordHref={`/dashboard/projects/${id}/payments/new?invoice=${invoiceId}`}
+        />
+      )}
       <InvoicePaper invoice={invoice} />
     </div>
   );
