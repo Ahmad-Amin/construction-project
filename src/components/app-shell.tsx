@@ -72,6 +72,7 @@ const SECTION_LABELS: Record<string, string> = {
   expenses: "Expenses",
   payments: "Payments",
   documents: "Documents",
+  invoices: "Invoices",
   edit: "Edit project",
   statement: "Statement",
 };
@@ -444,7 +445,13 @@ function Breadcrumbs({ pathname, projects }: { pathname: string; projects: Shell
       crumbs.push({ label: project?.name ?? "Project", href: `/dashboard/projects/${m[1]}` });
       if (m[2]) {
         const section = SECTION_LABELS[m[2]] ?? m[2];
-        const deeper = m[3] ? (m[3] === "new" ? `Add ${section.toLowerCase().replace(/s$/, "")}` : "Edit") : null;
+        const deeper = m[3]
+          ? m[3] === "new"
+            ? `Add ${section.toLowerCase().replace(/s$/, "")}`
+            : m[3].endsWith("edit") || m[2] !== "invoices"
+              ? "Edit"
+              : "Invoice"
+          : null;
         crumbs.push({ label: section, href: deeper ? `/dashboard/projects/${m[1]}/${m[2]}` : undefined });
         if (deeper) crumbs.push({ label: deeper });
       }

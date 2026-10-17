@@ -9,6 +9,7 @@ import {
   setExpenseVisibility,
   type ActionResult,
 } from "@/app/dashboard/projects/[id]/expenses/actions";
+import { useConfirm } from "@/components/confirm-dialog";
 
 function useAction() {
   const [pending, startTransition] = useTransition();
@@ -77,6 +78,7 @@ export function DeleteExpenseButton({
   expenseId: string;
   label: string;
 }) {
+  const confirm = useConfirm();
   const { pending, error, run } = useAction();
 
   return (
@@ -86,8 +88,8 @@ export function DeleteExpenseButton({
         disabled={pending}
         aria-label="Delete expense"
         title="Delete expense"
-        onClick={() => {
-          if (window.confirm(`Delete "${label}"? Its receipt is deleted too, and this can't be undone.`)) {
+        onClick={async () => {
+          if (await confirm({ title: `Delete "${label}"?`, message: "Its receipt is deleted too, and this can't be undone.", confirmLabel: "Delete expense", tone: "danger" })) {
             run(() => deleteExpense(projectId, expenseId), "Expense deleted");
           }
         }}

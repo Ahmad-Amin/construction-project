@@ -4,8 +4,11 @@ import { notFound, redirect } from "next/navigation";
 import { AlertTriangle, Banknote, CalendarClock, Clock, Plus } from "lucide-react";
 import { LinkPending } from "@/components/link-pending";
 import { PaymentCard } from "@/components/payment-card";
+import { InvoiceList } from "@/components/invoice-list";
 import { PaymentSchedule } from "@/components/payment-schedule";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatDate, formatMoney, todayIn } from "@/lib/format";
+import { fetchInvoices } from "@/lib/invoices";
+import { canMakeInvoices } from "@/lib/plans";
 import {
   awaitingMyResponse,
   fetchPayments,
@@ -41,10 +44,12 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
   const side = viewerSide(isTeam, isOwner);
 
   const supabase = await createClient();
-  const [payments, totals, schedule] = await Promise.all([
+  const [payments, totals, schedule, invoices] = await Promise.all([
     fetchPayments(supabase, id, PAGE_SIZE),
     fetchPaymentTotals(supabase, id),
     fetchSchedule(supabase, id),
+    // The owner's invoices, or the ones sent to this homeowner. Staff don't see invoices.
+    isOwner || !isTeam ? fetchInvoices(supabase, id) : Promise.resolve([]),
   ]);
   const scheduleHidden = (await cookies()).get(SCHEDULE_COOKIE)?.value === "hidden";
   const dueNow = schedule.filter((i) => i.status === "due");
@@ -146,6 +151,14 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
       <div data-tour="schedule" className="mt-6">
         <PaymentSchedule items={schedule} projectId={id} currency={currency} side={side} manualHref={requestFor} initialHidden={scheduleHidden} />
       </div>
+
+      <InvoiceList
+        projectId={id}
+        invoices={invoices}
+        isOwner={isOwner}
+        canCreate={isOwner && canMakeInvoices(project.plan)}
+        today={todayIn(project.timeZone)}
+      />
 
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="font-semibold">Payments</h2>

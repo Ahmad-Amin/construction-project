@@ -10,6 +10,7 @@ import {
   setDocumentVisibility,
   type ActionResult,
 } from "@/app/dashboard/projects/[id]/documents/actions";
+import { useConfirm } from "@/components/confirm-dialog";
 
 function useAction() {
   const [pending, startTransition] = useTransition();
@@ -123,6 +124,7 @@ export function DeleteDocumentButton({
   documentId: string;
   label: string;
 }) {
+  const confirm = useConfirm();
   const { pending, error, run } = useAction();
 
   return (
@@ -132,8 +134,8 @@ export function DeleteDocumentButton({
         disabled={pending}
         aria-label="Delete document"
         title="Delete document"
-        onClick={() => {
-          if (window.confirm(`Delete "${label}"? The file is deleted too, and this can't be undone.`)) {
+        onClick={async () => {
+          if (await confirm({ title: `Delete "${label}"?`, message: "The file is deleted too, and this can't be undone.", confirmLabel: "Delete document", tone: "danger" })) {
             run(() => deleteDocument(projectId, documentId), "Document deleted");
           }
         }}

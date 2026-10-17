@@ -15,6 +15,7 @@ import { ProgressRing } from "@/components/viz";
 import { milestoneStatusLabel } from "@/lib/project";
 import type { Milestone } from "@/lib/types";
 import { button, inputClass } from "@/lib/ui";
+import { useConfirm } from "@/components/confirm-dialog";
 
 // owner: everything. staff: progress only. readonly: homeowners.
 export type EditorMode = "owner" | "staff" | "readonly";
@@ -28,6 +29,7 @@ export function MilestoneEditor({
   milestones: Milestone[];
   mode: EditorMode;
 }) {
+  const confirm = useConfirm();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [newName, setNewName] = useState("");
@@ -69,8 +71,8 @@ export function MilestoneEditor({
             onProgress={(percent) => run(() => setProgress(projectId, m.id, percent))}
             onRename={(name) => run(() => renameMilestone(projectId, m.id, name))}
             onMove={(dir) => run(() => moveMilestone(projectId, m.id, dir))}
-            onDelete={() => {
-              if (window.confirm(`Delete "${m.name}"? This can't be undone.`)) {
+            onDelete={async () => {
+              if (await confirm({ title: `Delete "${m.name}"?`, message: "This can't be undone.", confirmLabel: "Delete stage", tone: "danger" })) {
                 run(() => removeMilestone(projectId, m.id));
               }
             }}

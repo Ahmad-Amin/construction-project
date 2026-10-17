@@ -10,6 +10,7 @@ import {
 import { Spinner } from "@/components/spinner";
 import { useToast } from "@/components/toast";
 import { button } from "@/lib/ui";
+import { useConfirm } from "@/components/confirm-dialog";
 
 // "Request payment": tells the homeowner this instalment is due (the bell and email), and offers
 // the same message ready to send from your own WhatsApp.
@@ -67,6 +68,7 @@ export function DeleteScheduleButton({
   itemId: string;
   title: string;
 }) {
+  const confirm = useConfirm();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
@@ -78,8 +80,8 @@ export function DeleteScheduleButton({
         disabled={pending}
         aria-label={`Remove ${title}`}
         title="Remove from the schedule"
-        onClick={() => {
-          if (!window.confirm(`Remove "${title}" from the payment schedule? Payments already recorded stay as they are.`)) return;
+        onClick={async () => {
+          if (!(await confirm({ title: `Remove "${title}" from the payment schedule?`, message: "Payments already recorded stay as they are.", confirmLabel: "Remove", tone: "danger" }))) return;
           startTransition(async () => {
             const result = await deleteScheduleItem(projectId, itemId);
             setError(result.error ?? null);

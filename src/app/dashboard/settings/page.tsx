@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Bell, Building2, CalendarDays, Database, KeyRound, LogOut, Palette, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { ArrowLeft, Bell, Building2, CalendarDays, Database, KeyRound, LogOut, Palette, Receipt, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { Avatar } from "@/components/avatar";
 import { AuthForm } from "@/components/auth-form";
@@ -27,7 +27,7 @@ import { one } from "@/lib/types";
 import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
 import { whatsappEnabled } from "@/lib/whatsapp-api";
-import { changePassword, updateCompany, updateProfile } from "./actions";
+import { changePassword, updateCompany, updateInvoiceSettings, updateProfile } from "./actions";
 
 export const metadata = { title: "Settings" };
 
@@ -58,7 +58,7 @@ export default async function SettingsPage({
   const emailVerified = !!authUser.user?.email_confirmed_at;
 
   const { data: companyRow } = isOwnerViewer(viewer)
-    ? await supabase.from("companies").select("weekly_summary").eq("id", viewer.company!.id).maybeSingle()
+    ? await supabase.from("companies").select("weekly_summary, invoice_details, payment_instructions").eq("id", viewer.company!.id).maybeSingle()
     : { data: null };
 
   // How many projects are Active, for the plan section (the owner's own company, by row-level security).
@@ -106,6 +106,7 @@ export default async function SettingsPage({
               { id: "company", label: "Company" },
               { id: "client-updates", label: "Client updates" },
               { id: "plan", label: "Plan" },
+              { id: "invoices", label: "Invoices" },
               { id: "data", label: "Your data" },
             ],
           },
@@ -315,6 +316,44 @@ export default async function SettingsPage({
               lapsed={viewer.company.planLapsed}
               activeProjects={activeProjects}
               timeZone={viewer.company.timeZone}
+            />
+          </SettingsSection>
+        )}
+
+        {isOwner && (
+          <SettingsSection
+            id="invoices"
+            icon={Receipt}
+            title="Invoices"
+            description="Printed on every invoice you send. A sent invoice keeps what it said when you sent it."
+          >
+            <AuthForm
+              action={updateInvoiceSettings}
+              submitLabel="Save"
+              columns={2}
+              autoWidthButton
+              fields={[
+                {
+                  name: "invoice_details",
+                  label: "Your details",
+                  multiline: true,
+                  optional: true,
+                  maxLength: 600,
+                  defaultValue: (companyRow?.invoice_details as string | undefined) ?? "",
+                  placeholder: "Address, phone number, tax number (NTN)",
+                  hint: "Shown under your company name.",
+                },
+                {
+                  name: "payment_instructions",
+                  label: "How to pay you",
+                  multiline: true,
+                  optional: true,
+                  maxLength: 600,
+                  defaultValue: (companyRow?.payment_instructions as string | undefined) ?? "",
+                  placeholder: "Bank: HBL · Account title: Amin Builders · IBAN: PK00 HABB 0000 0000 0000\nEasypaisa: 0300 1234567",
+                  hint: "Your bank account, IBAN, or Easypaisa / JazzCash number.",
+                },
+              ]}
             />
           </SettingsSection>
         )}

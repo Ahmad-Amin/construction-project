@@ -21,6 +21,8 @@ export type PlanInfo = {
   // Automatic WhatsApp messages to the client, and the PDF project statement.
   whatsapp: boolean;
   statements: boolean;
+  // Creating and sending invoices.
+  invoices: boolean;
 };
 
 export const PLANS: Record<PlanId, PlanInfo> = {
@@ -35,6 +37,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     staff: 0,
     whatsapp: false,
     statements: false,
+    invoices: false,
   },
   pro: {
     id: "pro",
@@ -47,6 +50,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     staff: 3,
     whatsapp: true,
     statements: true,
+    invoices: true,
   },
   business: {
     id: "business",
@@ -59,6 +63,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     staff: 10,
     whatsapp: true,
     statements: true,
+    invoices: true,
   },
 };
 
@@ -86,6 +91,7 @@ export function staffLimitText(plan: PlanId): string {
 
 export const canSendWhatsApp = (plan: PlanId) => PLANS[plan].whatsapp;
 export const canMakeStatements = (plan: PlanId) => PLANS[plan].statements;
+export const canMakeInvoices = (plan: PlanId) => PLANS[plan].invoices;
 
 export type Usage = { used: number; limit: number | null; atLimit: boolean };
 

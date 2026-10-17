@@ -18,6 +18,12 @@ type Field = {
   hint?: string;
   // A small status shown beside the label, like "Verified".
   badge?: { label: string; tone: "ok" | "warn" };
+  // A text box with several lines (addresses, payment instructions).
+  multiline?: boolean;
+  // May be left empty.
+  optional?: boolean;
+  maxLength?: number;
+  placeholder?: string;
 };
 
 // A password box with a button to show what was typed. The value stays in the box either way;
@@ -109,6 +115,16 @@ export function AuthForm({
                 </option>
               ))}
             </select>
+          ) : f.multiline ? (
+            <textarea
+              name={f.name}
+              defaultValue={f.defaultValue}
+              required={!f.optional}
+              maxLength={f.maxLength}
+              placeholder={f.placeholder}
+              rows={4}
+              className={`${inputClass} resize-y`}
+            />
           ) : f.type === "password" ? (
             <PasswordInput name={f.name} autoComplete={f.autoComplete} defaultValue={f.defaultValue} />
           ) : (

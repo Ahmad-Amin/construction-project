@@ -17,6 +17,7 @@ import { useToast } from "@/components/toast";
 import { dayInZone, formatDate } from "@/lib/format";
 import type { ProjectAccess, Team, TeamInvite, TeamMember, TeamProject } from "@/lib/team";
 import { button, inputClass } from "@/lib/ui";
+import { useConfirm } from "@/components/confirm-dialog";
 
 // ---------------------------------------------------------------------------
 // Access: which projects a person can open, and on which of them they also see payments.
@@ -255,6 +256,7 @@ function ProjectChips({ projects, given }: { projects: TeamProject[]; given: Pro
 }
 
 function MemberCard({ member, projects, timeZone }: { member: TeamMember; projects: TeamProject[]; timeZone: string }) {
+  const confirm = useConfirm();
   const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [access, setAccess] = useState<Access>(() => accessFrom(projects, member.projects));
@@ -296,8 +298,8 @@ function MemberCard({ member, projects, timeZone }: { member: TeamMember; projec
               disabled={pending}
               aria-label={`Remove ${member.name}`}
               title="Remove from team"
-              onClick={() => {
-                if (window.confirm(`Remove ${member.name} from your team? They lose access straight away. Their past updates stay.`)) {
+              onClick={async () => {
+                if (await confirm({ title: `Remove ${member.name} from your team?`, message: "They lose access straight away. Their past updates stay.", confirmLabel: "Remove", tone: "danger" })) {
                   run(() => removeStaff(member.userId), `${member.name} removed`);
                 }
               }}
@@ -341,6 +343,7 @@ function MemberCard({ member, projects, timeZone }: { member: TeamMember; projec
 // An invitation that hasn't been used yet
 // ---------------------------------------------------------------------------
 function InviteCard({ invite, projects, companyName, timeZone }: { invite: TeamInvite; projects: TeamProject[]; companyName: string; timeZone: string }) {
+  const confirm = useConfirm();
   const toast = useToast();
   const [link, setLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -400,8 +403,10 @@ function InviteCard({ invite, projects, companyName, timeZone }: { invite: TeamI
             disabled={pending}
             aria-label={`Cancel the invitation for ${invite.name}`}
             title="Cancel invitation"
-            onClick={() => {
-              if (window.confirm(`Cancel the invitation for ${invite.name}? Their link stops working.`)) run(() => revokeInvite(invite.id), "Invitation cancelled");
+            onClick={async () => {
+              if (await confirm({ title: `Cancel the invitation for ${invite.name}?`, message: "Their link stops working.", confirmLabel: "Cancel invitation", cancelLabel: "Keep it", tone: "danger" })) {
+                run(() => revokeInvite(invite.id), "Invitation cancelled");
+              }
             }}
             className="flex size-9 items-center justify-center rounded-lg text-danger transition-colors hover:bg-surface-2 disabled:opacity-40"
           >

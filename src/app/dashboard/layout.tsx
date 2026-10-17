@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { ConfirmProvider } from "@/components/confirm-dialog";
 import { ToastProvider } from "@/components/toast";
 import { roleOf } from "@/components/role-tag";
 import { countUnread } from "@/lib/notifications";
@@ -76,6 +77,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <ToastProvider>
+      <ConfirmProvider>
       <AppShell
         user={{
           name: viewer.name,
@@ -97,6 +99,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       >
         {children}
       </AppShell>
+      </ConfirmProvider>
     </ToastProvider>
   );
 }

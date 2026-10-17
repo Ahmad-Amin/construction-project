@@ -9,6 +9,7 @@ import {
   respondToPayment,
 } from "@/app/dashboard/projects/[id]/payments/actions";
 import { button, inputClass } from "@/lib/ui";
+import { useConfirm } from "@/components/confirm-dialog";
 
 export function DeletePaymentButton({
   projectId,
@@ -19,6 +20,7 @@ export function DeletePaymentButton({
   paymentId: string;
   label: string;
 }) {
+  const confirm = useConfirm();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
@@ -30,8 +32,8 @@ export function DeletePaymentButton({
         disabled={pending}
         aria-label="Delete payment"
         title="Delete payment"
-        onClick={() => {
-          if (!window.confirm(`Delete the payment of ${label}? This can't be undone.`)) return;
+        onClick={async () => {
+          if (!(await confirm({ title: `Delete the payment of ${label}?`, message: "This can't be undone.", confirmLabel: "Delete payment", tone: "danger" }))) return;
           startTransition(async () => {
             const result = await deletePayment(projectId, paymentId);
             setError(result.error ?? null);

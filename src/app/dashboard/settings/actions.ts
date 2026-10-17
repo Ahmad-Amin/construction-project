@@ -89,6 +89,29 @@ export async function updateCompany(_: FormState, formData: FormData): Promise<F
   return { message: "Saved." };
 }
 
+// What is printed on the company's invoices: its details (address, phone, tax number) and how to pay.
+export async function updateInvoiceSettings(_: FormState, formData: FormData): Promise<FormState> {
+  const details = String(formData.get("invoice_details") ?? "").trim();
+  const instructions = String(formData.get("payment_instructions") ?? "").trim();
+  if (details.length > 600 || instructions.length > 600) return { error: "Please keep each box under 600 characters." };
+
+  const viewer = await getViewer();
+  if (viewer?.company?.role !== "owner") {
+    return { error: "Only the company owner can change company settings." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("companies")
+    .update({ invoice_details: details, payment_instructions: instructions })
+    .eq("id", viewer.company.id)
+    .select("id");
+  if (error || !data?.length) return { error: GENERIC };
+
+  refresh();
+  return { message: "Saved. New invoices will show these details." };
+}
+
 // The file is already uploaded; this points the company at it (or clears it with null).
 export async function setCompanyLogo(path: string | null): Promise<{ error?: string }> {
   const viewer = await getViewer();

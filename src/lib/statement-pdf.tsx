@@ -64,7 +64,7 @@ const s = StyleSheet.create({
   footerText: { fontSize: 7.5, color: muted, maxWidth: 420 },
 });
 
-function imageSource(data: Buffer) {
+export function imageSource(data: Buffer) {
   const isPng = data[0] === 0x89 && data[1] === 0x50;
   return { data, format: isPng ? ("png" as const) : ("jpg" as const) };
 }

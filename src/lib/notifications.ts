@@ -15,6 +15,8 @@ export type NotificationKind =
   | "payment_due"
   | "document_shared"
   | "document_received"
+  | "invoice_sent"
+  | "invoice_cancelled"
   | "feedback_received"
   | "plan_requested"
   | "payment_confirmed"

@@ -13,6 +13,8 @@ const variants = {
   primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
   secondary: "border border-line bg-surface text-foreground hover:bg-surface-2",
   ghost: "text-foreground hover:bg-surface-2",
+  // Deleting and cancelling.
+  danger: "bg-danger text-white hover:opacity-90 dark:text-stone-900",
 };
 
 export function button(

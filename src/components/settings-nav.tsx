@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Building2, CalendarDays, Database, Palette, ShieldCheck, Sparkles, UserRound, type LucideIcon } from "lucide-react";
+import { Bell, Building2, CalendarDays, Database, Palette, ShieldCheck, Sparkles, UserRound, type LucideIcon, Receipt } from "lucide-react";
 
 // The icon for each section, looked up by its id here (icons are components, which a server page
 // can't hand to a client one).
@@ -13,6 +13,7 @@ const ICONS: Record<string, LucideIcon> = {
   company: Building2,
   "client-updates": CalendarDays,
   plan: Sparkles,
+  invoices: Receipt,
   data: Database,
 };
 

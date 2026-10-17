@@ -6,6 +6,7 @@ import { Trash2 } from "lucide-react";
 import { Spinner } from "@/components/spinner";
 import { deleteUpdate } from "@/app/dashboard/projects/[id]/updates/actions";
 import { useToast } from "@/components/toast";
+import { useConfirm } from "@/components/confirm-dialog";
 
 export function DeleteUpdateButton({
   projectId,
@@ -14,6 +15,7 @@ export function DeleteUpdateButton({
   projectId: string;
   updateId: string;
 }) {
+  const confirm = useConfirm();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
@@ -25,8 +27,8 @@ export function DeleteUpdateButton({
         disabled={pending}
         aria-label="Delete this update"
         title="Delete this update"
-        onClick={() => {
-          if (!window.confirm("Delete this update and its photos? This can't be undone.")) return;
+        onClick={async () => {
+          if (!(await confirm({ title: "Delete this update?", message: "Its photos are deleted too, and this can't be undone.", confirmLabel: "Delete update", tone: "danger" }))) return;
           startTransition(async () => {
             const result = await deleteUpdate(projectId, updateId);
             setError(result.error ?? null);

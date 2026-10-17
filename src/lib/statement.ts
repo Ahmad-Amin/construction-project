@@ -50,7 +50,8 @@ const MAX_UPDATES = 8;
 const MAX_PHOTOS = 6;
 const MAX_ROWS = 60;
 
-async function download(url: string): Promise<Buffer | null> {
+// Fetches an image (the logo, a photo) so a PDF can carry it inside the file. Shared with invoices.
+export async function download(url: string): Promise<Buffer | null> {
   try {
     const response = await fetch(url);
     return response.ok ? Buffer.from(await response.arrayBuffer()) : null;
