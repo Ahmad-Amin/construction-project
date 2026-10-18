@@ -27,6 +27,20 @@ export async function login(_: FormState, formData: FormData): Promise<FormState
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
+    // The right password, but the email was never confirmed: send a fresh confirmation link instead of saying the
+    // password is wrong. Supabase only answers this once the password is right, so it tells a stranger nothing.
+    if (error.code === "email_not_confirmed") {
+      const origin = await getOrigin();
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: `${origin}/auth/callback` },
+      });
+      if (resendError) {
+        return { error: "Please confirm your email first, with the link we sent you. Can't find it? Wait a few minutes and sign in again for a new one." };
+      }
+      return { message: `Please confirm your email first. We've sent a new link to ${email}.` };
+    }
     return { error: "That email or password isn't right. Please try again." };
   }
   redirect("/dashboard");

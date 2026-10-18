@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { isFirstGoogleSignIn } from "@/lib/auth-flow";
-import { queueNotificationDelivery } from "@/lib/notifications";
+import { finishSignIn } from "@/lib/sign-in";
 import { createClient } from "@/lib/supabase/server";
 
 // Landing point for magic links, email-confirmation links and "Continue with Google".
@@ -18,19 +18,8 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // A homeowner who confirmed their email after using an invite link:
-      // claim the client record now that they have a session.
-      const token = data.user?.user_metadata?.invite_token;
-      if (typeof token === "string") {
-        await supabase.rpc("accept_invite", { p_token: token });
-        queueNotificationDelivery();
-      }
-
-      // A staff member who confirmed their email after using a team invitation link: join the team now.
-      const staffToken = data.user?.user_metadata?.staff_invite_token;
-      if (typeof staffToken === "string") {
-        await supabase.rpc("accept_staff_invite", { p_token: staffToken });
-      }
+      // An invitation they started with (homeowner or staff) is accepted now that they have a session.
+      await finishSignIn(supabase, data.user);
 
       // They asked for a password reset in this browser: take them to choose a new one.
       const store = await cookies();

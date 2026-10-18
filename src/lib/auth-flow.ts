@@ -14,3 +14,17 @@ export function isFirstGoogleSignIn(user: Pick<User, "app_metadata" | "created_a
   if (Number.isNaN(created) || Number.isNaN(lastSignIn)) return false;
   return Math.abs(lastSignIn - created) < 15_000;
 }
+
+// Links to /auth/confirm carry a one-time token (token_hash) and its type. The reminder to confirm an email uses a
+// "recovery" token: opening it confirms an unconfirmed email and signs the person in. Unlike a "magiclink" one, it can
+// never create an account for an address that has none. "email" and "signup" are what Supabase's own confirmation
+// emails use, should their templates point here.
+export const CONFIRM_LINK_TYPES = ["recovery", "email", "signup"] as const;
+export type ConfirmLinkType = (typeof CONFIRM_LINK_TYPES)[number];
+
+// The token and type of a confirm link, or null when the link is incomplete or not one of ours.
+export function confirmLinkFrom(tokenHash: unknown, type: unknown): { tokenHash: string; type: ConfirmLinkType } | null {
+  if (typeof tokenHash !== "string" || !/^[\w-]{16,200}$/.test(tokenHash)) return null;
+  if (typeof type !== "string" || !(CONFIRM_LINK_TYPES as readonly string[]).includes(type)) return null;
+  return { tokenHash, type: type as ConfirmLinkType };
+}
