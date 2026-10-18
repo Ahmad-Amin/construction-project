@@ -9,7 +9,8 @@ export type PlanInfo = {
   id: PlanId;
   name: string;
   blurb: string;
-  // US dollars a month when billed monthly, and the price of a year (two months free). Null when free.
+  // US dollars a month when billed monthly, and the price of a year: about one month free, set so it works out to
+  // whole dollars a month ($384 is $32 a month). Null when free.
   monthlyUsd: number | null;
   yearlyUsd: number | null;
   // A rough local figure to help people in Pakistan; the card price is the one in dollars.
@@ -44,7 +45,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: "Pro",
     blurb: "For a contractor with several jobs running at once.",
     monthlyUsd: 35,
-    yearlyUsd: 350,
+    yearlyUsd: 384,
     approxMonthlyPkr: 10000,
     activeProjects: 10,
     staff: 3,
@@ -57,7 +58,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     name: "Business",
     blurb: "No limit on projects, and priority support.",
     monthlyUsd: 70,
-    yearlyUsd: 700,
+    yearlyUsd: 768,
     approxMonthlyPkr: 20000,
     activeProjects: null,
     staff: 10,

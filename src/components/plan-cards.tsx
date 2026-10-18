@@ -57,7 +57,7 @@ export function PlanCards({ current, ctas }: { current?: PlanId; ctas: PlanCtas 
         <div role="group" aria-label="Billing period" className="inline-flex rounded-full border border-line bg-surface-2/60 p-1 text-sm font-medium">
           {[
             { id: false, label: "Monthly" },
-            { id: true, label: "Yearly · 2 months free" },
+            { id: true, label: "Yearly · 1 month free" },
           ].map((o) => (
             <button
               key={String(o.id)}
