@@ -48,7 +48,8 @@ const highlights: Record<PlanId, string[]> = {
 function Mark({ value }: { value: Cell }) {
   if (value === true) return <Check className="mx-auto size-4 text-success" aria-label="Included" />;
   if (value === false) return <X className="mx-auto size-4 text-muted/60" aria-label="Not included" />;
-  return <span className="text-sm font-medium">{value}</span>;
+  // One line where there is room (the pricing page, a wide settings column); narrow tables may wrap.
+  return <span className="text-sm font-medium @3xl:whitespace-nowrap">{value}</span>;
 }
 
 // The three plans as cards, a monthly / yearly switch, and one comparison table underneath. It adapts to
@@ -147,11 +148,13 @@ export function PlanCards({ current, ctas, videos = false }: { current?: PlanId;
           <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-line bg-surface-2/50">
+                {/* Where there's room, every column is sized to its content (plan entries on one line, the spare room going to
+                    the feature names); narrow tables keep fixed plan columns and may wrap. */}
                 <th scope="col" className="px-4 py-3 font-medium text-muted">
                   <span className="sr-only">Feature</span>
                 </th>
                 {PLAN_IDS.map((id) => (
-                  <th key={id} scope="col" className="w-28 px-3 py-3 text-center font-semibold @3xl:w-36">
+                  <th key={id} scope="col" className="w-28 px-3 py-3 text-center font-semibold @3xl:w-auto @3xl:px-5 @6xl:w-56">
                     {PLANS[id].name}
                     {current === id && <span className="ml-1.5 text-xs font-medium text-success">· yours</span>}
                   </th>
@@ -165,7 +168,7 @@ export function PlanCards({ current, ctas, videos = false }: { current?: PlanId;
                     {row.label}
                   </th>
                   {PLAN_IDS.map((id) => (
-                    <td key={id} className={`px-3 py-3 text-center ${row[id] === false ? "text-muted" : ""}`}>
+                    <td key={id} className={`px-3 py-3 text-center @3xl:px-5 ${row[id] === false ? "text-muted" : ""}`}>
                       <Mark value={row[id]} />
                     </td>
                   ))}
