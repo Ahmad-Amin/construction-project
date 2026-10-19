@@ -2,15 +2,17 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal, preconnect } from "react-dom";
-import { AlertTriangle, Play, VideoOff, X } from "lucide-react";
+import { AlertTriangle, CloudUpload, Play, RotateCw, VideoOff, WifiOff, X } from "lucide-react";
 import { videoPlayer, videoStatuses, type PlayerResult } from "@/app/dashboard/projects/[id]/updates/video-actions";
 import { Spinner } from "@/components/spinner";
+import { ACTIVE, useVideoUploadManager } from "@/components/video-upload-manager";
 import { formatClock } from "@/lib/video-rules";
 import type { VideoItem } from "@/lib/videos";
 
-// The videos of an update, as tiles at the start of its row of photos. A video still being prepared shows that, and
-// turns into a playable tile by itself. Tapping a tile plays it in a full-screen player. The player link is private
-// and short-lived, so it is fetched when needed: on the way to a tap (hover, touch), so it opens without waiting.
+// The videos of an update, as tiles at the start of its row of photos. A video still uploading shows "Video on its
+// way" (or, in the browser uploading it, its progress), then "Preparing video…", and turns into a playable tile by
+// itself. Tapping a tile plays it in a full-screen player. The player link is private and short-lived, so it is
+// fetched when needed: on the way to a tap (hover, touch), so it opens without waiting.
 
 const tile = "relative block h-24 w-40 shrink-0 snap-start overflow-hidden rounded-lg sm:h-28 sm:w-48";
 
@@ -29,7 +31,11 @@ function playerFor(id: string) {
 }
 
 export function VideoTiles({ videos: given }: { videos: VideoItem[] }) {
-  const [videos, setVideos] = useState(given);
+  const manager = useVideoUploadManager();
+  const live = (id: string) => manager?.uploads.find((u) => u.id === id);
+  const [all, setVideos] = useState(given);
+  // A video stopped while uploading is no longer part of the update.
+  const videos = manager?.stopped.size ? all.filter((v) => !manager.stopped.has(v.id)) : all;
   const [from, setFrom] = useState(given);
   // New videos from the server (the page was refreshed) replace what is shown.
   if (from !== given) {
@@ -43,14 +49,22 @@ export function VideoTiles({ videos: given }: { videos: VideoItem[] }) {
   const origin = firstThumb && /^https?:\/\//.test(firstThumb) ? new URL(firstThumb).origin : null;
   if (origin) preconnect(origin);
 
-  // Check on videos still being prepared: quickly at first, then less often; only while the page is on screen.
-  const pending = videos.filter((v) => v.status === "processing").map((v) => v.id).join(",");
+  // Check on videos still on their way: ones being prepared quickly at first, then less often; ones still uploading
+  // from somewhere else every half minute (an upload in this browser reports itself). Only while the page is on screen.
+  const waitingOn = videos.filter((v) => {
+    if (v.status === "processing") return true;
+    if (v.status !== "uploading") return false;
+    const u = live(v.id);
+    return !(u && ACTIVE.includes(u.phase));
+  });
+  const pending = waitingOn.map((v) => v.id).join(",");
+  const quick = waitingOn.some((v) => v.status === "processing" || live(v.id)?.phase === "done");
   useEffect(() => {
     if (!pending) return;
     let stopped = false;
-    let delay = 3000;
+    let delay = quick ? 3000 : 30_000;
     let timer: ReturnType<typeof setTimeout>;
-    const until = Date.now() + 30 * 60 * 1000;
+    const until = Date.now() + 6 * 60 * 60 * 1000;
     const tick = async () => {
       if (stopped) return;
       if (document.visibilityState === "visible") {
@@ -61,7 +75,7 @@ export function VideoTiles({ videos: given }: { videos: VideoItem[] }) {
           // A missed check is fine; the next one tries again.
         }
       }
-      delay = Math.min(Math.round(delay * 1.4), 20_000);
+      delay = quick ? Math.min(Math.round(delay * 1.4), 20_000) : 30_000;
       if (!stopped && Date.now() < until) timer = setTimeout(tick, delay);
     };
     timer = setTimeout(tick, delay);
@@ -69,7 +83,7 @@ export function VideoTiles({ videos: given }: { videos: VideoItem[] }) {
       stopped = true;
       clearTimeout(timer);
     };
-  }, [pending]);
+  }, [pending, quick]);
 
   if (videos.length === 0) return null;
 
@@ -105,11 +119,19 @@ export function VideoTiles({ videos: given }: { videos: VideoItem[] }) {
           </li>
         ) : (
           <li key={v.id} className={`${tile} flex flex-col items-center justify-center gap-1.5 border border-line bg-surface-2 px-3 text-center`}>
-            {v.status === "processing" ? (
+            {v.status === "uploading" && live(v.id) && ACTIVE.includes(live(v.id)!.phase) ? (
+              <UploadingHere percent={live(v.id)!.percent} paused={live(v.id)!.phase === "paused"} onRetry={() => manager?.retry(v.id)} />
+            ) : v.status === "processing" || (v.status === "uploading" && live(v.id)?.phase === "done") ? (
               <>
                 <Spinner className="size-5 text-muted" />
                 <span className="text-xs font-medium">Preparing video…</span>
                 <span className="text-[11px] leading-tight text-muted">Usually ready in a minute or two</span>
+              </>
+            ) : v.status === "uploading" ? (
+              <>
+                <CloudUpload className="size-5 text-muted" aria-hidden />
+                <span className="text-xs font-medium">Video on its way</span>
+                <span className="text-[11px] leading-tight text-muted">It appears here once it&apos;s uploaded</span>
               </>
             ) : v.status === "error" ? (
               <>
@@ -126,6 +148,25 @@ export function VideoTiles({ videos: given }: { videos: VideoItem[] }) {
         ),
       )}
       {open && <VideoPlayer videoId={open} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+
+// This browser is uploading it: its progress (or a retry when the connection dropped).
+function UploadingHere({ percent, paused, onRetry }: { percent: number; paused: boolean; onRetry: () => void }) {
+  return (
+    <>
+      {paused ? <WifiOff className="size-5 text-primary-hover" aria-hidden /> : <CloudUpload className="size-5 text-muted" aria-hidden />}
+      <span className="text-xs font-medium tabular-nums">{paused ? "Waiting for connection" : `Uploading ${percent}%`}</span>
+      {paused ? (
+        <button type="button" onClick={onRetry} className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold text-data-accent hover:bg-surface">
+          <RotateCw className="size-3" aria-hidden /> Retry
+        </button>
+      ) : (
+        <span className="mt-0.5 h-1 w-24 overflow-hidden rounded-full bg-line" aria-hidden>
+          <span className="block h-full bg-primary transition-[width] duration-500 ease-out" style={{ width: `${percent}%` }} />
+        </span>
+      )}
     </>
   );
 }

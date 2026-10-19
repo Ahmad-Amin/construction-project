@@ -36,6 +36,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { ThemeQuickToggle } from "@/components/theme-quick-toggle";
 import { FeedbackButton } from "@/components/feedback-button";
 import { TourButton, TourHost } from "@/components/tour";
+import { VideoUploadIndicator } from "@/components/video-upload-indicator";
 import { Logo } from "@/components/logo";
 import { PlanBadge } from "@/components/plan-badge";
 import type { PlanId } from "@/lib/plans";
@@ -748,6 +749,7 @@ export function AppShell(props: ShellProps) {
             </button>
             <Logo href="/dashboard" />
             <div className="ml-auto flex items-center gap-1">
+              <VideoUploadIndicator compact />
               {/* Full label on wider phones, just the icon on narrow ones, nothing on the narrowest (the menu still shows it). */}
               <span className="hidden min-[480px]:inline-flex">
                 <RoleTag role={props.user.role} />
@@ -777,6 +779,7 @@ export function AppShell(props: ShellProps) {
               <Breadcrumbs pathname={pathname} projects={props.projects} />
             </div>
             <div className="flex shrink-0 items-center gap-3">
+              <VideoUploadIndicator />
               {firstAwaiting && (
                 <Link
                   href={`/dashboard/projects/${firstAwaiting.id}/payments`}

@@ -10,7 +10,8 @@ import {
 
 // Site videos as the screens show them. Server only (it signs links); the types are shared with the browser.
 
-export type VideoStatus = "processing" | "ready" | "error" | "unavailable";
+// uploading: the file is still on its way to Cloudflare (an update can be posted before it arrives).
+export type VideoStatus = "uploading" | "processing" | "ready" | "error" | "unavailable";
 
 export type VideoItem = {
   id: string;
@@ -47,6 +48,7 @@ export function videoProblem(code: string) {
 export function toVideoItem(row: VideoRow, cfg: StreamConfig | null, now = Date.now()): VideoItem {
   const duration = row.duration_seconds === null ? null : Number(row.duration_seconds);
   if (row.status === "error") return { id: row.id, status: "error", duration, thumb: null, problem: videoProblem(row.error_code) };
+  if (row.status === "uploading") return { id: row.id, status: "uploading", duration, thumb: null, problem: null };
   if (row.status !== "ready") return { id: row.id, status: "processing", duration, thumb: null, problem: null };
   if (!cfg || !row.provider_uid) return { id: row.id, status: "unavailable", duration, thumb: null, problem: null };
   return { id: row.id, status: "ready", duration, thumb: thumbnailUrl(cfg, signVideoToken(cfg, row.provider_uid, THUMB_SECONDS, now)), problem: null };

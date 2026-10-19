@@ -13,6 +13,7 @@ import { button, inputClass } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
 import { useToast } from "@/components/toast";
 import { useConfirm } from "@/components/confirm-dialog";
+import { askToNotify } from "@/components/video-upload-manager";
 import { useVideoUploads, VideoField, type VideoLimits } from "@/components/video-uploads";
 
 const MAX_PHOTOS = 10;
@@ -25,6 +26,7 @@ export function UpdateForm({
   milestones,
   today,
   video = null,
+  projectName = "",
   sheet = false,
 }: {
   projectId: string;
@@ -32,6 +34,8 @@ export function UpdateForm({
   today: string;
   // Site videos: null when they are switched off; `limits` null when the plan has none.
   video?: { limits: VideoLimits | null; upgradeHref: string | null } | null;
+  // For the upload list and notifications ("your video for 12 Marla House…").
+  projectName?: string;
   // Shown in the slide-over panel: the buttons stay in view along the bottom while the form scrolls.
   sheet?: boolean;
 }) {
@@ -41,7 +45,8 @@ export function UpdateForm({
   // One id per draft. Retrying a failed post re-uses it, so it can never post twice. Videos are added to it too.
   const [updateId] = useState(newId);
   const uploaded = useRef(new Map<string, Uploaded>());
-  const videos = useVideoUploads({ projectId, updateId, limits: video?.limits ?? null });
+  const videos = useVideoUploads({ projectId, updateId, projectName, limits: video?.limits ?? null });
+  const videoBusy = videos.preparing || videos.uploading;
 
   const [text, setText] = useState("");
   const [date, setDate] = useState(today);
@@ -51,8 +56,8 @@ export function UpdateForm({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const busy = status !== null;
-  // Closing the panel by accident would stop a video upload too.
-  useSheetBusy(busy || videos.busy);
+  // Closing the panel by accident would remove a video still uploading for this update (posting keeps it going).
+  useSheetBusy(busy || videoBusy);
   const back = `/dashboard/projects/${projectId}/updates`;
 
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -97,7 +102,7 @@ export function UpdateForm({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (busy || videos.busy) return;
+    if (busy || videos.preparing) return;
     if (!text.trim()) {
       setError("Please write a short update.");
       return;
@@ -107,6 +112,8 @@ export function UpdateForm({
       return;
     }
     setError(null);
+    // The video carries on uploading after posting: offer a notification for when it's done (this tap allows asking).
+    if (videos.uploading) askToNotify();
 
     try {
       const supabase = createClient();
@@ -149,14 +156,20 @@ export function UpdateForm({
         milestoneId: milestoneId || null,
         progress: selected && progress !== selected.progress_percent ? progress : null,
         photos: photos.map((p) => uploaded.current.get(p.id)!),
-        videos: videos.readyIds,
+        videos: videos.postableIds,
       });
       if (result.error) {
         setError(result.error);
         return;
       }
       videos.markPosted();
-      toast.success(videos.readyIds.length > 0 ? "Update posted. Its video will be ready to watch in a minute or two." : "Update posted");
+      toast.success(
+        videos.uploading
+          ? "Update posted. Its video keeps uploading; keep BuildPeek open until it's done."
+          : videos.postableIds.length > 0
+            ? "Update posted. Its video will be ready to watch in a minute or two."
+            : "Update posted",
+      );
       router.push(`/dashboard/projects/${projectId}/updates?posted=${updateId}`);
     } catch {
       setError("Something went wrong. Please check your connection and try again.");
@@ -320,16 +333,16 @@ export function UpdateForm({
             : "pt-1"
         }`}
       >
-        {videos.busy && !busy ? (
+        {videoBusy && !busy ? (
           <button
             type="button"
             onClick={async () => {
               if (
                 await confirm({
-                  title: "Stop uploading?",
-                  message: "The video stops uploading and this update isn't posted.",
+                  title: "Leave without posting?",
+                  message: "The video stops uploading and this update isn't posted. To keep the video, post the update instead.",
                   confirmLabel: "Stop and leave",
-                  cancelLabel: "Keep uploading",
+                  cancelLabel: "Stay",
                   tone: "danger",
                 })
               ) {
@@ -343,8 +356,8 @@ export function UpdateForm({
         ) : (
           <CancelLink href={back} busy={busy} />
         )}
-        <button type="submit" disabled={busy || videos.busy} className={`${button("primary")} tabular-nums`}>
-          {busy ? "Please wait…" : videos.paused ? "Video upload paused" : videos.busy ? `Uploading video… ${videos.percent}%` : "Post update"}
+        <button type="submit" disabled={busy || videos.preparing} className={`${button("primary")} tabular-nums`}>
+          {busy ? "Please wait…" : videos.preparing ? "Preparing video…" : "Post update"}
         </button>
       </div>
     </form>

@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AnalyticsConsent } from "@/components/analytics-consent";
 import { RouteProgress } from "@/components/route-progress";
+import { VideoUploadProvider } from "@/components/video-upload-manager";
 import { PRODUCT_NAME } from "@/lib/site";
 import "./globals.css";
 
@@ -58,7 +59,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           element; real mismatches anywhere inside the page are still reported. */}
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <RouteProgress />
-        {children}
+        {/* Video uploads live above every page, so one carries on while the person moves around the app. */}
+        <VideoUploadProvider>{children}</VideoUploadProvider>
         {/* Vercel Web Analytics: page views only, no cookies. It does nothing until you turn Analytics on for the project in Vercel. */}
         <Analytics />
         {/* Google Analytics: only if NEXT_PUBLIC_GA_ID is set, only on public pages, and only after the visitor says yes. */}

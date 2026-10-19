@@ -41,7 +41,7 @@ export async function NewUpdateView({ projectId: id, sheet }: { projectId: strin
   return (
     <FormFrame sheet={sheet}>
       <FormHeading>Add update</FormHeading>
-      <UpdateForm sheet={sheet} projectId={id} milestones={data ?? []} today={todayIn(project.timeZone)} video={video} />
+      <UpdateForm sheet={sheet} projectId={id} projectName={project.name} milestones={data ?? []} today={todayIn(project.timeZone)} video={video} />
     </FormFrame>
   );
 }
