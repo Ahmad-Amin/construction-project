@@ -4,6 +4,7 @@ import { planCtas } from "@/lib/billing";
 import { formatDate } from "@/lib/format";
 import { PLANS, usage, type PlanId } from "@/lib/plans";
 import { CONTACT_EMAIL } from "@/lib/site";
+import { formatLength } from "@/lib/video-rules";
 
 // The owner's view of the plan: what they are on, how much of it is used, and the plans to move to.
 // A client component (the cards) sits inside a server one (the facts), so the dates are worked out here.
@@ -13,12 +14,15 @@ export function PlanSection({
   lapsed,
   activeProjects,
   timeZone,
+  video = null,
 }: {
   plan: PlanId;
   until: string | null;
   lapsed: boolean;
   activeProjects: number;
   timeZone: string;
+  // Site video minutes this month, when videos are switched on.
+  video?: { usedSeconds: number; monthlySeconds: number } | null;
 }) {
   const info = PLANS[plan];
   const u = usage(plan, activeProjects);
@@ -44,6 +48,22 @@ export function PlanSection({
             )}
           </div>
         </div>
+        {video && video.monthlySeconds > 0 && (
+          <div className="mt-4 max-w-sm">
+            <div className="mb-1.5 flex justify-between text-sm">
+              <span className="text-muted">Video this month</span>
+              <span className="font-medium tabular-nums">
+                {Math.ceil(video.usedSeconds / 60)} of {video.monthlySeconds / 60} minutes
+              </span>
+            </div>
+            <ProgressBar percent={Math.min(100, Math.round((video.usedSeconds / video.monthlySeconds) * 100))} />
+            <p className="mt-1 text-xs text-muted">
+              {video.usedSeconds >= video.monthlySeconds
+                ? "All used. More becomes available on the 1st."
+                : `${formatLength(video.monthlySeconds - video.usedSeconds)} left. Resets on the 1st; deleting a video gives its minutes back.`}
+            </p>
+          </div>
+        )}
         {plan !== "free" && (
           <p className="mt-4 text-sm text-muted">
             {endDay ? `Paid until ${formatDate(endDay)}.` : "No end date."} To change or cancel, write to{" "}
@@ -63,7 +83,7 @@ export function PlanSection({
         )}
       </div>
 
-      <PlanCards current={plan} ctas={planCtas()} />
+      <PlanCards current={plan} ctas={planCtas()} videos={video !== null} />
     </div>
   );
 }

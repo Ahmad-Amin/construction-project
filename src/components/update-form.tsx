@@ -12,6 +12,8 @@ import { CancelLink, useSheetBusy } from "@/components/sheet-lock";
 import { button, inputClass } from "@/lib/ui";
 import { uploadWithRetry } from "@/lib/upload";
 import { useToast } from "@/components/toast";
+import { useConfirm } from "@/components/confirm-dialog";
+import { useVideoUploads, VideoField, type VideoLimits } from "@/components/video-uploads";
 
 const MAX_PHOTOS = 10;
 
@@ -22,19 +24,24 @@ export function UpdateForm({
   projectId,
   milestones,
   today,
+  video = null,
   sheet = false,
 }: {
   projectId: string;
   milestones: { id: string; name: string; progress_percent: number }[];
   today: string;
+  // Site videos: null when they are switched off; `limits` null when the plan has none.
+  video?: { limits: VideoLimits | null; upgradeHref: string | null } | null;
   // Shown in the slide-over panel: the buttons stay in view along the bottom while the form scrolls.
   sheet?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
-  // One id per draft. Retrying a failed post re-uses it, so it can never post twice.
-  const updateId = useRef(newId());
+  const confirm = useConfirm();
+  // One id per draft. Retrying a failed post re-uses it, so it can never post twice. Videos are added to it too.
+  const [updateId] = useState(newId);
   const uploaded = useRef(new Map<string, Uploaded>());
+  const videos = useVideoUploads({ projectId, updateId, limits: video?.limits ?? null });
 
   const [text, setText] = useState("");
   const [date, setDate] = useState(today);
@@ -44,7 +51,9 @@ export function UpdateForm({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const busy = status !== null;
-  useSheetBusy(busy);
+  // Closing the panel by accident would stop a video upload too.
+  useSheetBusy(busy || videos.busy);
+  const back = `/dashboard/projects/${projectId}/updates`;
 
   const cameraInput = useRef<HTMLInputElement>(null);
   const galleryInput = useRef<HTMLInputElement>(null);
@@ -88,16 +97,20 @@ export function UpdateForm({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (busy) return;
+    if (busy || videos.busy) return;
     if (!text.trim()) {
       setError("Please write a short update.");
+      return;
+    }
+    if (videos.failed) {
+      setError("One of the videos didn't upload. Remove it (or add it again), then post.");
       return;
     }
     setError(null);
 
     try {
       const supabase = createClient();
-      const base = `${projectId}/updates/${updateId.current}`;
+      const base = `${projectId}/updates/${updateId}`;
 
       for (let i = 0; i < photos.length; i++) {
         const photo = photos[i];
@@ -129,20 +142,22 @@ export function UpdateForm({
 
       setStatus("Posting update…");
       const result = await createUpdate({
-        id: updateId.current,
+        id: updateId,
         projectId,
         date,
         text,
         milestoneId: milestoneId || null,
         progress: selected && progress !== selected.progress_percent ? progress : null,
         photos: photos.map((p) => uploaded.current.get(p.id)!),
+        videos: videos.readyIds,
       });
       if (result.error) {
         setError(result.error);
         return;
       }
-      toast.success("Update posted");
-      router.push(`/dashboard/projects/${projectId}/updates?posted=${updateId.current}`);
+      videos.markPosted();
+      toast.success(videos.readyIds.length > 0 ? "Update posted. Its video will be ready to watch in a minute or two." : "Update posted");
+      router.push(`/dashboard/projects/${projectId}/updates?posted=${updateId}`);
     } catch {
       setError("Something went wrong. Please check your connection and try again.");
     } finally {
@@ -278,11 +293,13 @@ export function UpdateForm({
             }}
           />
         </div>
+
+        {video && <VideoField uploads={videos} limits={video.limits} disabled={busy} upgradeHref={video.upgradeHref} />}
       </section>
 
       <p className="flex items-start gap-2 px-1 text-sm text-muted">
         <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-        Your client sees this update and its photos as soon as you post it.
+        Your client sees this update and its {video?.limits ? "photos and videos" : "photos"} as soon as you post it.
       </p>
 
       {error && (
@@ -303,9 +320,31 @@ export function UpdateForm({
             : "pt-1"
         }`}
       >
-        <CancelLink href={`/dashboard/projects/${projectId}/updates`} busy={busy} />
-        <button type="submit" disabled={busy} className={button("primary")}>
-          {busy ? "Please wait…" : "Post update"}
+        {videos.busy && !busy ? (
+          <button
+            type="button"
+            onClick={async () => {
+              if (
+                await confirm({
+                  title: "Stop uploading?",
+                  message: "The video stops uploading and this update isn't posted.",
+                  confirmLabel: "Stop and leave",
+                  cancelLabel: "Keep uploading",
+                  tone: "danger",
+                })
+              ) {
+                router.push(back);
+              }
+            }}
+            className={button("secondary")}
+          >
+            Cancel
+          </button>
+        ) : (
+          <CancelLink href={back} busy={busy} />
+        )}
+        <button type="submit" disabled={busy || videos.busy} className={`${button("primary")} tabular-nums`}>
+          {busy ? "Please wait…" : videos.paused ? "Video upload paused" : videos.busy ? `Uploading video… ${videos.percent}%` : "Post update"}
         </button>
       </div>
     </form>

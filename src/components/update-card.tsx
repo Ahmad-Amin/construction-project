@@ -1,11 +1,12 @@
-import { Camera, Flag, StickyNote } from "lucide-react";
+import { Camera, Flag, StickyNote, Video } from "lucide-react";
 import { DeleteUpdateButton } from "@/components/delete-update-button";
 import { PhotoGallery } from "@/components/photo-gallery";
+import { VideoTiles } from "@/components/video-tiles";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { formatDate, formatRelativeDate } from "@/lib/format";
 import type { UpdateItem } from "@/lib/updates";
 
-// One site update, one row: the day and who wrote it on top, the note underneath, and the photos
+// One site update, one row: the day and who wrote it on top, the note underneath, and its videos and photos
 // in a single row that scrolls sideways.
 export function UpdateCard({
   update,
@@ -22,7 +23,7 @@ export function UpdateCard({
   shareHref?: string | null;
 }) {
   const hasPhotos = update.photos.length > 0;
-  const Icon = hasPhotos ? Camera : StickyNote;
+  const Icon = update.videos.length > 0 ? Video : hasPhotos ? Camera : StickyNote;
 
   return (
     <article className="rounded-2xl border border-line bg-surface p-4 sm:px-5 sm:py-4">
@@ -56,7 +57,7 @@ export function UpdateCard({
           </div>
 
           <p className="mt-3 max-w-3xl whitespace-pre-line leading-relaxed">{update.text}</p>
-          <PhotoGallery photos={update.photos} layout="row" />
+          <PhotoGallery photos={update.photos} layout="row" lead={update.videos.length > 0 ? <VideoTiles videos={update.videos} /> : undefined} />
         </div>
       </div>
     </article>

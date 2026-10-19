@@ -6,8 +6,17 @@ import { Lightbox } from "@/components/lightbox";
 import type { UpdatePhoto } from "@/lib/updates";
 
 // Thumbnails (a grid, or one row that scrolls sideways) that open a full-screen viewer. The links are signed and expire,
-// so we never store them; the server hands fresh ones out on every page load.
-export function PhotoGallery({ photos, layout = "grid" }: { photos: UpdatePhoto[]; layout?: "grid" | "row" }) {
+// so we never store them; the server hands fresh ones out on every page load. In a row, `lead` goes first (an update's
+// videos).
+export function PhotoGallery({
+  photos,
+  layout = "grid",
+  lead,
+}: {
+  photos: UpdatePhoto[];
+  layout?: "grid" | "row";
+  lead?: React.ReactNode;
+}) {
   const [open, setOpen] = useState<number | null>(null);
 
   const close = useCallback(() => setOpen(null), []);
@@ -17,7 +26,7 @@ export function PhotoGallery({ photos, layout = "grid" }: { photos: UpdatePhoto[
     [photos.length],
   );
 
-  if (photos.length === 0) return null;
+  if (photos.length === 0 && !(layout === "row" && lead)) return null;
 
   const thumb = (p: UpdatePhoto, i: number, className: string) => (
     <li key={p.id} className={className}>
@@ -36,7 +45,10 @@ export function PhotoGallery({ photos, layout = "grid" }: { photos: UpdatePhoto[
   return (
     <>
       {layout === "row" ? (
-        <PhotoRow>{photos.map((p, i) => thumb(p, i, "size-24 shrink-0 snap-start sm:size-28"))}</PhotoRow>
+        <PhotoRow>
+          {lead}
+          {photos.map((p, i) => thumb(p, i, "size-24 shrink-0 snap-start sm:size-28"))}
+        </PhotoRow>
       ) : (
         <ul className="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-4">
           {photos.map((p, i) => thumb(p, i, ""))}
@@ -88,7 +100,7 @@ function PhotoRow({ children }: { children: React.ReactNode }) {
       <ul
         ref={list}
         className="flex snap-x gap-2 overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:thin]"
-        aria-label="Photos"
+        aria-label="Photos and videos"
       >
         {children}
       </ul>

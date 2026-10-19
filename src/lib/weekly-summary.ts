@@ -20,6 +20,8 @@ export type WeeklySummary = {
   updates: { date: string; text: string; author: string }[];
   photo_count: number;
   photos: string[];
+  // Posted this week (from migration 47; absent in summaries made before it).
+  video_count?: number;
   paid_count: number;
   paid_this_week: { amount: number; date: string }[];
   paid_this_week_total: number;
@@ -59,6 +61,13 @@ export function weeklySummarySubject(s: WeeklySummary) {
   return `${s.project_name}: your weekly update (${s.progress}% complete)`;
 }
 
+// ", 5 photos, 1 video" after the number of updates (nothing when there are neither).
+const media = (s: WeeklySummary, sep: string) =>
+  [s.photo_count ? plural(s.photo_count, "photo", "photos") : "", s.video_count ? plural(s.video_count, "video", "videos") : ""]
+    .filter(Boolean)
+    .map((part) => sep + part)
+    .join("");
+
 // Inline styles and tables, because email apps ignore most modern CSS.
 export function renderWeeklySummaryEmail(input: {
   to: string;
@@ -84,7 +93,7 @@ export function renderWeeklySummaryEmail(input: {
   ];
   if (s.finished.length) text.push("", `Finished this week: ${s.finished.join(", ")}`);
   if (s.update_count) {
-    text.push("", `${plural(s.update_count, "site update", "site updates")}${s.photo_count ? `, ${plural(s.photo_count, "photo", "photos")}` : ""}:`);
+    text.push("", `${plural(s.update_count, "site update", "site updates")}${media(s, ", ")}:`);
     for (const u of s.updates) text.push(`  - ${formatDate(u.date)}: ${u.text}`);
   }
   if (s.paid_count || s.awaiting_count || s.paid_total) {
@@ -133,7 +142,7 @@ export function renderWeeklySummaryEmail(input: {
 
   const updates = s.update_count
     ? card(
-        `${plural(s.update_count, "site update", "site updates")}${s.photo_count ? ` · ${plural(s.photo_count, "photo", "photos")}` : ""}`,
+        `${plural(s.update_count, "site update", "site updates")}${media(s, " · ")}`,
         s.updates
           .map(
             (u) => `<p style="margin:0 0 10px 0;font-size:14px;line-height:1.55;color:#44403c;"><span style="color:#78716c;">${e(formatDate(u.date))}</span><br>${e(u.text)}</p>`,

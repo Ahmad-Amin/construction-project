@@ -24,6 +24,10 @@ export type PlanInfo = {
   statements: boolean;
   // Creating and sending invoices.
   invoices: boolean;
+  // Site videos on updates: the longest one, and how many minutes of new video a month (0 when not included).
+  // The database has the same numbers (plan_video_max_seconds, plan_video_monthly_seconds).
+  videoMaxSeconds: number;
+  videoMonthlyMinutes: number;
 };
 
 export const PLANS: Record<PlanId, PlanInfo> = {
@@ -39,6 +43,8 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     whatsapp: false,
     statements: false,
     invoices: false,
+    videoMaxSeconds: 0,
+    videoMonthlyMinutes: 0,
   },
   pro: {
     id: "pro",
@@ -52,6 +58,8 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     whatsapp: true,
     statements: true,
     invoices: true,
+    videoMaxSeconds: 180,
+    videoMonthlyMinutes: 60,
   },
   business: {
     id: "business",
@@ -65,6 +73,8 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     whatsapp: true,
     statements: true,
     invoices: true,
+    videoMaxSeconds: 300,
+    videoMonthlyMinutes: 200,
   },
 };
 

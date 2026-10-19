@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { one } from "@/lib/types";
+import { toVideoItems, VIDEO_COLUMNS, type VideoItem, type VideoRow } from "@/lib/videos";
 
 export type UpdatePhoto = { id: string; thumb: string; full: string };
 
@@ -11,6 +12,7 @@ export type UpdateItem = {
   authorName: string;
   milestone: string | null;
   photos: UpdatePhoto[];
+  videos: VideoItem[];
 };
 
 type Row = {
@@ -21,12 +23,12 @@ type Row = {
   author_name: string;
   milestone: { name: string } | { name: string }[] | null;
   project_photos: { id: string; storage_path: string; thumb_path: string | null }[];
+  project_videos: VideoRow[];
 };
 
 const SIGNED_URL_SECONDS = 60 * 60;
 
-const UPDATE_SELECT =
-  "id, update_date, text, author_id, author_name, milestone:milestones(name), project_photos(id, storage_path, thumb_path)";
+const UPDATE_SELECT = `id, update_date, text, author_id, author_name, milestone:milestones(name), project_photos(id, storage_path, thumb_path), project_videos(${VIDEO_COLUMNS})`;
 
 // Turns rows into items, swapping photo paths for short-lived signed links.
 // Photos are private; storage RLS decides which ones this user may sign.
@@ -56,6 +58,8 @@ async function hydrate(supabase: SupabaseClient, rows: Row[]): Promise<UpdateIte
       if (!full) return [];
       return [{ id: p.id, full, thumb: (p.thumb_path && signed.get(p.thumb_path)) || full }];
     }),
+    // Oldest first, in the order they were added.
+    videos: toVideoItems([...(r.project_videos ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at))),
   }));
 }
 

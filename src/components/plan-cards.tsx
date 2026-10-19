@@ -32,6 +32,12 @@ const rows: Row[] = [
   { label: "Support", free: "Email", pro: "Email", business: "Priority" },
 ];
 
+// Site videos: shown only while they are switched on, so nobody buys a plan for something that is off.
+const videoCell = (id: PlanId): Cell =>
+  PLANS[id].videoMaxSeconds === 0 ? false : `${PLANS[id].videoMaxSeconds / 60} min each, ${PLANS[id].videoMonthlyMinutes} min a month`;
+const videoRow: Row = { label: "Short site videos on updates", free: videoCell("free"), pro: videoCell("pro"), business: videoCell("business") };
+const videoHighlight = (id: PlanId) => (PLANS[id].videoMaxSeconds ? [`Site videos, up to ${PLANS[id].videoMaxSeconds / 60} minutes`] : []);
+
 // The three or four things worth knowing about each plan at a glance.
 const highlights: Record<PlanId, string[]> = {
   free: ["1 active project", "Everything you need to run one job", "Email and in-app updates for your client"],
@@ -48,8 +54,10 @@ function Mark({ value }: { value: Cell }) {
 // The three plans as cards, a monthly / yearly switch, and one comparison table underneath. It adapts to
 // the room it is given (not the screen), so it is as tidy in a narrow settings column as on the public
 // pricing page. `ctas` decides where each button goes.
-export function PlanCards({ current, ctas }: { current?: PlanId; ctas: PlanCtas }) {
+export function PlanCards({ current, ctas, videos = false }: { current?: PlanId; ctas: PlanCtas; videos?: boolean }) {
   const [yearly, setYearly] = useState(false);
+  const shownRows = videos ? [...rows.slice(0, -2), videoRow, ...rows.slice(-2)] : rows;
+  const shownHighlights = (id: PlanId) => (videos ? [...highlights[id], ...videoHighlight(id)] : highlights[id]);
 
   return (
     <div className="@container">
@@ -121,7 +129,7 @@ export function PlanCards({ current, ctas }: { current?: PlanId; ctas: PlanCtas 
               {isCurrent && <p className="mt-4 rounded-lg bg-surface-2 py-2.5 text-center text-sm font-semibold">You are on this plan</p>}
 
               <ul className="mt-5 space-y-2.5 border-t border-line pt-4 text-sm">
-                {highlights[id].map((h) => (
+                {shownHighlights(id).map((h) => (
                   <li key={h} className="flex items-start gap-2">
                     <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
                     {h}
@@ -151,7 +159,7 @@ export function PlanCards({ current, ctas }: { current?: PlanId; ctas: PlanCtas 
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {rows.map((row) => (
+              {shownRows.map((row) => (
                 <tr key={row.label}>
                   <th scope="row" className="px-4 py-3 font-normal">
                     {row.label}

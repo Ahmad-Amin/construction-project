@@ -1,8 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { queueNotificationDelivery } from "@/lib/notifications";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { MAX_VIDEOS_PER_UPDATE } from "@/lib/video-rules";
+import { removeDeletedVideosSoon } from "@/lib/videos";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type ActionResult = { error?: string };
 
@@ -16,6 +22,8 @@ type NewUpdate = {
   milestoneId: string | null;
   progress: number | null;
   photos: { path: string; thumb: string | null }[];
+  // Videos already uploaded to Cloudflare for this update (from startVideoUpload).
+  videos?: string[];
 };
 
 function refresh(projectId: string) {
@@ -23,10 +31,12 @@ function refresh(projectId: string) {
   revalidatePath("/dashboard");
 }
 
-// Photos are already in storage by the time this runs; this records the update itself.
+// Photos are already in storage, and videos at Cloudflare, by the time this runs; this records the update itself.
 export async function createUpdate(input: NewUpdate): Promise<ActionResult> {
   const text = input.text.trim();
   if (!text) return { error: "Please write a short update." };
+  const videos = Array.isArray(input.videos) ? input.videos.filter((v) => typeof v === "string" && UUID.test(v)) : [];
+  if (videos.length > MAX_VIDEOS_PER_UPDATE) return { error: `You can add up to ${MAX_VIDEOS_PER_UPDATE} videos to one update.` };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("create_update", {
@@ -37,6 +47,7 @@ export async function createUpdate(input: NewUpdate): Promise<ActionResult> {
     p_milestone_id: input.milestoneId,
     p_progress: input.milestoneId ? input.progress : null,
     p_photos: input.photos,
+    p_videos: videos,
   });
   // Our database function raises plain-English messages (error code P0001).
   if (error) return { error: error.code === "P0001" ? error.message : GENERIC };
@@ -68,6 +79,8 @@ export async function deleteUpdate(projectId: string, updateId: string): Promise
     p.thumb_path ? [p.storage_path, p.thumb_path] : [p.storage_path],
   );
   if (files.length > 0) await supabase.storage.from("project-media").remove(files);
+  // Its videos were queued for removal when the update went; remove them from Cloudflare after answering.
+  after(() => removeDeletedVideosSoon(createAdminClient));
 
   refresh(projectId);
   return {};

@@ -1,5 +1,6 @@
 import { AlertTriangle, Banknote, Camera, CheckCircle2, Flag, Receipt, type LucideIcon } from "lucide-react";
 import { PhotoGallery } from "@/components/photo-gallery";
+import { VideoTiles } from "@/components/video-tiles";
 import { expenseCategoryLabel } from "@/lib/expenses";
 import { formatDate, formatMoney, formatRelativeDate, formatTime } from "@/lib/format";
 import { sideLabel, type PaymentStatus } from "@/lib/payments";
@@ -118,7 +119,7 @@ function EventRow({ event: e, currency, timeZone }: { event: TimelineEvent; curr
             <Flag className="size-3" aria-hidden /> {e.update.milestone}
           </p>
         )}
-        <PhotoGallery photos={e.update.photos} layout="row" />
+        <PhotoGallery photos={e.update.photos} layout="row" lead={e.update.videos.length > 0 ? <VideoTiles videos={e.update.videos} /> : undefined} />
       </Row>
     );
   }

@@ -26,6 +26,7 @@ import { createClient } from "@/lib/supabase/server";
 import { one } from "@/lib/types";
 import { button } from "@/lib/ui";
 import { getViewer } from "@/lib/viewer";
+import { videoUploadsOn } from "@/lib/stream";
 import { whatsappEnabled } from "@/lib/whatsapp-api";
 import { changePassword, updateCompany, updateInvoiceSettings, updateProfile } from "./actions";
 
@@ -66,6 +67,11 @@ export default async function SettingsPage({
     ? await supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "active").is("archived_at", null)
     : { count: 0 };
   const activeProjects = activeCount ?? 0;
+
+  // Site video minutes this month (when videos are switched on).
+  const { data: videoUsage } = isOwnerViewer(viewer) && videoUploadsOn() ? await supabase.rpc("my_video_usage") : { data: null };
+  const videoRow = (videoUsage as { monthly_seconds: number; used_seconds: number }[] | null)?.[0];
+  const video = videoUploadsOn() ? { usedSeconds: videoRow?.used_seconds ?? 0, monthlySeconds: videoRow?.monthly_seconds ?? 0 } : null;
 
   // Homeowners can ask for WhatsApp updates once sending is switched on for the product.
   const showWhatsApp = !viewer.company && whatsappEnabled();
@@ -317,6 +323,7 @@ export default async function SettingsPage({
               lapsed={viewer.company.planLapsed}
               activeProjects={activeProjects}
               timeZone={viewer.company.timeZone}
+              video={video}
             />
           </SettingsSection>
         )}

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { PublicFooter, PublicHeader } from "@/components/public-chrome";
 import { GA_ID, GA_REQUIRES_CONSENT } from "@/lib/analytics";
+import { streamConfig } from "@/lib/stream";
 import { CONTACT_EMAIL, DELETION_DAYS, LEGAL_UPDATED, PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
 
@@ -174,6 +175,13 @@ export default function TrustPage() {
             photos, so those links last seven days. It is off unless the contractor turns it on, and the contractor can pause it for any project.
             Homeowners can stop the email by turning off email notifications in Settings.
           </p>
+          {streamConfig() && (
+            <p className="mt-3">
+              Site videos are kept and played by Cloudflare Stream. Every video is private: it plays only through a
+              link made for someone allowed to see that update, which stops working after a few hours. Homeowners can
+              watch videos but not download them.
+            </p>
+          )}
         </Section>
 
         <Section title="WhatsApp and email">

@@ -1,6 +1,7 @@
 import { LegalList, LegalPage, LegalSection } from "@/components/legal-page";
 import { GA_ID, GA_REQUIRES_CONSENT } from "@/lib/analytics";
 import { GOOGLE_AUTH_ENABLED } from "@/lib/auth-flow";
+import { streamConfig } from "@/lib/stream";
 import { CONTACT_EMAIL, DELETION_DAYS, OPERATOR_NAME, PRODUCT_NAME } from "@/lib/site";
 
 export const metadata = {
@@ -92,6 +93,9 @@ export default function PrivacyPage() {
             <li><strong className="text-foreground">Google (Analytics):</strong> counting visits to our public pages{GA_REQUIRES_CONSENT ? ", only if you accept analytics cookies" : ", unless you switch it off"}.</li>
           )}
           <li><strong className="text-foreground">Meta (WhatsApp):</strong> delivering WhatsApp messages, only for people who switched them on.</li>
+          {streamConfig() && (
+            <li><strong className="text-foreground">Cloudflare (Stream):</strong> storing and playing the site videos contractors add to their updates.</li>
+          )}
           <li><strong className="text-foreground">A content delivery network</strong> that serves the small country-flag pictures in the phone-number picker, which means your browser contacts it when that picker is shown.</li>
         </LegalList>
         <p>
