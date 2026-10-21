@@ -3,14 +3,15 @@ import Link from "next/link";
 import { PlanCards } from "@/components/plan-cards";
 import { PublicFooter, PublicHeader } from "@/components/public-chrome";
 import { planCtas } from "@/lib/billing";
+import { breadcrumbs, faqPage, jsonLd, pageMetadata } from "@/lib/seo";
 import { CONTACT_EMAIL, PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Pricing",
   description: `Start free with one active project. Move to Pro or Business when you run several jobs at once. Your clients never pay.`,
-  alternates: { canonical: "/pricing" },
-};
+  path: "/pricing",
+});
 
 const faqs = [
   {
@@ -43,9 +44,21 @@ const faqs = [
   },
 ];
 
+const structured = jsonLd({
+  "@context": "https://schema.org",
+  "@graph": [
+    breadcrumbs([
+      { name: "Home", path: "/" },
+      { name: "Pricing", path: "/pricing" },
+    ]),
+    faqPage(faqs),
+  ],
+});
+
 export default function PricingPage() {
   return (
     <div className="flex min-h-full flex-col">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structured }} />
       <PublicHeader wide />
 
       <main className="mx-auto w-full max-w-[96rem] flex-1 px-5 py-12 sm:px-6 sm:py-16 lg:px-12 2xl:px-16">

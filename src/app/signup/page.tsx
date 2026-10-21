@@ -3,12 +3,13 @@ import { AuthForm } from "@/components/auth-form";
 import { AuthShell } from "@/components/auth-shell";
 import { GoogleSignIn } from "@/components/google-sign-in";
 import { signup } from "@/app/login/actions";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Create your account",
   description: "Set up your company and your first project in a few minutes. Nothing for your client to install.",
-  alternates: { canonical: "/signup" },
-};
+  path: "/signup",
+});
 
 export default function SignupPage() {
   return (

@@ -7,17 +7,18 @@ import { LandingVisual } from "@/components/landing-visual";
 import { PublicFooter, PublicHeader } from "@/components/public-chrome";
 import { SectionNav } from "@/components/section-nav";
 import { SiteIllustration } from "@/components/site-illustration";
+import { PLANS, PLAN_IDS } from "@/lib/plans";
+import { absoluteUrl, faqPage, jsonLd, organization, pageMetadata, siteUrl } from "@/lib/seo";
 import { CONTACT_EMAIL, PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
 
-export const metadata = {
-  title: { absolute: `${PRODUCT_NAME}: show your clients how the work is going` },
+export const metadata = pageMetadata({
+  title: `${PRODUCT_NAME}: show your clients how the work is going`,
+  absoluteTitle: true,
   description:
-    "One private page for every project: photos from site, progress and payments. You post from your phone, your client looks whenever they like. Built for home builders and renovators.",
-  alternates: { canonical: "/" },
-  openGraph: { url: "/", title: `${PRODUCT_NAME}: show your clients how the work is going` },
-  twitter: { title: `${PRODUCT_NAME}: show your clients how the work is going` },
-};
+    "Site photos, progress and payments on one private page per project. Post from your phone; your client looks whenever they like. For builders and renovators.",
+  path: "/",
+});
 
 const wrap = "mx-auto w-full max-w-[96rem] px-5 sm:px-8 lg:px-12 2xl:px-16";
 
@@ -72,7 +73,7 @@ const questions = [
   },
   {
     q: "Can my site supervisor use it too?",
-    a: "Not yet. For now the account belongs to the company owner, who posts the updates. Logins for your site team are on our list.",
+    a: "Yes, on Pro and Business. Invite your site team with their own logins, and choose which projects each person sees and what they can do.",
   },
   {
     q: "Can I take my records with me?",
@@ -89,22 +90,41 @@ const anchors = [
   { href: "#inside", label: "What's inside" },
   { href: "#privacy", label: "Privacy" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/guides", label: "Guides" },
   { href: "#questions", label: "Questions" },
 ];
 
 // Public landing page. Anything behind login lives under /dashboard.
-// Tells search engines what this is, in a form they read directly. Built from constants only;
-// the "<" is escaped so the text can never close the script tag.
-const structuredData = JSON.stringify({
+// Tells search engines what this is, in a form they read directly: who makes it, the site, the app with its
+// plans and prices (from src/lib/plans.ts, so they never drift), and the questions below. Built from constants
+// only.
+const structuredData = jsonLd({
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: PRODUCT_NAME,
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
-  description:
-    "One private page for every construction project: photos from site, progress and payments, shared between contractor and homeowner.",
-  audience: { "@type": "Audience", audienceType: "Home builders and renovators" },
-}).replace(/</g, "\\u003c");
+  "@graph": [
+    organization(),
+    { "@type": "WebSite", "@id": `${siteUrl()}/#website`, name: PRODUCT_NAME, url: siteUrl(), publisher: { "@id": organization()["@id"] } },
+    {
+      "@type": "SoftwareApplication",
+      name: PRODUCT_NAME,
+      url: siteUrl(),
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web",
+      description:
+        "One private page for every construction project: photos from site, progress and payments, shared between contractor and homeowner.",
+      audience: { "@type": "Audience", audienceType: "Home builders, contractors and renovators" },
+      publisher: { "@id": organization()["@id"] },
+      offers: PLAN_IDS.map((id) => ({
+        "@type": "Offer",
+        name: PLANS[id].name,
+        price: PLANS[id].monthlyUsd ?? 0,
+        priceCurrency: "USD",
+        description: PLANS[id].monthlyUsd === null ? PLANS[id].blurb : `${PLANS[id].blurb} Billed monthly.`,
+        url: absoluteUrl("/pricing"),
+      })),
+    },
+    faqPage(questions),
+  ],
+});
 
 export default function Home() {
   return (

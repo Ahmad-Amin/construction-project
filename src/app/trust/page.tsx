@@ -16,12 +16,13 @@ import { GA_ID, GA_REQUIRES_CONSENT } from "@/lib/analytics";
 import { streamConfig } from "@/lib/stream";
 import { CONTACT_EMAIL, DELETION_DAYS, LEGAL_UPDATED, PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Private by design",
   description: "How your project records, client details and money information are protected.",
-  alternates: { canonical: "/trust" },
-};
+  path: "/trust",
+});
 
 const promises = [
   {

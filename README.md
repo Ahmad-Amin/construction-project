@@ -139,6 +139,15 @@ Homeowners who switch on **Settings → Notifications → Send me updates on Wha
 - **Link previews:** the picture shown when the site is shared is drawn in code (`src/app/opengraph-image.tsx`); the title and description come from each page's metadata. Invite pages are kept out of search engines and say nothing about the person or project.
 - **Search engines:** `robots.txt` and the sitemap are generated (`src/app/robots.ts`, `sitemap.ts`). The dashboard, invite links, sign-in and API routes are not indexed.
 
+## Search and guides
+
+- **Every public page** sets its metadata through `pageMetadata()` in `src/lib/seo.ts`: title, description, canonical address, and the link-preview tags with the site's picture. Use it for any new public page. (A page that writes its own `openGraph` replaces the layout's whole one, picture included, which is why this helper exists.)
+- **Structured data** (what search engines and AI assistants read directly): the home page describes the company, the site, the app with its plans and prices (from `src/lib/plans.ts`) and its questions; pricing has its questions; each guide has the article, its breadcrumbs and its questions. The helpers are in `src/lib/seo.ts`.
+- **Guides** live at `/guides` (worldwide) and `/<country>/guides` (for one country, `/pk/guides` for Pakistan). A topic can have a version for everyone and one per country, each with its own examples, money and words, not the same text with the currency swapped. The versions point at each other with hreflang links (on the page and in the sitemap), so Google shows each person the one for where they are.
+- **Adding a guide:** add it to `GUIDES` in `src/lib/guides.ts` (the guides page, the sitemap and the language links read that list), create its `page.tsx` with `<GuideArticle>` from `src/components/guide-article.tsx`, and add `opengraph-image.tsx` and `twitter-image.tsx` next to it (copy an existing guide's). Change `updated` whenever the article changes in a way readers would notice. Screenshots go in `public/guides/`.
+- **The payment schedule calculator** (`src/components/payment-schedule-calculator.tsx`) runs entirely in the browser; its download is a CSV with formulas, made on the visitor's device.
+- **After deploying:** add buildpeek.app as a Domain property in Google Search Console (verify with the TXT record in Cloudflare DNS), submit `https://buildpeek.app/sitemap.xml`, and import it into Bing Webmaster Tools from Search Console.
+
 ## Sharing with clients
 
 - **WhatsApp:** one-tap, pre-written messages that open the client's chat (click-to-chat links; nothing is sent automatically). Available on each site update, on the project Overview ("Share progress"), right after posting an update, and as a reminder on payments that are waiting for the other side to confirm. Messages are built in `src/lib/whatsapp.ts` and contain only progress, update text and payments, never expenses.

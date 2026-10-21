@@ -6,13 +6,23 @@ import { GA_ID } from "@/lib/analytics";
 import { CONTACT_EMAIL, OPERATOR_NAME, PRODUCT_NAME } from "@/lib/site";
 import { button } from "@/lib/ui";
 
-// `wide` is for the landing page; the text pages (privacy) use the narrow width.
+// `wide` is for the landing page; the text pages (privacy) use the narrow width. `children` replaces the
+// Pricing and Guides links (the landing page shows its own section links there).
 export function PublicHeader({ wide = false, children }: { wide?: boolean; children?: React.ReactNode }) {
   return (
     <header className="sticky top-0 z-10 bg-background/85 backdrop-blur">
       <div className={`mx-auto flex w-full items-center justify-between gap-4 px-5 py-4 sm:px-6 ${wide ? "max-w-[96rem] lg:px-12 2xl:px-16" : "max-w-3xl"}`}>
         <Logo />
-        {children}
+        {children ?? (
+          <nav aria-label="Site" className="hidden items-center gap-1 md:flex">
+            <Link href="/pricing" className={button("ghost", "sm")}>
+              Pricing
+            </Link>
+            <Link href="/guides" className={button("ghost", "sm")}>
+              Guides
+            </Link>
+          </nav>
+        )}
         <nav className="flex items-center gap-1">
           <ThemeQuickToggle />
           <Link href="/login" className={button("ghost", "sm")}>
@@ -57,6 +67,11 @@ export function PublicFooter({ wide = false }: { wide?: boolean }) {
               <li>
                 <Link href="/pricing" className={footerLink}>
                   Pricing
+                </Link>
+              </li>
+              <li>
+                <Link href="/guides" className={footerLink}>
+                  Guides and templates
                 </Link>
               </li>
               <li>

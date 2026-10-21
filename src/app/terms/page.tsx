@@ -1,11 +1,12 @@
 import { LegalList, LegalPage, LegalSection } from "@/components/legal-page";
 import { CONTACT_EMAIL, GOVERNING_LAW, OPERATOR_NAME, PRODUCT_NAME } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Terms of use",
-  description: `The rules for using ${PRODUCT_NAME}, in plain words.`,
-  alternates: { canonical: "/terms" },
-};
+  description: `The rules for using ${PRODUCT_NAME}, in plain words: your account, what you share with your clients, plans and payment, and changes to these terms.`,
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

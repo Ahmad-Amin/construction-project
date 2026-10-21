@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AnalyticsConsent } from "@/components/analytics-consent";
 import { RouteProgress } from "@/components/route-progress";
 import { VideoUploadProvider } from "@/components/video-upload-manager";
+import { SITE_DESCRIPTION } from "@/lib/seo";
 import { PRODUCT_NAME } from "@/lib/site";
 import "./globals.css";
 
@@ -17,8 +18,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const DESCRIPTION = "Progress, money, receipts and project updates, shared between contractor and homeowner.";
+const DESCRIPTION = SITE_DESCRIPTION;
 
+// The defaults. Public pages set their own through pageMetadata() in src/lib/seo.ts.
 export const metadata: Metadata = {
   // Makes every address in the tags below absolute, which link previews need. Set SITE_URL in production.
   metadataBase: new URL(process.env.SITE_URL?.trim() || "http://localhost:3000"),
@@ -29,7 +31,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: PRODUCT_NAME, statusBarStyle: "default" },
   // What shows when a link is shared on WhatsApp, Facebook, LinkedIn and the like. The picture
   // comes from opengraph-image.tsx next to this file.
-  openGraph: { type: "website", siteName: PRODUCT_NAME, title: PRODUCT_NAME, description: DESCRIPTION, locale: "en_PK" },
+  openGraph: { type: "website", siteName: PRODUCT_NAME, title: PRODUCT_NAME, description: DESCRIPTION, locale: "en_US" },
   twitter: { card: "summary_large_image", title: PRODUCT_NAME, description: DESCRIPTION },
 };
 

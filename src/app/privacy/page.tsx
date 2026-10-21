@@ -3,12 +3,13 @@ import { GA_ID, GA_REQUIRES_CONSENT } from "@/lib/analytics";
 import { GOOGLE_AUTH_ENABLED } from "@/lib/auth-flow";
 import { streamConfig } from "@/lib/stream";
 import { CONTACT_EMAIL, DELETION_DAYS, OPERATOR_NAME, PRODUCT_NAME } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Privacy policy",
   description: `What ${PRODUCT_NAME} collects, why, who it is shared with, and your choices.`,
-  alternates: { canonical: "/privacy" },
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (
