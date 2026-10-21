@@ -1,97 +1,97 @@
-import Link from "next/link";
-import { ArrowRight, Banknote, Camera, CheckCircle2, Clock, Eye, EyeOff, HardHat, TrendingUp } from "lucide-react";
-import { BackToTop } from "@/components/back-to-top";
-import { DemoButtons } from "@/components/demo-buttons";
-import { Faq } from "@/components/faq";
-import { LandingVisual } from "@/components/landing-visual";
-import { PublicFooter, PublicHeader } from "@/components/public-chrome";
-import { SectionNav } from "@/components/section-nav";
-import { SiteIllustration } from "@/components/site-illustration";
-import { PLANS, PLAN_IDS } from "@/lib/plans";
-import { absoluteUrl, faqPage, jsonLd, organization, pageMetadata, siteUrl } from "@/lib/seo";
-import { CONTACT_EMAIL, PRODUCT_NAME } from "@/lib/site";
-import { button } from "@/lib/ui";
+import Link from 'next/link';
+import { ArrowRight, Banknote, Camera, CheckCircle2, Clock, Eye, EyeOff, HardHat, TrendingUp } from 'lucide-react';
+import { BackToTop } from '@/components/back-to-top';
+import { DemoButtons } from '@/components/demo-buttons';
+import { Faq } from '@/components/faq';
+import { LandingVisual } from '@/components/landing-visual';
+import { PublicFooter, PublicHeader } from '@/components/public-chrome';
+import { SectionNav } from '@/components/section-nav';
+import { SiteIllustration } from '@/components/site-illustration';
+import { PLANS, PLAN_IDS } from '@/lib/plans';
+import { absoluteUrl, faqPage, jsonLd, organization, pageMetadata, siteUrl } from '@/lib/seo';
+import { CONTACT_EMAIL, PRODUCT_NAME } from '@/lib/site';
+import { button } from '@/lib/ui';
 
 export const metadata = pageMetadata({
   title: `${PRODUCT_NAME}: show your clients how the work is going`,
   absoluteTitle: true,
   description:
-    "Site photos, progress and payments on one private page per project. Post from your phone; your client looks whenever they like. For builders and renovators.",
-  path: "/",
+    'Site photos, progress and payments on one private page per project. Post from your phone; your client looks whenever they like. For builders and renovators.',
+  path: '/',
 });
 
-const wrap = "mx-auto w-full max-w-[96rem] px-5 sm:px-8 lg:px-12 2xl:px-16";
+const wrap = 'mx-auto w-full max-w-[96rem] px-5 sm:px-8 lg:px-12 2xl:px-16';
 
 // A day with the portal, told plainly.
 const day = [
   {
-    when: "On site",
-    body: "Take a photo, write a line, tick off the stage. It takes a minute, and you do it from your phone.",
+    when: 'On site',
+    body: 'Take a photo, write a line, tick off the stage. It takes a minute, and you do it from your phone.',
   },
   {
     when: "At your client's home",
-    body: "They open their own link and see the progress, the photos and what has been paid. Nobody has to phone you.",
+    body: 'They open their own link and see the progress, the photos and what has been paid. Nobody has to phone you.',
   },
   {
-    when: "At the end of the month",
-    body: "Every payment is confirmed by both of you, so there is one record that nobody has to argue about.",
+    when: 'At the end of the month',
+    body: 'Every payment is confirmed by both of you, so there is one record that nobody has to argue about.',
   },
 ];
 
 const questions = [
   {
-    q: "What do I need to get started?",
-    a: "An email address and a few minutes. You add your company, then your first project and your client, and you get a private link to send them.",
+    q: 'What do I need to get started?',
+    a: 'An email address and a few minutes. You add your company, then your first project and your client, and you get a private link to send them.',
   },
   {
-    q: "Does my client need to install anything?",
+    q: 'Does my client need to install anything?',
     a: "No. They open a link on their phone, choose a password, and that's it.",
   },
   {
-    q: "How does my client get in?",
+    q: 'How does my client get in?',
     a: "You send them their own invite link, on WhatsApp or however you like. They set a password and see only their own project, nobody else's.",
   },
   {
-    q: "Can my client see what I spend?",
-    a: "Only what you choose to share. New expenses start hidden, and the totals your client sees never include them.",
+    q: 'Can my client see what I spend?',
+    a: 'Only what you choose to share. New expenses start hidden, and the totals your client sees never include them.',
   },
   {
-    q: "What if my client disagrees with a payment?",
+    q: 'What if my client disagrees with a payment?',
     a: "They can dispute it and say why. You both see the result, and nothing counts towards the total until it's sorted.",
   },
   {
-    q: "Does it remind my client about things?",
-    a: "Yes. When a payment needs their confirmation, a new site update is posted or a stage is finished, they get a notification in the app and an email. You can also send a reminder yourself with one tap.",
+    q: 'Does it remind my client about things?',
+    a: 'Yes. When a payment needs their confirmation, a new site update is posted or a stage is finished, they get a notification in the app and an email. You can also send a reminder yourself with one tap.',
   },
   {
-    q: "Does it work on a weak connection?",
-    a: "Yes. Photos are shrunk on your phone before they upload and are retried if the signal drops, so an update from a site with poor reception still goes through.",
+    q: 'Does it work on a weak connection?',
+    a: 'Yes. Photos are shrunk on your phone before they upload and are retried if the signal drops, so an update from a site with poor reception still goes through.',
   },
   {
-    q: "Is it only for big projects?",
-    a: "No. A house, an extra floor, a renovation, a shop fit-out. If you have a client who keeps asking for updates, it fits.",
+    q: 'Is it only for big projects?',
+    a: 'No. A house, an extra floor, a renovation, a shop fit-out. If you have a client who keeps asking for updates, it fits.',
   },
   {
-    q: "Can my site supervisor use it too?",
-    a: "Yes, on Pro and Business. Invite your site team with their own logins, and choose which projects each person sees and what they can do.",
+    q: 'Can my site supervisor use it too?',
+    a: 'Yes, on Pro and Business. Invite your site team with their own logins, and choose which projects each person sees and what they can do.',
   },
   {
-    q: "Can I take my records with me?",
-    a: "Yes. Download your projects, stages, updates, expenses and payments as spreadsheets whenever you like.",
+    q: 'Can I take my records with me?',
+    a: 'Yes. Download your projects, stages, updates, expenses and payments as spreadsheets whenever you like.',
   },
   {
-    q: "Is it available in Urdu?",
+    q: 'Is it available in Urdu?',
     a: "Not yet. For now it's in English, though you can write your site updates and notes in any language.",
   },
 ];
 
 const anchors = [
-  { href: "#day", label: "How it works" },
-  { href: "#inside", label: "What's inside" },
-  { href: "#privacy", label: "Privacy" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/guides", label: "Guides" },
-  { href: "#questions", label: "Questions" },
+  { href: '#day', label: 'How it works' },
+  { href: '#inside', label: "What's inside" },
+  { href: '#privacy', label: 'Privacy' },
+  { href: '/pricing', label: 'Pricing' },
+  { href: '/guides', label: 'Guides' },
+  { href: '#questions', label: 'Questions' },
 ];
 
 // Public landing page. Anything behind login lives under /dashboard.
@@ -99,27 +99,27 @@ const anchors = [
 // plans and prices (from src/lib/plans.ts, so they never drift), and the questions below. Built from constants
 // only.
 const structuredData = jsonLd({
-  "@context": "https://schema.org",
-  "@graph": [
+  '@context': 'https://schema.org',
+  '@graph': [
     organization(),
-    { "@type": "WebSite", "@id": `${siteUrl()}/#website`, name: PRODUCT_NAME, url: siteUrl(), publisher: { "@id": organization()["@id"] } },
+    { '@type': 'WebSite', '@id': `${siteUrl()}/#website`, name: PRODUCT_NAME, url: siteUrl(), publisher: { '@id': organization()['@id'] } },
     {
-      "@type": "SoftwareApplication",
+      '@type': 'SoftwareApplication',
       name: PRODUCT_NAME,
       url: siteUrl(),
-      applicationCategory: "BusinessApplication",
-      operatingSystem: "Web",
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
       description:
-        "One private page for every construction project: photos from site, progress and payments, shared between contractor and homeowner.",
-      audience: { "@type": "Audience", audienceType: "Home builders, contractors and renovators" },
-      publisher: { "@id": organization()["@id"] },
+        'One private page for every construction project: photos from site, progress and payments, shared between contractor and homeowner.',
+      audience: { '@type': 'Audience', audienceType: 'Home builders, contractors and renovators' },
+      publisher: { '@id': organization()['@id'] },
       offers: PLAN_IDS.map((id) => ({
-        "@type": "Offer",
+        '@type': 'Offer',
         name: PLANS[id].name,
         price: PLANS[id].monthlyUsd ?? 0,
-        priceCurrency: "USD",
+        priceCurrency: 'USD',
         description: PLANS[id].monthlyUsd === null ? PLANS[id].blurb : `${PLANS[id].blurb} Billed monthly.`,
-        url: absoluteUrl("/pricing"),
+        url: absoluteUrl('/pricing'),
       })),
     },
     faqPage(questions),
@@ -140,23 +140,25 @@ export default function Home() {
           <div>
             <p className="animate-rise flex items-center gap-3 text-[0.95rem]">
               <span className="flex size-9 items-center justify-center rounded-xl bg-primary-soft text-data-accent ring-1 ring-primary/25">
-                <HardHat className="size-[18px]" aria-hidden />
+                <HardHat className="size-4.5" aria-hidden />
               </span>
               <span>
                 <span className="text-muted">Made for </span>
                 <span className="font-semibold">home builders and renovators</span>
               </span>
             </p>
-            <h1 className="animate-rise mt-6 text-balance text-5xl font-semibold leading-[1.04] tracking-tight sm:text-6xl lg:text-7xl 2xl:text-[5.25rem]" style={{ animationDelay: "60ms" }}>
-              Your client keeps asking how it&apos;s going.{" "}
-              <span className="text-muted">Now they can just look.</span>
+            <h1
+              className="animate-rise mt-6 text-balance text-5xl font-semibold leading-[1.04] tracking-tight sm:text-6xl lg:text-7xl 2xl:text-[5.25rem]"
+              style={{ animationDelay: '60ms' }}
+            >
+              Your client keeps asking how it&apos;s going. <span className="text-muted">Now they can just look.</span>
             </h1>
-            <p className="animate-rise mt-7 max-w-xl text-lg leading-relaxed text-muted sm:text-xl" style={{ animationDelay: "120ms" }}>
-              One private page for each project: photos from the site, what has been paid, and what comes next.
-              You post from your phone. They look whenever they like.
+            <p className="animate-rise mt-7 max-w-xl text-lg leading-relaxed text-muted sm:text-xl" style={{ animationDelay: '120ms' }}>
+              One private page for each project: photos from the site, what has been paid, and what comes next. You post from your phone. They look
+              whenever they like.
             </p>
-            <div className="animate-rise mt-9 flex flex-col gap-3 sm:flex-row sm:items-center" style={{ animationDelay: "180ms" }}>
-              <Link href="/signup" className={button("primary", "lg")}>
+            <div className="animate-rise mt-9 flex flex-col gap-3 sm:flex-row sm:items-center" style={{ animationDelay: '180ms' }}>
+              <Link href="/signup" className={button('primary', 'lg')}>
                 Create your account
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
@@ -164,14 +166,14 @@ export default function Home() {
                 Homeowner? Sign in
               </Link>
             </div>
-            <ul className="animate-rise mt-9 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted" style={{ animationDelay: "240ms" }}>
-              {["Works on any phone", "Nothing to install", "Set up in a few minutes"].map((t) => (
+            <ul className="animate-rise mt-9 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted" style={{ animationDelay: '240ms' }}>
+              {['Works on any phone', 'Nothing to install', 'Set up in a few minutes'].map((t) => (
                 <li key={t} className="flex items-center gap-1.5">
                   <CheckCircle2 className="size-4 text-success" aria-hidden /> {t}
                 </li>
               ))}
             </ul>
-            <div className="animate-rise mt-9 border-t border-line pt-6" style={{ animationDelay: "300ms" }}>
+            <div className="animate-rise mt-9 border-t border-line pt-6" style={{ animationDelay: '300ms' }}>
               <DemoButtons />
             </div>
           </div>
@@ -184,9 +186,7 @@ export default function Home() {
           <div className={`${wrap} grid gap-10 py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-16 lg:py-28`}>
             <div className="lg:sticky lg:top-28 lg:self-start">
               <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">A normal day with it</h2>
-              <p className="mt-4 max-w-sm text-lg leading-relaxed text-muted">
-                Three small moments, and nobody has to chase anybody.
-              </p>
+              <p className="mt-4 max-w-sm text-lg leading-relaxed text-muted">Three small moments, and nobody has to chase anybody.</p>
             </div>
             <ol className="divide-y divide-line border-y border-line">
               {day.map(({ when, body }, i) => (
@@ -218,9 +218,9 @@ export default function Home() {
                 <p className="mt-2 text-muted">Stages with percentages, so it&apos;s clear what&apos;s done and what&apos;s next.</p>
                 <ul className="mt-6 space-y-4" aria-label="Sample stages">
                   {[
-                    ["Foundation", 100],
-                    ["Grey structure", 85],
-                    ["Electrical", 40],
+                    ['Foundation', 100],
+                    ['Grey structure', 85],
+                    ['Electrical', 40],
                   ].map(([name, pct]) => (
                     <li key={name}>
                       <div className="mb-1.5 flex justify-between text-sm">
@@ -275,8 +275,10 @@ export default function Home() {
                 </p>
                 <div className="mt-6 grid grid-cols-3 gap-3" aria-hidden>
                   {[0, 1, 2].map((i) => (
-                    <div key={i} className="bg-hero aspect-[4/3] overflow-hidden rounded-2xl border border-line shadow-sm shadow-black/5">
-                      <SiteIllustration className={`size-full object-cover ${i === 1 ? "scale-150 origin-bottom-left" : i === 2 ? "scale-125 origin-bottom-right" : ""}`} />
+                    <div key={i} className="bg-hero aspect-4/3 overflow-hidden rounded-2xl border border-line shadow-sm shadow-black/5">
+                      <SiteIllustration
+                        className={`size-full object-cover ${i === 1 ? 'scale-150 origin-bottom-left' : i === 2 ? 'scale-125 origin-bottom-right' : ''}`}
+                      />
                     </div>
                   ))}
                 </div>
@@ -288,17 +290,19 @@ export default function Home() {
                   <EyeOff className="size-5" aria-hidden />
                 </span>
                 <h3 className="mt-5 text-xl font-semibold tracking-tight">Your costs stay private</h3>
-                <p className="mt-2 text-muted">
-                  Expenses are hidden from your client until you choose to share them.
-                </p>
+                <p className="mt-2 text-muted">Expenses are hidden from your client until you choose to share them.</p>
                 <ul className="mt-6 space-y-2.5 text-sm" aria-label="Sample expenses">
                   <li className="flex items-center justify-between gap-3 rounded-xl bg-surface-2 px-3.5 py-2.5">
                     <span>Site office</span>
-                    <span className="flex items-center gap-1.5 text-xs text-muted"><EyeOff className="size-3.5" aria-hidden /> Hidden</span>
+                    <span className="flex items-center gap-1.5 text-xs text-muted">
+                      <EyeOff className="size-3.5" aria-hidden /> Hidden
+                    </span>
                   </li>
                   <li className="flex items-center justify-between gap-3 rounded-xl bg-surface-2 px-3.5 py-2.5">
                     <span>Steel, Ittefaq</span>
-                    <span className="flex items-center gap-1.5 text-xs text-success"><Eye className="size-3.5" aria-hidden /> Shared</span>
+                    <span className="flex items-center gap-1.5 text-xs text-success">
+                      <Eye className="size-3.5" aria-hidden /> Shared
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -308,7 +312,7 @@ export default function Home() {
 
         {/* Privacy */}
         <section id="privacy" className={`${wrap} scroll-mt-20 py-20 lg:py-28`}>
-          <div className="privacy-band rounded-[2rem] px-7 py-12 sm:px-12 sm:py-16 lg:px-16">
+          <div className="privacy-band rounded-4xl px-7 py-12 sm:px-12 sm:py-16 lg:px-16">
             <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
               <div>
                 <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">Your numbers stay yours</h2>
@@ -345,7 +349,7 @@ export default function Home() {
               </p>
               {CONTACT_EMAIL && (
                 <p className="mt-3 max-w-sm leading-relaxed text-muted">
-                  Don&apos;t see yours?{" "}
+                  Don&apos;t see yours?{' '}
                   <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-foreground underline underline-offset-4">
                     Write to us
                   </a>
@@ -364,7 +368,7 @@ export default function Home() {
               <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">Try it on your next project.</h2>
               <p className="mt-4 max-w-md text-lg text-muted">Set up your company and your first project in a few minutes.</p>
             </div>
-            <Link href="/signup" className={`${button("primary", "lg")} shrink-0`}>
+            <Link href="/signup" className={`${button('primary', 'lg')} shrink-0`}>
               Create your account
               <ArrowRight className="size-4" aria-hidden />
             </Link>
