@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Banknote,
   Bell,
+  Contact,
   Camera,
   ChevronRight,
   ChevronsUpDown,
@@ -61,6 +62,8 @@ export type ShellProps = {
   isPlatformAdmin?: boolean;
   // Notifications the person hasn't opened yet.
   unread: number;
+  // For people who can see leads: their follow-ups due today or overdue (null: no Leads item).
+  leads: { due: number } | null;
   // Whether the person folded the desktop sidebar away (remembered in a cookie).
   initialCollapsed: boolean;
   // The guided tours this person has already been shown (kept on their account).
@@ -529,6 +532,18 @@ function SidebarContent({
           <Nav href="/dashboard" icon={LayoutDashboard} active={pathname === "/dashboard"} collapsed={collapsed} onNavigate={onNavigate}>
             Dashboard
           </Nav>
+          {props.leads && (
+            <Nav
+              href="/dashboard/leads"
+              icon={Contact}
+              active={pathname.startsWith("/dashboard/leads")}
+              badge={props.leads.due}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+            >
+              Leads
+            </Nav>
+          )}
           <Nav
             href="/dashboard/notifications"
             icon={Bell}
@@ -620,6 +635,11 @@ function Breadcrumbs({ pathname, projects }: { pathname: string; projects: Shell
   if (pathname.startsWith("/dashboard/settings")) crumbs.push({ label: "Settings" });
   else if (pathname.startsWith("/dashboard/admin")) crumbs.push({ label: "Plans admin" });
   else if (pathname.startsWith("/dashboard/team")) crumbs.push({ label: "Team" });
+  else if (pathname.startsWith("/dashboard/leads")) {
+    const deeper = pathname === "/dashboard/leads/new" ? "Add a lead" : pathname !== "/dashboard/leads" ? "Lead" : null;
+    crumbs.push({ label: "Leads", href: deeper ? "/dashboard/leads" : undefined });
+    if (deeper) crumbs.push({ label: deeper });
+  }
   else if (pathname === "/dashboard/projects/new") crumbs.push({ label: "New project" });
   else {
     const m = pathname.match(/^\/dashboard\/projects\/([0-9a-f-]{36})(?:\/([a-z]+))?(?:\/(.+))?/);

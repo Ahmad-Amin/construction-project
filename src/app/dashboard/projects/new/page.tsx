@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { emptyProjectValues, ProjectForm } from "@/components/project-form";
 import { phoneCountryFor } from "@/lib/phone";
 import { PlanLimitCard } from "@/components/plan-limit-card";
+import { fetchLead, workTypeLabel } from "@/lib/leads";
 import { usage } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/viewer";
@@ -10,13 +11,18 @@ import { createProject } from "../actions";
 
 export const metadata = { title: "New project" };
 
-export default async function NewProjectPage() {
+export default async function NewProjectPage({ searchParams }: { searchParams: Promise<{ lead?: string }> }) {
   const viewer = await getViewer();
   if (viewer?.company?.role !== "owner") redirect("/dashboard");
+  const { lead: leadId } = await searchParams;
 
   // At the plan's limit there is nothing to fill in: say so, and what to do. (The database refuses
   // the project too, so this is only the friendly version of a rule that can't be got round.)
   const supabase = await createClient();
+  // Started from a lead ("Won → Create the project"): its details fill in the form. A lead that already has a project, or
+  // isn't there, just gives the empty form.
+  const lead = leadId ? await fetchLead(supabase, leadId) : null;
+  const fromLead = lead && !lead.projectId ? lead : null;
   const { count } = await supabase
     .from("projects")
     .select("id", { count: "exact", head: true })
@@ -38,12 +44,28 @@ export default async function NewProjectPage() {
     <main className="w-full max-w-3xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       <h1 className="text-2xl font-bold tracking-tight">New project</h1>
       <p className="mt-1 mb-6 text-sm text-muted">
-        Add the project and your client. You&apos;ll get a link to invite them next.
+        {fromLead
+          ? `Filled in from the lead ${fromLead.name}. Creating the project marks the lead won.`
+          : "Add the project and your client. You'll get a link to invite them next."}
       </p>
       <ProjectForm
         action={createProject}
         mode="create"
-        defaults={emptyProjectValues}
+        defaults={
+          fromLead
+            ? {
+                ...emptyProjectValues,
+                name: fromLead.workType && fromLead.workType !== "other" ? `${fromLead.name} · ${workTypeLabel(fromLead.workType)}` : fromLead.name,
+                location: fromLead.location,
+                budget: fromLead.budget === null ? "" : String(fromLead.budget),
+                client_name: fromLead.name,
+                client_email: fromLead.email ?? "",
+                client_phone: fromLead.phone ?? "",
+              }
+            : emptyProjectValues
+        }
+        templateId={fromLead?.workType || undefined}
+        leadId={fromLead?.id}
         currency={viewer.company.currency}
         phoneCountry={phoneCountryFor((await headers()).get("x-vercel-ip-country"), viewer.company.timeZone)}
         cancelHref="/dashboard"

@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
-import { AlertTriangle, Banknote, Camera, CalendarClock, CalendarDays, CheckCircle2, FileText, FileX, Flag, Receipt, MessageSquarePlus, PartyPopper, Sparkles, UserPlus, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Banknote, Camera, CalendarClock, CalendarDays, CheckCircle2, Contact, FileText, FileX, Flag, Receipt, MessageSquarePlus, PartyPopper, Sparkles, UserPlus, type LucideIcon } from "lucide-react";
 import { markNotificationRead } from "@/app/dashboard/notifications/actions";
 import { timeAgo } from "@/lib/format";
 import type { NotificationItem, NotificationKind } from "@/lib/notifications";
@@ -23,6 +23,7 @@ const icons: Record<NotificationKind, { icon: LucideIcon; tone: string }> = {
   client_joined: { icon: UserPlus, tone: "bg-primary-soft text-data-accent" },
   project_completed: { icon: PartyPopper, tone: "bg-success-soft text-success" },
   weekly_summary: { icon: CalendarDays, tone: "bg-primary-soft text-data-accent" },
+  lead_follow_up: { icon: Contact, tone: "bg-primary-soft text-data-accent" },
 };
 
 // The round icon for a kind of notification (also used by toasts).

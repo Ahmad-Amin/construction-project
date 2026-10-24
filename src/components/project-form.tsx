@@ -71,6 +71,8 @@ export function ProjectForm({
   phoneCountry,
   emailLocked = false,
   cancelHref,
+  templateId: startTemplate,
+  leadId,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   mode: "create" | "edit";
@@ -80,14 +82,19 @@ export function ProjectForm({
   phoneCountry: string;
   emailLocked?: boolean;
   cancelHref: string;
+  // The stages template to start from (a lead's type of work); the default one otherwise.
+  templateId?: string;
+  // The lead this project comes from: creating it marks the lead won and links the two.
+  leadId?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   // After a failed save, show what was just submitted rather than the original defaults.
   const v = (key: keyof ProjectFormValues) => state.values?.[key] ?? String(defaults[key]);
   const visible = state.values ? state.values.budget_visible === "on" : defaults.budget_visible;
-  const defaultTemplate = MILESTONE_TEMPLATES.find((t) => t.id === DEFAULT_TEMPLATE_ID)!;
+  const defaultTemplate =
+    MILESTONE_TEMPLATES.find((t) => t.id === startTemplate) ?? MILESTONE_TEMPLATES.find((t) => t.id === DEFAULT_TEMPLATE_ID)!;
   const nextId = useRef(defaultTemplate.milestones.length);
-  const [templateId, setTemplateId] = useState<string | null>(DEFAULT_TEMPLATE_ID);
+  const [templateId, setTemplateId] = useState<string | null>(defaultTemplate.id);
   const [milestones, setMilestones] = useState(() =>
     defaultTemplate.milestones.map((name, id) => ({ id, name })),
   );
@@ -102,6 +109,7 @@ export function ProjectForm({
 
   return (
     <form action={formAction} className="space-y-5">
+      {leadId && <input type="hidden" name="lead_id" value={leadId} />}
       <Section title="Project">
         <Field label="Project name">
           <input name="name" required defaultValue={v("name")} placeholder="Carter Residence" className={inputClass} />

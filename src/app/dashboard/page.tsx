@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { Archive, BellRing, Banknote, ChevronDown, Hammer, PauseCircle, Plus, Receipt, Trash2 } from "lucide-react";
+import { Archive, ArrowRight, BellRing, Banknote, ChevronDown, Contact, Hammer, PauseCircle, Plus, Receipt, Trash2 } from "lucide-react";
 import { signOut } from "@/app/login/actions";
 import { AuthForm } from "@/components/auth-form";
 import { AuthShell } from "@/components/auth-shell";
@@ -21,6 +21,7 @@ import { CURRENCIES, currencyForCountry } from "@/lib/currency";
 import { isDemoEmail } from "@/lib/demo";
 import { DEFAULT_TIMEZONE, isTimeZone, timeZoneOptions } from "@/lib/timezone";
 import { fetchGettingStarted } from "@/lib/getting-started";
+import { fetchMyFollowUps, leadAccess } from "@/lib/leads";
 import { formatMoneyCompact } from "@/lib/format";
 import { viewerSide } from "@/lib/payments";
 import { createClient } from "@/lib/supabase/server";
@@ -120,10 +121,11 @@ export default async function DashboardPage({
   const supabase = await createClient();
   // The first-run checklist is for owners only, and not for the shared demo account.
   const wantsChecklist = isOwner && !isDemoEmail(viewer.email);
-  const [dashboard, profile, gettingStarted] = await Promise.all([
+  const [dashboard, profile, gettingStarted, followUps] = await Promise.all([
     fetchDashboard(supabase, side),
     supabase.from("profiles").select("name").eq("id", viewer.userId).maybeSingle(),
     wantsChecklist ? fetchGettingStarted(supabase, viewer.userId, !!viewer.company?.logoUrl) : Promise.resolve(null),
+    leadAccess(viewer).see ? fetchMyFollowUps(supabase) : Promise.resolve(null),
   ]);
   const { kpis, attention, activity, photos } = dashboard;
   const projects = dashboard.projects.filter((p) => !p.archived);
@@ -168,6 +170,25 @@ export default async function DashboardPage({
       />
 
       {gettingStarted && <GettingStartedCard data={gettingStarted} />}
+
+      {followUps && followUps.today + followUps.overdue > 0 && (
+        <Link
+          href="/dashboard/leads?due=1"
+          className="animate-rise flex items-center gap-3 rounded-2xl border border-primary/40 bg-primary-soft px-4 py-3 text-sm transition-colors hover:border-primary"
+        >
+          <Contact className="size-5 shrink-0 text-data-accent" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="font-semibold">
+              {followUps.today > 0 && `${followUps.today} lead ${followUps.today === 1 ? "follow-up" : "follow-ups"} due today`}
+              {followUps.today > 0 && followUps.overdue > 0 && " · "}
+              {followUps.overdue > 0 && `${followUps.overdue} overdue`}
+            </span>
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-primary-hover">
+            Open leads <ArrowRight className="size-4" aria-hidden />
+          </span>
+        </Link>
+      )}
 
       {deleted && (
         <p role="status" className="animate-rise flex items-center gap-2 rounded-xl bg-surface-2 px-4 py-3 text-sm font-medium">

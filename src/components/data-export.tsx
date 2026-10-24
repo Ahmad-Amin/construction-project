@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, Download, FolderKanban, Flag, Receipt, Banknote } from "lucide-react";
+import { CalendarDays, Contact, Download, FolderKanban, Flag, Receipt, Banknote } from "lucide-react";
 
 const files = [
   { kind: "projects", label: "Projects", note: "Each project with its client, budget and overall progress", icon: FolderKanban },
@@ -7,6 +7,7 @@ const files = [
   { kind: "updates", label: "Site updates", note: "Dated notes with who posted them", icon: CalendarDays },
   { kind: "expenses", label: "Expenses", note: "Including the ones hidden from your client", icon: Receipt },
   { kind: "payments", label: "Payments", note: "With who recorded them, and who confirmed or disputed", icon: Banknote },
+  { kind: "leads", label: "Leads", note: "Every enquiry, its stage, follow-up and how it ended", icon: Contact },
 ] as const;
 
 // Owner-only downloads. Plain <a> links so the browser saves the file instead of the app navigating.

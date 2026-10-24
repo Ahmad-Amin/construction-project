@@ -41,5 +41,14 @@
       "53% complete, 2 site updates",
       "https://example.com/p/1"
     ]
+  },
+  "lead_follow_ups": {
+    "body": "Hello {{1}}, you have {{2}} due {{3}}. See them here: {{4}} Thank you.",
+    "example": [
+      "Ahmad",
+      "3 lead follow-ups",
+      "today",
+      "https://example.com/dashboard/leads"
+    ]
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { toCsv, type Cell } from "@/lib/csv";
 import { expenseCategoryLabel, type ExpenseCategory } from "@/lib/expenses";
+import { lostReasonLabel, sourceLabel, workTypeLabel } from "@/lib/leads";
 import { dayInZone, todayIn } from "@/lib/format";
 import { overallProgress } from "@/lib/project";
 import { createClient } from "@/lib/supabase/server";
@@ -9,7 +10,7 @@ import { one } from "@/lib/types";
 import { getViewer } from "@/lib/viewer";
 
 const LIMIT = 10_000;
-const KINDS = ["projects", "milestones", "updates", "expenses", "payments"] as const;
+const KINDS = ["projects", "milestones", "updates", "expenses", "payments", "leads"] as const;
 type Kind = (typeof KINDS)[number];
 
 const yesNo = (value: boolean) => (value ? "Yes" : "No");
@@ -64,6 +65,44 @@ async function build(kind: Kind, supabase: SupabaseClient, currency: string, tim
           .sort((a, b) => a.position - b.position)
           .map((m) => [p.name, m.name, m.status, m.progress_percent] as Cell[]),
       ),
+    };
+  }
+
+  if (kind === "leads") {
+    const [{ data }, { data: stages }] = await Promise.all([
+      supabase
+        .from("leads")
+        .select("name, phone, email, location, work_type, size, budget, source, status, stage_id, lost_reason, follow_up_on, follow_up_note, notes, created_at, closed_at")
+        .order("created_at", { ascending: false })
+        .limit(LIMIT),
+      supabase.from("lead_stages").select("id, name"),
+    ]);
+    const stageOf = new Map(((stages ?? []) as { id: string; name: string }[]).map((s) => [s.id, s.name]));
+    type Row = {
+      name: string;
+      phone: string | null;
+      email: string | null;
+      location: string;
+      work_type: string;
+      size: string;
+      budget: number | null;
+      source: string;
+      status: "open" | "won" | "lost";
+      stage_id: string;
+      lost_reason: string | null;
+      follow_up_on: string | null;
+      follow_up_note: string;
+      notes: string;
+      created_at: string;
+      closed_at: string | null;
+    };
+    return {
+      headers: ["Name", "Phone", "Email", "Location", "Type of work", "Size", `Rough budget (${currency})`, "Found you through", "Status", "Stage", "Lost because", "Follow up on", "Follow-up note", "Notes", "Added on", "Closed on"],
+      rows: ((data ?? []) as Row[]).map((l) => [
+        l.name, l.phone, l.email, l.location, workTypeLabel(l.work_type), l.size, l.budget === null ? null : Number(l.budget),
+        sourceLabel(l.source), l.status === "open" ? "Open" : l.status === "won" ? "Won" : "Lost", stageOf.get(l.stage_id) ?? "",
+        lostReasonLabel(l.lost_reason), l.follow_up_on, l.follow_up_note, l.notes, dayOf(l.created_at), dayOf(l.closed_at),
+      ]),
     };
   }
 

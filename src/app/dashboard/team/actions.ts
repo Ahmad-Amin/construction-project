@@ -28,6 +28,7 @@ const parseSettings = (s: Partial<StaffSettings> | undefined): StaffSettings => 
   viewOnly: s?.viewOnly === true,
   canSeeBudget: s?.canSeeBudget === true,
   canSeeClient: s?.canSeeClient !== false,
+  canSeeLeads: s?.canSeeLeads === true,
 });
 
 const linkFor = async (token: string) => `${await getOrigin()}/invite/team/${token}`;
@@ -58,6 +59,7 @@ export async function inviteStaff(input: {
     p_view_only: settings.viewOnly,
     p_can_see_budget: settings.canSeeBudget,
     p_can_see_client: settings.canSeeClient,
+    p_can_see_leads: settings.canSeeLeads,
   });
   if (error || typeof data !== "string") return { error: error ? friendly(error) : GENERIC };
 
@@ -112,6 +114,7 @@ export async function saveStaff(
     p_can_see_budget: settings.canSeeBudget,
     p_can_see_client: settings.canSeeClient,
     p_paused: null,
+    p_can_see_leads: settings.canSeeLeads,
   });
   if (settingsError) return { error: friendly(settingsError) };
   const { error } = await supabase.rpc("set_staff_access", {

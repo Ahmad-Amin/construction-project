@@ -60,7 +60,7 @@ export function Sheet({ children }: { children: React.ReactNode }) {
         aria-modal="true"
         aria-labelledby="sheet-title"
         tabIndex={-1}
-        className="animate-sheet absolute inset-y-0 right-0 flex w-full flex-col bg-background shadow-2xl outline-none sm:max-w-xl sm:border-l sm:border-line"
+        className="animate-sheet absolute inset-y-0 right-0 flex w-full flex-col bg-background shadow-2xl outline-none sm:max-w-2xl sm:border-l sm:border-line"
       >
         <button
           type="button"

@@ -22,12 +22,19 @@ export default function PrivacyPage() {
         <p>
           <strong className="text-foreground">From a contractor or staff member:</strong> your name, email address
           and password (we never see your password in readable form), your company name and logo, and your
-          currency and time zone settings.
+          currency and time zone settings. If you choose to get your lead reminders on WhatsApp, the phone number you
+          save for them; only you can see it.
           {GOOGLE_AUTH_ENABLED && " If you sign in with Google, Google tells us your name and email address; we never receive your Google password or anything else from your Google account."}
         </p>
         <p>
           <strong className="text-foreground">About a client:</strong> the name, email address and phone number the
           contractor enters when inviting them, and the account they create when they accept.
+        </p>
+        <p>
+          <strong className="text-foreground">About a contractor&apos;s leads:</strong> the name, phone number, email
+          and details of people who enquire about work, the notes the contractor keeps about them, and their
+          follow-up dates. A contractor adds these, and they are seen only by the contractor and the staff the
+          contractor allows. The contractor is responsible for having the right to keep them.
         </p>
         <p>
           <strong className="text-foreground">The project records you add:</strong> milestones, site updates and

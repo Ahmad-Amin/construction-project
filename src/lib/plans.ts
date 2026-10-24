@@ -24,6 +24,8 @@ export type PlanInfo = {
   statements: boolean;
   // Creating and sending invoices.
   invoices: boolean;
+  // How many leads can be open at once; null means no limit. The database has the same numbers (plan_open_lead_limit).
+  openLeads: number | null;
   // Site videos on updates: the longest one, and how many minutes of new video a month (0 when not included).
   // The database has the same numbers (plan_video_max_seconds, plan_video_monthly_seconds).
   videoMaxSeconds: number;
@@ -43,6 +45,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     whatsapp: false,
     statements: false,
     invoices: false,
+    openLeads: 10,
     videoMaxSeconds: 0,
     videoMonthlyMinutes: 0,
   },
@@ -58,6 +61,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     whatsapp: true,
     statements: true,
     invoices: true,
+    openLeads: null,
     videoMaxSeconds: 180,
     videoMonthlyMinutes: 60,
   },
@@ -73,6 +77,7 @@ export const PLANS: Record<PlanId, PlanInfo> = {
     whatsapp: true,
     statements: true,
     invoices: true,
+    openLeads: null,
     videoMaxSeconds: 300,
     videoMonthlyMinutes: 200,
   },
@@ -103,6 +108,13 @@ export function staffLimitText(plan: PlanId): string {
 export const canSendWhatsApp = (plan: PlanId) => PLANS[plan].whatsapp;
 export const canMakeStatements = (plan: PlanId) => PLANS[plan].statements;
 export const canMakeInvoices = (plan: PlanId) => PLANS[plan].invoices;
+
+// The one sentence shown when the open leads are at the plan's limit.
+export function leadLimitMessage(plan: PlanId): string {
+  const limit = PLANS[plan].openLeads;
+  if (limit === null) return "";
+  return `Your ${PLANS[plan].name} plan includes ${limit} open leads. Mark a lead won or lost, or upgrade for unlimited leads.`;
+}
 
 export type Usage = { used: number; limit: number | null; atLimit: boolean };
 

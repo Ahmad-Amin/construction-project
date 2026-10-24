@@ -15,6 +15,7 @@ import { getViewer } from "@/lib/viewer";
 import { renderWeeklySummaryEmail, signSummaryPhotos, type WeeklySummary } from "@/lib/weekly-summary";
 
 const GENERIC_ERROR = "Something went wrong saving this project. Please try again.";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Our database functions raise plain-English messages (error code P0001); show those as-is.
 const friendly = (error: { code?: string; message: string }) =>
@@ -31,8 +32,13 @@ export async function createProject(_: FormState, formData: FormData): Promise<F
   const phone = parsePhone(text(formData, "client_phone"));
   if (phone.error) return fail(formData, phone.error);
 
+  // From a lead: the same project, and the lead is marked won and linked to it, in one step.
+  const leadId = text(formData, "lead_id");
+  if (leadId && !UUID.test(leadId)) return fail(formData, GENERIC_ERROR);
+
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("create_project", {
+  const { data, error } = await supabase.rpc(leadId ? "create_project_from_lead" : "create_project", {
+    ...(leadId ? { p_lead: leadId } : {}),
     p_name: text(formData, "name"),
     p_location: text(formData, "location"),
     p_start_date: dateOrNull(text(formData, "start_date")),
@@ -47,6 +53,7 @@ export async function createProject(_: FormState, formData: FormData): Promise<F
   if (error || !data) return fail(formData, error ? friendly(error) : GENERIC_ERROR);
   // The side navigation lists projects, so it has to reload to include this one.
   revalidatePath("/dashboard", "layout");
+  if (leadId) revalidatePath("/dashboard/leads", "layout");
   await flash("Project created");
   redirect(`/dashboard/projects/${data}`);
 }

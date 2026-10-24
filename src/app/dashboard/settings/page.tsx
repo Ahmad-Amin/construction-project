@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Bell, Building2, CalendarDays, Database, KeyRound, LogOut, Palette, Receipt, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { ArrowLeft, Bell, Building2, CalendarDays, Contact, Database, KeyRound, LogOut, Palette, Receipt, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { headers } from "next/headers";
 import { signOut } from "@/app/login/actions";
 import { Avatar } from "@/components/avatar";
 import { AuthForm } from "@/components/auth-form";
@@ -8,6 +9,8 @@ import { CompanyBadge } from "@/components/company-badge";
 import { CompanyWeeklySummaryToggle } from "@/components/company-weekly-summary-toggle";
 import { DataExport } from "@/components/data-export";
 import { EmailToggle } from "@/components/email-toggle";
+import { LeadStagesEditor, type StageRow } from "@/components/lead-stages-editor";
+import { ReminderWhatsApp } from "@/components/reminder-whatsapp";
 import { LogoUploader } from "@/components/logo-uploader";
 import { PasswordForm } from "@/components/password-form";
 import { ROLE_LABEL, roleOf } from "@/components/role-tag";
@@ -17,7 +20,8 @@ import { SubmitButton } from "@/components/submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WhatsAppToggle } from "@/components/whatsapp-toggle";
 import { isDemoEmail } from "@/lib/demo";
-import { formatPhone } from "@/lib/phone";
+import { fetchLeadStages, leadAccess } from "@/lib/leads";
+import { formatPhone, phoneCountryFor } from "@/lib/phone";
 import { PlanSection } from "@/components/plan-section";
 import { CURRENCIES } from "@/lib/currency";
 import { canSendWhatsApp, effectivePlan } from "@/lib/plans";
@@ -86,6 +90,19 @@ export default async function SettingsPage({
     return canSendWhatsApp(effectivePlan(company?.plan, company?.plan_until));
   });
 
+  // Leads: the owner's stages (with how many leads each has), and the number this person's own reminders go to.
+  const leads = leadAccess(viewer);
+  const [stageRes, stageLeadsRes, reminderRes] = await Promise.all([
+    leads.owner ? fetchLeadStages(supabase) : Promise.resolve([]),
+    leads.owner ? supabase.from("leads").select("stage_id").limit(10000) : Promise.resolve({ data: null }),
+    leads.see ? supabase.from("team_whatsapp").select("phone, reminders").eq("user_id", viewer.userId).maybeSingle() : Promise.resolve({ data: null }),
+  ]);
+  const perStage = new Map<string, number>();
+  for (const r of (stageLeadsRes.data ?? []) as { stage_id: string }[]) perStage.set(r.stage_id, (perStage.get(r.stage_id) ?? 0) + 1);
+  const leadStages: StageRow[] = stageRes.map((st) => ({ id: st.id, name: st.name, color: st.color, leads: perStage.get(st.id) ?? 0 }));
+  const reminderRow = reminderRes.data as { phone: string; reminders: boolean } | null;
+  const showReminderWhatsApp = leads.see && whatsappEnabled() && !!viewer.company;
+
   const name = profile?.name ?? "";
   const isOwner = viewer.company?.role === "owner";
   const isDemo = isDemoEmail(viewer.email);
@@ -111,6 +128,7 @@ export default async function SettingsPage({
             items: [
               { id: "company", label: "Company" },
               { id: "client-updates", label: "Client updates" },
+              { id: "leads", label: "Leads" },
               { id: "plan", label: "Plan" },
               { id: "invoices", label: "Invoices" },
               { id: "data", label: "Your data" },
@@ -196,6 +214,14 @@ export default async function SettingsPage({
                 initial={profile?.whatsapp_notifications ?? false}
                 phone={clientRow?.phone ? formatPhone(clientRow.phone) : null}
                 available={whatsappAvailable}
+              />
+            )}
+            {showReminderWhatsApp && viewer.company && (
+              <ReminderWhatsApp
+                phone={reminderRow?.phone ?? null}
+                reminders={reminderRow?.reminders ?? true}
+                paid={canSendWhatsApp(viewer.company.plan)}
+                phoneCountry={phoneCountryFor((await headers()).get("x-vercel-ip-country"), viewer.company.timeZone)}
               />
             )}
           </SettingsRows>
@@ -307,6 +333,17 @@ export default async function SettingsPage({
             <SettingsRows>
               <CompanyWeeklySummaryToggle initial={companyRow?.weekly_summary ?? false} />
             </SettingsRows>
+          </SettingsSection>
+        )}
+
+        {isOwner && (
+          <SettingsSection
+            id="leads"
+            icon={Contact}
+            title="Leads"
+            description="The stages your enquiries move through, in order. Rename, reorder, add or remove them."
+          >
+            <LeadStagesEditor stages={leadStages} />
           </SettingsSection>
         )}
 

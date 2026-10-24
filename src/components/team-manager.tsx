@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import {
   Banknote,
   Check,
+  Contact,
   Copy,
   EyeOff,
   FolderLock,
@@ -58,7 +59,7 @@ const invoiceIds = (access: Access) => Object.keys(access).filter((id) => access
 const invoiceBlock = (s: StaffSettings) =>
   s.viewOnly ? "View-only staff can't send invoices." : !s.canSeeClient ? "Invoices need the client's details switched on." : null;
 
-const NEW_STAFF: StaffSettings = { viewOnly: false, canSeeBudget: false, canSeeClient: true };
+const NEW_STAFF: StaffSettings = { viewOnly: false, canSeeBudget: false, canSeeClient: true, canSeeLeads: false };
 
 function Switch({ checked, onChange, disabled, label }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; label: string }) {
   return (
@@ -188,6 +189,7 @@ function SettingsPicker({ value, onChange }: { value: StaffSettings; onChange: (
     { key: "viewOnly", title: "View only", text: "They can look around, but can't post updates, add expenses or documents, or change progress." },
     { key: "canSeeBudget", title: "Can see the budget", text: "The budget of the projects they can open." },
     { key: "canSeeClient", title: "Can see the client's details", text: "The client's name, phone number and email. Invoices need this." },
+    { key: "canSeeLeads", title: "Can see leads", text: "Your enquiries and their follow-ups. They get reminders for the follow-ups they set." },
   ];
   return (
     <fieldset className="min-w-0">
@@ -207,13 +209,14 @@ function SettingsPicker({ value, onChange }: { value: StaffSettings; onChange: (
   );
 }
 
-// The limits on a person, as small tags (nothing when they have the full set).
+// What the owner set for a person, as small tags: the limits, and leads when allowed (nothing for the usual set).
 function SettingTags({ settings, paused }: { settings: StaffSettings; paused?: boolean }) {
   const tags = [
     paused && "Paused",
     settings.viewOnly && "View only",
     !settings.canSeeBudget && "Budget hidden",
     !settings.canSeeClient && "Client details hidden",
+    settings.canSeeLeads && "Sees leads",
   ].filter((t): t is string => !!t);
   if (tags.length === 0) return null;
   return (
@@ -223,7 +226,14 @@ function SettingTags({ settings, paused }: { settings: StaffSettings; paused?: b
           key={t}
           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${t === "Paused" ? "bg-primary-soft text-primary-hover" : "bg-surface-2 text-muted"}`}
         >
-          {t === "Paused" ? <PauseCircle className="size-3" aria-hidden /> : <EyeOff className="size-3" aria-hidden />} {t}
+          {t === "Paused" ? (
+            <PauseCircle className="size-3" aria-hidden />
+          ) : t === "Sees leads" ? (
+            <Contact className="size-3" aria-hidden />
+          ) : (
+            <EyeOff className="size-3" aria-hidden />
+          )}{" "}
+          {t}
         </li>
       ))}
     </ul>

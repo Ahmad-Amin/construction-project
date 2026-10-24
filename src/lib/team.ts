@@ -6,7 +6,7 @@ export type TeamProject = { id: string; name: string; archived: boolean };
 // Per project: payments (seeing them) and invoices (creating and sending them, which needs payments).
 export type ProjectAccess = { id: string; pay: boolean; invoice: boolean };
 // Per person.
-export type StaffSettings = { viewOnly: boolean; canSeeBudget: boolean; canSeeClient: boolean };
+export type StaffSettings = { viewOnly: boolean; canSeeBudget: boolean; canSeeClient: boolean; canSeeLeads: boolean };
 
 export type TeamMember = {
   userId: string;
@@ -42,11 +42,17 @@ type TeamRow = {
   can_see_budget: boolean;
   can_see_client: boolean;
   paused: boolean;
+  can_see_leads?: boolean;
 };
 
 type AccessRow = { project_id: string; can_see_payments: boolean; can_invoice: boolean };
 const toAccess = (a: AccessRow): ProjectAccess => ({ id: a.project_id, pay: a.can_see_payments, invoice: a.can_see_payments && a.can_invoice });
-const settingsOf = (r: TeamRow): StaffSettings => ({ viewOnly: r.view_only, canSeeBudget: r.can_see_budget, canSeeClient: r.can_see_client });
+const settingsOf = (r: TeamRow): StaffSettings => ({
+  viewOnly: r.view_only,
+  canSeeBudget: r.can_see_budget,
+  canSeeClient: r.can_see_client,
+  canSeeLeads: r.can_see_leads === true,
+});
 
 // Everything here runs as the owner: the database refuses anyone else.
 export async function fetchTeam(supabase: SupabaseClient): Promise<Team> {

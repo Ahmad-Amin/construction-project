@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { ConfirmProvider } from "@/components/confirm-dialog";
 import { ToastProvider } from "@/components/toast";
 import { roleOf } from "@/components/role-tag";
+import { fetchMyFollowUps, leadAccess } from "@/lib/leads";
 import { countUnread } from "@/lib/notifications";
 import { platformAdminEmail } from "@/lib/admin";
 import { viewerSide } from "@/lib/payments";
@@ -32,7 +33,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // a homeowner only theirs. Payments waiting on this person show as badges.
   const supabase = await createClient();
   const isStaff = !!viewer.company && viewer.company.role !== "owner";
-  const [projectsRes, pendingRes, unread, activeRes, toursRes, staffRes] = await Promise.all([
+  const seesLeads = leadAccess(viewer).see;
+  const [projectsRes, pendingRes, unread, activeRes, toursRes, staffRes, followUps] = await Promise.all([
     supabase
       .from("projects")
       .select("id, name, status, archived_at")
@@ -51,6 +53,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     isStaff
       ? supabase.from("project_staff").select("project_id, can_see_payments")
       : Promise.resolve({ data: [] as { project_id: string; can_see_payments: boolean }[] }),
+    // The Leads badge: this person's follow-ups due today or overdue.
+    seesLeads ? fetchMyFollowUps(supabase) : Promise.resolve(null),
   ]);
   const paymentsOn = new Set(
     ((staffRes.data ?? []) as { project_id: string; can_see_payments: boolean }[]).filter((r) => r.can_see_payments).map((r) => r.project_id),
@@ -94,6 +98,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         isOwner={isOwner}
         isPlatformAdmin={isPlatformAdmin}
         unread={unread}
+        leads={followUps ? { due: followUps.today + followUps.overdue } : null}
         initialCollapsed={collapsed}
         toursSeen={toursSeen}
       >

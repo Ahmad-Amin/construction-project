@@ -29,6 +29,7 @@ const rows: Row[] = [
   { label: "PDF project statements", free: PLANS.free.statements, pro: PLANS.pro.statements, business: PLANS.business.statements },
   { label: "Invoices with your logo, sent to your client", free: PLANS.free.invoices, pro: PLANS.pro.invoices, business: PLANS.business.invoices },
   { label: "Staff accounts, with access you choose per project", free: false, pro: `Up to ${PLANS.pro.staff}`, business: `Up to ${PLANS.business.staff}` },
+  { label: "Leads with follow-up reminders", free: `${PLANS.free.openLeads} open`, pro: "Unlimited", business: "Unlimited" },
   { label: "Support", free: "Email", pro: "Email", business: "Priority" },
 ];
 
@@ -41,7 +42,7 @@ const videoHighlight = (id: PlanId) => (PLANS[id].videoMaxSeconds ? [`Site video
 // The three or four things worth knowing about each plan at a glance.
 const highlights: Record<PlanId, string[]> = {
   free: ["1 active project", "Everything you need to run one job", "Email and in-app updates for your client"],
-  pro: ["Up to 10 active projects", "Up to 3 staff accounts", "Automatic WhatsApp updates", "Invoices and PDF statements"],
+  pro: ["Up to 10 active projects", "Up to 3 staff accounts", "Automatic WhatsApp updates", "Invoices and PDF statements", "Unlimited leads"],
   business: ["Unlimited active projects", "Up to 10 staff accounts", "Everything in Pro", "Priority support"],
 };
 
